@@ -85,15 +85,23 @@ public class CrashReportBottomSheet extends OnceBottomSheetHelper {
         scrollView.addView(frameLayout);
         setCustomView(scrollView);
 
-        FirebaseAnalyticsHelper.INSTANCE.trackEventWithEmptyBundle("crash_screen");
+        try {
+            FirebaseAnalyticsHelper.INSTANCE.trackEventWithEmptyBundle("crash_screen");
+        } catch (Throwable ignored) {}
     }
 
     public static void checkBottomSheet(BaseFragment fragment) {
         try {
+            if (fragment == null || fragment.getParentActivity() == null || fragment.getParentActivity().isFinishing()) {
+                Crashlytics.deleteCrashLogs();
+                return;
+            }
             CrashReportBottomSheet dialog = new CrashReportBottomSheet(fragment);
-            dialog.setCancelable(false);
+            dialog.setCancelable(true);
             dialog.show();
-        } catch (Exception ignored) {
+        } catch (Throwable t) {
+            // If showing bottom sheet fails for any reason, delete the crash logs so we don't loop
+            Crashlytics.deleteCrashLogs();
         }
     }
 

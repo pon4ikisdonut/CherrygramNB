@@ -1,9 +1,9 @@
 package org.telegram.messenger
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.os.Handler
 import android.os.Looper
+import org.telegram.ui.ActionBar.AlertDialog
 import java.lang.ref.WeakReference
 
 object BlockedNotice {
@@ -51,27 +51,20 @@ object BlockedNotice {
             return
         }
 
+        shown = true
+        pending = false
+
         try {
             AlertDialog.Builder(activity)
                 .setTitle("CherryGram Ban")
                 .setMessage(
-                    "Вы заблокированы в CherryGram, но я (pon4ikisdonut) " +
-                        "вырезал кик из сессии, " +
-                        "так что можете пользоваться, " +
-                        "если нравится клиент. Но задумайтесь " +
-                        "над тем, кто разработчик, если " +
-                        "он так поступает."
+                    "Вы заблокированы в оригинальном CherryGram, но в форке CherrygramNB (автор pon4ikisdonut) " +
+                        "кик из сессии полностью вырезан. Можете свободно пользоваться клиентом!"
                 )
-                .setPositiveButton("Спасибо") { dialog, _ ->
-                    dialog.dismiss()
-                }
-                .setCancelable(true)
+                .setPositiveButton("Понятно", null)
                 .show()
-
-            shown = true
-            pending = false
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (t: Throwable) {
+            t.printStackTrace()
         }
     }
 }

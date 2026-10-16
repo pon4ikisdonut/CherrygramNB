@@ -3033,11 +3033,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
 
         if (getUserConfig() != null) {
-            FirebaseCrashlyticsHelper.INSTANCE.updateUser(getUserConfig().getCurrentUser());
+            try {
+                FirebaseCrashlyticsHelper.INSTANCE.updateUser(getUserConfig().getCurrentUser());
 
-            if (CherrygramCoreConfig.INSTANCE.getCheckContent() && getContext() != null) {
-                FirebaseCrashlyticsHelper.INSTANCE.logToCrashlytics(getContext(), getUserConfig().clientUserId);
-            }
+                if (CherrygramCoreConfig.INSTANCE.getCheckContent() && getContext() != null) {
+                    FirebaseCrashlyticsHelper.INSTANCE.logToCrashlytics(getContext(), getUserConfig().clientUserId);
+                }
+            } catch (Throwable ignored) {}
         }
 
         if (communityId != 0) {

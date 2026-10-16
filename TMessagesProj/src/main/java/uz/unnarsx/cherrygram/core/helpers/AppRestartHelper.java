@@ -28,12 +28,18 @@ public final class AppRestartHelper extends Activity {
     private static final String KEY_RESTART_INTENTS = "cherrygram_restart_intents";
     private static final String KEY_MAIN_PROCESS_PID = "cherrygram_main_process_pid";
 
+    private static final String PREFS_RESTART = "cherrygram_restart_safety";
+    private static final String KEY_LAST_RESTART_TIME = "last_restart_time";
+    private static final long MIN_RESTART_INTERVAL_MS = 15000; // 15 seconds debounce
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Process.killProcess(getIntent().getIntExtra(KEY_MAIN_PROCESS_PID, -1));
         ArrayList<Intent> intents = getIntent().getParcelableArrayListExtra(KEY_RESTART_INTENTS);
-        startActivities(intents.toArray(new Intent[0]));
+        if (intents != null && !intents.isEmpty()) {
+            startActivities(intents.toArray(new Intent[0]));
+        }
         finish();
         Runtime.getRuntime().exit(0);
     }
@@ -48,10 +54,25 @@ public final class AppRestartHelper extends Activity {
     }
 
     public static void restartApp(Context context) {
-        triggerRebirth(context, new Intent(context, LaunchActivity.class));
+        if (context == null) return;
+        try {
+            android.content.SharedPreferences prefs = context.getSharedPreferences(PREFS_RESTART, Context.MODE_PRIVATE);
+            long now = System.currentTimeMillis();
+            long lastRestart = prefs.getLong(KEY_LAST_RESTART_TIME, 0);
+            if (now - lastRestart < MIN_RESTART_INTERVAL_MS) {
+                android.util.Log.e("CherrygramNB", "Suppressed restartApp: called too rapidly (" + (now - lastRestart) + "ms since last restart)");
+                return;
+            }
+            prefs.edit().putLong(KEY_LAST_RESTART_TIME, now).apply();
+            android.util.Log.e("CherrygramNB", "restartApp triggered by: ", new Throwable());
+            triggerRebirth(context, new Intent(context, LaunchActivity.class));
+        } catch (Throwable t) {
+            android.util.Log.e("CherrygramNB", "Error in restartApp", t);
+        }
     }
 
     public static void killApp() {
+        android.util.Log.e("CherrygramNB", "killApp called");
         System.exit(0);
     }
 

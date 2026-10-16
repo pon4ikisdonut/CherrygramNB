@@ -5,7 +5,6 @@ import static org.telegram.messenger.AndroidUtilities.dp;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
-import android.content.IntentSender;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.view.Gravity;
@@ -15,28 +14,18 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 
-import com.google.android.play.core.appupdate.AppUpdateManager;
-import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
-import com.google.android.play.core.appupdate.AppUpdateOptions;
-import com.google.android.play.core.install.InstallStateUpdatedListener;
-import com.google.android.play.core.install.model.AppUpdateType;
-import com.google.android.play.core.install.model.InstallStatus;
-import com.google.android.play.core.install.model.UpdateAvailability;
-
 import org.telegram.messenger.AndroidUtilities;
-import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.FileLoader;
+import org.telegram.messenger.ImageLoader;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.IUpdateLayout;
 
-import uz.unnarsx.cherrygram.core.CherrygramLogger;
-import uz.unnarsx.cherrygram.core.helpers.AppRestartHelper;
+import java.io.File;
 
 public class UpdateLayout extends IUpdateLayout {
-
-    private static final int PLAY_UPDATE_REQUEST_CODE = 1001;
 
     private FrameLayout updateLayout;
     private RadialProgress2 updateLayoutIcon;
@@ -46,36 +35,48 @@ public class UpdateLayout extends IUpdateLayout {
     private final Activity activity;
     private final ViewGroup sideMenuContainer;
 
-    private int currentAccount;
-
-    private AppUpdateManager appUpdateManager;
-    private InstallStateUpdatedListener installStateUpdatedListener;
-    private boolean gpUpdateDownloaded = false;
-    private boolean gpUpdateDownloading = false;
-    private int gpDownloadProgress = 0;
-
     public UpdateLayout(Activity activity, ViewGroup sideMenuContainer) {
         super(activity, sideMenuContainer);
         this.activity = activity;
         this.sideMenuContainer = sideMenuContainer;
     }
 
+    public void updateFileProgress(Object[] args) {
+        if (updateTextView == null || args == null) return;
+        if (SharedConfig.isAppUpdateAvailable()) {
+            String location = (String) args[0];
+            String fileName = FileLoader.getAttachFileName(SharedConfig.pendingAppUpdate.document);
+            if (fileName != null && fileName.equals(location)) {
+                Long loadedSize = (Long) args[1];
+                Long totalSize = (Long) args[2];
+                float loadProgress = loadedSize / (float) totalSize;
+                updateLayoutIcon.setProgress(loadProgress, true);
+                updateTextView.setText(LocaleController.formatString(R.string.AppUpdateDownloading, (int) (loadProgress * 100)));
+            }
+        }
+    }
+
     public void createUpdateUI(int currentAccount) {
         if (sideMenuContainer == null || updateLayout != null) {
             return;
         }
-        this.currentAccount = currentAccount;
-
         updateLayout = new FrameLayout(activity);
         updateLayout.setVisibility(View.INVISIBLE);
         updateLayout.setTranslationY(dp(44));
         updateLayout.setBackground(Theme.getSelectorDrawable(0x40ffffff, false));
         sideMenuContainer.addView(updateLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 44, Gravity.LEFT | Gravity.BOTTOM));
         updateLayout.setOnClickListener(v -> {
-            if (gpUpdateDownloaded) {
-                completeGooglePlayUpdate();
-            } else if (!gpUpdateDownloading) {
-                startGooglePlayUpdate();
+            if (!SharedConfig.isAppUpdateAvailable()) {
+                return;
+            }
+            if (updateLayoutIcon.getIcon() == MediaActionDrawable.ICON_DOWNLOAD) {
+                FileLoader.getInstance(currentAccount).loadFile(SharedConfig.pendingAppUpdate.document, "update", FileLoader.PRIORITY_NORMAL, 1);
+                updateAppUpdateViews(currentAccount,  true);
+            } else if (updateLayoutIcon.getIcon() == MediaActionDrawable.ICON_CANCEL) {
+                FileLoader.getInstance(currentAccount).cancelLoadFile(SharedConfig.pendingAppUpdate.document);
+                updateAppUpdateViews(currentAccount, true);
+            } else {
+                AndroidUtilities.openForView(SharedConfig.pendingAppUpdate.document, true, activity);
             }
         });
 
@@ -117,32 +118,36 @@ public class UpdateLayout extends IUpdateLayout {
         updateSizeTextView.setTypeface(AndroidUtilities.bold());
         updateSizeTextView.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
         updateSizeTextView.setTextColor(0xccffffff);
-
-        registerGooglePlayUpdateListener();
     }
 
     public void updateAppUpdateViews(int currentAccount, boolean animated) {
         if (sideMenuContainer == null) {
             return;
         }
-        this.currentAccount = currentAccount;
-
-        if (SharedConfig.pendingAppUpdate != null) {
+        if (SharedConfig.isAppUpdateAvailable()) {
             createUpdateUI(currentAccount);
 
-            if (gpUpdateDownloaded) {
+            String fileName = FileLoader.getAttachFileName(SharedConfig.pendingAppUpdate.document);
+            File path = FileLoader.getInstance(currentAccount).getPathToAttach(SharedConfig.pendingAppUpdate.document, true);
+            boolean showSize;
+            if (path.exists()) {
                 updateLayoutIcon.setIcon(MediaActionDrawable.ICON_UPDATE, true, animated);
                 setUpdateText(LocaleController.getString(R.string.AppUpdateNow), animated);
-            } else if (gpUpdateDownloading) {
-                updateLayoutIcon.setIcon(MediaActionDrawable.ICON_CANCEL, true, animated);
-                updateLayoutIcon.setProgress(gpDownloadProgress / 100f, true);
-                setUpdateText(LocaleController.formatString(R.string.AppUpdateDownloading, gpDownloadProgress), animated);
+                showSize = false;
             } else {
-                updateLayoutIcon.setIcon(MediaActionDrawable.ICON_DOWNLOAD, true, animated);
-                setUpdateText(LocaleController.getString(R.string.AppUpdate).replace("Telegram", LocaleController.getString(R.string.CG_AppName)), animated);
+                if (FileLoader.getInstance(currentAccount).isLoadingFile(fileName)) {
+                    updateLayoutIcon.setIcon(MediaActionDrawable.ICON_CANCEL, true, animated);
+                    updateLayoutIcon.setProgress(0, false);
+                    Float p = ImageLoader.getInstance().getFileProgress(fileName);
+                    setUpdateText(LocaleController.formatString(R.string.AppUpdateDownloading, (int) ((p != null ? p : 0.0f) * 100)), animated);
+                    showSize = false;
+                } else {
+                    updateLayoutIcon.setIcon(MediaActionDrawable.ICON_DOWNLOAD, true, animated);
+                    setUpdateText(LocaleController.getString(R.string.AppUpdate).replace("Telegram", LocaleController.getString(R.string.CG_AppName)), animated);
+                    showSize = true;
+                }
             }
-            updateSizeTextView.setText(null, animated);
-
+            updateSizeTextView.setText(showSize ? AndroidUtilities.formatFileSize(SharedConfig.pendingAppUpdate.document.size) : null, animated);
             if (updateLayout.getTag() != null) {
                 return;
             }
@@ -174,110 +179,7 @@ public class UpdateLayout extends IUpdateLayout {
         }
     }
 
-    // ----------------------------------------------------------------------------------------
-    // Google Play In-App Update
-    // ----------------------------------------------------------------------------------------
-
-    private void registerGooglePlayUpdateListener() {
-        if (appUpdateManager != null) {
-            return;
-        }
-        appUpdateManager = AppUpdateManagerFactory.create(activity);
-
-        installStateUpdatedListener = state -> {
-            switch (state.installStatus()) {
-                case InstallStatus.DOWNLOADING:
-                    gpUpdateDownloading = true;
-                    gpUpdateDownloaded = false;
-                    gpDownloadProgress = state.totalBytesToDownload() > 0
-                            ? (int) (state.bytesDownloaded() * 100L / state.totalBytesToDownload())
-                            : 0;
-                    updateAppUpdateViews(currentAccount, true);
-                    break;
-
-                case InstallStatus.DOWNLOADED:
-                    gpUpdateDownloading = false;
-                    gpUpdateDownloaded = true;
-                    updateAppUpdateViews(currentAccount, true);
-                    break;
-
-                case InstallStatus.INSTALLED:
-                    gpUpdateDownloading = false;
-                    gpUpdateDownloaded = false;
-                    unregisterGooglePlayUpdateListener();
-                    break;
-
-                case InstallStatus.FAILED:
-                case InstallStatus.CANCELED:
-                    gpUpdateDownloading = false;
-                    gpUpdateDownloaded = false;
-                    updateAppUpdateViews(currentAccount, true);
-                    break;
-
-                case InstallStatus.PENDING:
-                case InstallStatus.INSTALLING:
-                case InstallStatus.REQUIRES_UI_INTENT:
-                case InstallStatus.UNKNOWN:
-                default:
-                    break;
-            }
-        };
-        appUpdateManager.registerListener(installStateUpdatedListener);
-
-        appUpdateManager.getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
-            gpUpdateDownloaded = appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED;
-            gpUpdateDownloading = appUpdateInfo.installStatus() == InstallStatus.DOWNLOADING;
-            updateAppUpdateViews(currentAccount, true);
-        });
-    }
-
-    private void startGooglePlayUpdate() {
-        if (appUpdateManager == null) {
-            return;
-        }
-        appUpdateManager.getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
-            if (appUpdateInfo.updateAvailability() != UpdateAvailability.UPDATE_AVAILABLE) {
-                return;
-            }
-            if (!appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
-                return;
-            }
-            try {
-                appUpdateManager.startUpdateFlowForResult(
-                        appUpdateInfo,
-                        activity,
-                        AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build(),
-                        PLAY_UPDATE_REQUEST_CODE
-                );
-            } catch (IntentSender.SendIntentException e) {
-                CherrygramLogger.e(e);
-            }
-        }).addOnFailureListener(CherrygramLogger::e);
-    }
-
-    private void completeGooglePlayUpdate() {
-        if (appUpdateManager != null) {
-            appUpdateManager.completeUpdate();
-        } else {
-            AppRestartHelper.restartApp(ApplicationLoader.applicationContext);
-        }
-    }
-
-    private void unregisterGooglePlayUpdateListener() {
-        if (appUpdateManager != null && installStateUpdatedListener != null) {
-            appUpdateManager.unregisterListener(installStateUpdatedListener);
-            installStateUpdatedListener = null;
-        }
-    }
-
-    /** Вызвать при уничтожении drawer'а/side-меню, чтобы не держать listener живым дольше нужного. */
-    public void destroy() {
-        unregisterGooglePlayUpdateListener();
-        appUpdateManager = null;
-    }
-
     private void setUpdateText(String text, boolean animate) {
         updateTextView.setText(text, animate);
     }
-
 }
