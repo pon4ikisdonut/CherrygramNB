@@ -236,6 +236,7 @@ def main():
         elif "x86" in filename:
             abi = "x86"
             
+        tag = "#updateBeta" if is_beta else "#updateRelease"
         caption = (
             f"🍒 *CherrygramNB v{cherry_version} ({version_code}) {build_flavor}*\n\n"
             f"📦 *Файл:* `{filename}`\n"
@@ -243,7 +244,7 @@ def main():
             f"⚡ *База:* Telegram v{tg_version}\n"
             f"👤 *Автор форка:* @pon4ikisdonut\n"
             f"📢 *Канал:* @CherrygramNB\n\n"
-            f"#CherrygramNB #{build_flavor} #Update"
+            f"#CherrygramNB #{build_flavor} #Update {tag}"
         )
         
         print(f"[*] Sending {filename} to {chat_id}...")
@@ -254,35 +255,7 @@ def main():
             continue
             
         msg_id = resp["result"]["message_id"]
-        print(f"[+] APK sent successfully! Message ID: {msg_id}")
-        
-        # Now publish the client in-app updater metadata post
-        release_date = datetime.now().strftime("%d.%m.%Y")
-        tag = "#updateBeta" if is_beta else "#updateRelease"
-        metadata = {
-            "build_flavor": build_flavor,
-            "release_date": release_date,
-            "can_not_skip": False,
-            "version": cherry_version,
-            "version_code": version_code,
-            "sticker": 0,
-            "message": msg_id,
-            "document": {
-                abi: msg_id,
-                "universal": msg_id,
-                "arm64-v8a": msg_id,
-                "armeabi-v7a": msg_id
-            },
-            "url": "https://t.me/CherrygramNB"
-        }
-        
-        meta_post = f"{tag}\n" + json.dumps(metadata, indent=2)
-        print(f"[*] Posting in-app update metadata to {chat_id}...")
-        meta_resp = send_message(bot_token, chat_id, meta_post, parse_mode=None)
-        if meta_resp.get("ok"):
-            print(f"[+] In-app update metadata posted successfully! Message ID: {meta_resp['result']['message_id']}")
-        else:
-            print(f"[-] Failed to post update metadata: {meta_resp.get('description')}")
+        print(f"[+] APK and update notification published in a single post! Message ID: {msg_id}")
 
 if __name__ == "__main__":
     main()

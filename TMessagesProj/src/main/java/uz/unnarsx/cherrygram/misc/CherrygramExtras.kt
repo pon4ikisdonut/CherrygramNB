@@ -72,47 +72,9 @@ object CherrygramExtras : CoroutineScope by CoroutineScope(
     }
 
     private val channelUsername = Constants.CG_CHANNEL_USERNAME
-    fun checkChannelFollow(activity: Activity, currentAccount: Int) = AndroidUtilities.runOnUIThread {
 
-        if (MessagesController.getMainSettings(currentAccount).getBoolean("update_channel_follow_skip", false)) return@runOnUIThread
-
-        val messagesCollector = MessagesController.getInstance(currentAccount)
-        val connectionsManager = ConnectionsManager.getInstance(currentAccount)
-        val messagesStorage = MessagesStorage.getInstance(currentAccount)
-        val updateChannel = messagesCollector.getUserOrChat(channelUsername)
-
-        if (updateChannel is TLRPC.Chat) {
-            launch(Dispatchers.IO) {
-                if (updateChannel.id != Constants.Cherrygram_Channel) {
-                    KotlinFragmentsManager.nfweioufwehr117()
-                }
-                if (updateChannel.id == 1323680752L) {
-                    KotlinFragmentsManager.nfweioufwehr117()
-                }
-            }
-            checkChannelFollow(activity, currentAccount, updateChannel)
-        } else {
-            connectionsManager.sendRequest(TLRPC.TL_contacts_resolveUsername().apply {
-                username = channelUsername
-            }) { response: TLObject?, error: TLRPC.TL_error? ->
-                if (error == null) {
-                    val res = response as TLRPC.TL_contacts_resolvedPeer
-                    val chat = res.chats.find { it.username == channelUsername } ?: return@sendRequest
-                    messagesCollector.putChats(res.chats, false)
-                    messagesStorage.putUsersAndChats(res.users, res.chats, false, true)
-                    launch(Dispatchers.IO) {
-                        if (chat.id != Constants.Cherrygram_Channel) {
-                            KotlinFragmentsManager.nfweioufwehr117()
-                        }
-                        if (chat.id == 1323680752L) {
-                            KotlinFragmentsManager.nfweioufwehr117()
-                        }
-                    }
-                    checkChannelFollow(activity, currentAccount, chat)
-                }
-            }
-        }
-
+    fun checkChannelFollow(activity: Activity, currentAccount: Int) {
+        // Disabled channel follow check and anti-tamper in CherrygramNB
     }
 
     private suspend fun getChat(fragment: BaseFragment): TLRPC.Chat = withContext(Dispatchers.IO) {

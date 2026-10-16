@@ -111,7 +111,64 @@ public abstract class BaseRemoteHelper {
 
                 // 3. Fallback: if message starts directly with tag
                 if (json == null && text.startsWith(tag)) {
-                    json = new JSONObject(afterTag);
+                    try {
+                        json = new JSONObject(afterTag);
+                    } catch (Exception ignored) {}
+                }
+
+                // 4. Auto-derive update metadata if message has an attached APK document and the tag
+                if (json == null && message.media != null && message.media.document != null) {
+                    json = new JSONObject();
+                    json.put("build_flavor", tag.toLowerCase().contains("beta") ? "Beta" : "Release");
+                    json.put("release_date", "");
+                    json.put("can_not_skip", false);
+                    json.put("sticker", 0);
+                    json.put("message", message.id);
+                    json.put("url", Constants.CG_CHANNEL_URL != null ? Constants.CG_CHANNEL_URL : "https://t.me/CherrygramNB");
+
+                    JSONObject docs = new JSONObject();
+                    docs.put("universal", message.id);
+                    docs.put("arm64-v8a", message.id);
+                    docs.put("armeabi-v7a", message.id);
+                    json.put("document", docs);
+
+                    String version = null;
+                    int versionCode = 0;
+
+                    java.util.regex.Pattern pVer = java.util.regex.Pattern.compile("v?([0-9]+\\.[0-9]+\\.[0-9]+)");
+                    java.util.regex.Matcher mVer = pVer.matcher(text);
+                    if (mVer.find()) {
+                        version = mVer.group(1);
+                    }
+
+                    java.util.regex.Pattern pCode = java.util.regex.Pattern.compile("\\(([0-9]{4,})\\)");
+                    java.util.regex.Matcher mCode = pCode.matcher(text);
+                    if (mCode.find()) {
+                        try {
+                            versionCode = Integer.parseInt(mCode.group(1));
+                        } catch (Exception ignored) {}
+                    }
+
+                    if (version == null) {
+                        for (TLRPC.DocumentAttribute attr : message.media.document.attributes) {
+                            if (attr instanceof TLRPC.TL_documentAttributeFilename) {
+                                String fn = ((TLRPC.TL_documentAttributeFilename) attr).file_name;
+                                if (fn != null) {
+                                    java.util.regex.Matcher mFn = pVer.matcher(fn);
+                                    if (mFn.find()) {
+                                        version = mFn.group(1);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (version != null) {
+                        json.put("version", version);
+                        json.put("version_code", versionCode);
+                    } else {
+                        json = null;
+                    }
                 }
 
                 if (json != null) {
