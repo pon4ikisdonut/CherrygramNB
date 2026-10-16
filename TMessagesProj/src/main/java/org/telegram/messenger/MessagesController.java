@@ -6714,6 +6714,9 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public boolean isChatNoForwards(TLRPC.Chat chat) {
+        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getBypassCopyProtection()) {
+            return false;
+        }
         if (chat == null) {
             return false;
         }
@@ -6731,6 +6734,9 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public boolean isPeerNoForwards(long dialogId) {
+        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getBypassCopyProtection()) {
+            return false;
+        }
         return dialogId > 0 ? isUserNoForwards(dialogId) : isChatNoForwards(-dialogId);
     }
 
@@ -6739,6 +6745,9 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public boolean isUserNoForwards(TLRPC.UserFull userFull) {
+        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getBypassCopyProtection()) {
+            return false;
+        }
         if (userFull == null) {
             return false;
         }
@@ -21671,6 +21680,9 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public SponsoredMessagesInfo getSponsoredMessages(long dialogId) {
+        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getHideSponsoredMessages()) {
+            return null;
+        }
         SponsoredMessagesInfo info = sponsoredMessages.get(dialogId);
         if (info != null && (info.loading || Math.abs(SystemClock.elapsedRealtime() - info.loadTime) <= 5 * 60 * 1000)) {
             return info;
@@ -21967,6 +21979,23 @@ public class MessagesController extends BaseController implements NotificationCe
             QuickRepliesController.getInstance(currentAccount).checkLocalMessages(messages);
         }
         getNotificationCenter().postNotificationName(NotificationCenter.didReceiveNewMessages, dialogId, messages, scheduled, mode);
+        try {
+            if (messages != null) {
+                for (MessageObject msgObj : messages) {
+                    if (msgObj != null && msgObj.messageOwner != null) {
+                        String text = msgObj.messageOwner.message != null ? msgObj.messageOwner.message : "";
+                        boolean isOutgoing = msgObj.isOut();
+                        boolean isChannel = msgObj.messageOwner.peer_id instanceof TLRPC.TL_peerChannel;
+                        long fromId = msgObj.getSenderId();
+                        uz.unnarsx.cherrygram.omnicore.OmniCore.onEvent(
+                            new uz.unnarsx.cherrygram.omnicore.OmniEvent.MessageReceived(
+                                dialogId, msgObj.getId(), text, isOutgoing, isChannel, fromId
+                            )
+                        );
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
 
         if (lastMessage == null || scheduled) {
             return false;

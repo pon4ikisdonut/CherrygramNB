@@ -387,7 +387,7 @@ object CGMessageMenuInjector {
         icons: ArrayList<Int?>
     ) {
 
-        val show = force || (chatActivity != null && CherrygramMessagesConfig.showJSON &&
+        val show = force || (chatActivity != null && (CherrygramMessagesConfig.showJSON || uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.showRawJson) &&
                 !(chatActivity.messageMenuHelper.allowNewMessageMenu() && MessageMenuCompactView.allowCompactStyle()))
 
         if (show) {

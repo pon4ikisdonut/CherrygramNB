@@ -190,7 +190,7 @@ object CherrygramCoreConfig: CoroutineScope by CoroutineScope(
 
     @JvmStatic
     fun isPlayStoreBuild(): Boolean {
-        return !ApplicationLoader.isStandaloneBuild()
+        return false
     }
     /** Cherrygram build types finish */
 

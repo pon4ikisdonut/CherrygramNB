@@ -1,56 +1,157 @@
-# 🍒 Cherrygram
+# 🍒 CherrygramNB
 
-Cherrygram is a third-party Telegram client with not many but useful modifications.
+<p align="center">
+  <img src="TMessagesProj_App/src/main/res/mipmap-xxxhdpi/ic_launcher.png" width="128" height="128" alt="CherrygramNB Logo"/>
+</p>
 
-This is an unofficial fork of the original [Telegram App for Android](https://github.com/DrKLO/Telegram).
+<h3 align="center">Clean, Fast & Independent Telegram Client with OmniCore Plugin Engine</h3>
 
-This repo contains the official source code for [Telegram App for Android](https://play.google.com/store/apps/details?id=org.telegram.messenger).
+<p align="center">
+  <a href="https://t.me/CherrygramNB"><img src="https://img.shields.io/badge/Channel-%40CherrygramNB-blue?style=flat&logo=telegram" alt="Telegram Channel"></a>
+  <a href="https://t.me/cherrygramnbchat"><img src="https://img.shields.io/badge/Chat-%40cherrygramnbchat-blue?style=flat&logo=telegram" alt="Telegram Chat"></a>
+  <a href="https://ko-fi.com/pon4ikisdonut"><img src="https://img.shields.io/badge/Support-Ko--fi-ff5f5f?style=flat&logo=ko-fi" alt="Ko-fi"></a>
+  <a href="https://github.com/pon4ikisdonut/CherrygramNB"><img src="https://img.shields.io/badge/Source-GitHub-black?style=flat&logo=github" alt="GitHub"></a>
+</p>
 
-## Current Maintainers
+---
 
-- [arsLan4k1390](https://github.com/arsLan4k1390)
-- You? :)
+## 📖 About
 
-## Contributors
+**CherrygramNB** is an advanced third-party fork of Cherrygram for Android, built on top of the latest **Telegram v12.10.6** (source codebase) and Cherrygram v11.3.0.
 
-- [arsLan4k1390](https://github.com/arsLan4k1390)
+CherrygramNB is completely decoupled from Google Play Store restrictions, removes all invasive monetization bloat, includes native developer tools, bypasses artificial restrictions, and introduces **OmniCore** — a modular event-driven plugin engine.
 
+* **Fork Maintainer:** [@pon4ikisdonut](https://t.me/pon4ikisdonut)
+* **Official Channel:** [@CherrygramNB](https://t.me/CherrygramNB)
+* **Community Chat:** [@cherrygramnbchat](https://t.me/cherrygramnbchat)
 
-## Discussion
+---
 
-Join the [Cherrygram official channel](https://t.me/cherrygram)
+## ⚡ Features & Enhancements
 
-Join the [Cherrygram official group](https://t.me/CherrygramSupport)
+### 1. 🛠️ Developer Tools (DevTools)
+* **Raw JSON Inspector:** Dedicated button in the message context menu to view raw `TLRPC.Message` JSON and fields in real time.
+* **Quick Copy ID:** Display user, group, and channel IDs directly in profile headers with instant one-click copy to clipboard.
+* **Bot Token Manager:** Built-in bot authorization (`TL_auth_importBotAuthorization`) allowing you to log in directly via Bot Token from `@BotFather` to test and debug bots from your phone.
 
+### 2. 🛡️ Hardcore Filtering & Anti-Spam
+* **Regex Channel Filters:** Locally filter out advertisements, cryptocurrency shills, and casino spam from your channel feed using custom regular expressions.
+* **Auto-Mute Unknowns:** Automatically archive and mute private chats from non-contacts.
 
-## API, Protocol documentation
+### 3. 🧹 De-bloat & Clean UI
+* **Total Stories Removal:** Toggle to hide the top stories bar and colored rings around user avatars across dialogs and profiles.
+* **No Sponsored Messages:** Completely neutralizes and removes Telegram sponsored/ad messages from channels.
+* **Minimal Attachment Menu:** Option to declutter the attachment bottom sheet to only essential actions.
+* **Zero Bloat:** SafeStars and SafePay mechanisms completely excised.
 
-Telegram API manuals: https://core.telegram.org/api
+### 4. 🔓 Content & Restrictions Bypass
+* **Copy Protection Bypass (No-Quote):** Copy text, save media, and forward messages even in channels and groups where copy protection (`noforwards`) is enforced.
+* **Screenshot & Screen Recording Freedom:** Neutralizes `FLAG_SECURE` window locks.
+* **Local Voice-to-Text:** Free voice message transcription using Android's on-device speech recognizer without requiring Telegram Premium.
+* **Anti-Delete Messages:** Local caching marks deleted messages with an `[Удалено]` indicator rather than disappearing from your chat.
 
-MTproto protocol manuals: https://core.telegram.org/mtproto
+### 5. 🔒 Privacy & Security
+* **Streamer Mode:** One-tap toggle that blurs/masks your phone number, username, and avatar in the drawer and settings for safe streaming and screenshot sharing.
+* **Hidden Chats:** Hide sensitive dialogues with PIN/passcode access.
+* **Fake Device Profile:** Spoof device model and client metadata in active sessions.
 
+### 6. 🎨 Interface & Ergonomics
+* **Bottom Folder Tabs (Bottom Bar):** Ergonomic navigation bar placed at the bottom for effortless one-handed use on large screens.
+* **No-Bubble / IRC Mode:** Clean flat text presentation without speech bubbles.
+* **Dynamic Material You:** System wallpaper accent color harmony across icons, buttons, and switches.
+* **Custom Typography:** Full support for loading external `.ttf` and `.otf` fonts.
 
-## Compilation Guide
+### 7. 🚀 Productivity
+* **Canned Responses:** Pre-configured quick-reply snippets in the message input bar.
+* **Local Auto-Responder:** Automatically sends away messages while you are busy.
+* **Unlimited Multi-Account:** Expanded account limit supporting up to 20 active profiles simultaneously.
 
-You will require Android Studio 2025.1.4, Android NDK 27.2.12479018 and Android SDK 36.
+---
 
-1. Clone the Cherrygram source code with its submodules:
-   ```bash
-   git clone --recursive --shallow-submodules https://github.com/arslan4k1390/Cherrygram.git Cherrygram
-   ```
-   In case you forgot the `--recursive` flag, change to the `Telegram` directory and run:
-   ```bash
-   git submodule init && git submodule update --init --recursive --depth=1
-   ```
-2. Switch to `main_Reproducible_Builds` branch and follow the instructions listed in `README.md`
-3. Fill out storeFile, storePassword, keyAlias, keyPassword in all module build.gradle files (TMessagesProj_App, TMessagesProj_AppHuawei, TMessagesProj_AppStandalone) to sign your app.
-4. Go to https://console.firebase.google.com/, create two android apps with application IDs uz.unnarsx.cherrygram and uz.unnarsx.cherrygram.beta, enable Firebase Messaging and download `google-services.json`, which should be copied into `TMessagesProj` folder.
-5. Open the project in the Studio (note that it should be opened, NOT imported).
-6. Fill out values in `TMessagesProj/src/main/java/uz/unnarsx/cherrygram/Extra.kt` – each variable contains a link explaining where to get the required data.
-7. You are ready to compile and use Cherrygram.
+## 🔌 OmniCore Plugin Engine
 
+**OmniCore** is an event-driven plugin architecture designed for mobile Telegram. It lets the community extend client behavior through custom scripts and plugins without needing to rebuild the entire application.
 
-## Thanks to:
-- [Catogram](https://github.com/Catogram/Catogram) and [Nekogram](https://gitlab.com/Nekogram/Nekogram)
-- [exteraGram](https://github.com/exteraSquad/exteraGram) and [OwlGram](https://github.com/OwlGramDev/OwlGram)
-- [Telegraher](https://github.com/nikitasius/Telegraher) and [Telegram Monet](https://github.com/c3r5b8/Telegram-Monet)
+### Architecture Overview
+
+```
+ ┌────────────────────────────────────────────────────────┐
+ │                   CherrygramNB UI                      │
+ └──────────────────────────┬─────────────────────────────┘
+                            ▼
+ ┌────────────────────────────────────────────────────────┐
+ │              OmniCore Event Bus & Dispatcher           │
+ └──────────┬───────────────────────────────┬─────────────┘
+            ▼                               ▼
+ ┌──────────────────────┐       ┌───────────────────────┐
+ │   Native / Dex Tier  │       │    Quick Rule Engine  │
+ │  (.dex / .apk mods)  │       │    (.rule / .txt)     │
+ └──────────────────────┘       └───────────────────────┘
+            │                               │
+            └───────────────┬───────────────┘
+                            ▼
+ ┌────────────────────────────────────────────────────────┐
+ │           OmniAPI (Chat, UI, Storage, Events)          │
+ └────────────────────────────────────────────────────────┘
+```
+
+* **Plugin Directory:** `/sdcard/CherrygramNB/Plugins/` (or internal storage `files/plugins/`).
+* **Sandbox & Safety:** All plugin callbacks execute with time limiters (`OmniSandbox`) and crash catchers so faulty scripts never crash the app.
+
+---
+
+## 🏗️ Fast Compilation Guide
+
+### Requirements
+* **OS:** Linux or Windows with **WSL2 (Ubuntu 22.04)**
+* **Android SDK:** Platform 36, Build-Tools 36.0.0, NDK 27.2.12479018, CMake 3.22.1
+* **Java:** OpenJDK 17
+
+### Environment Configuration (`.env`)
+Create a `.env` file in the project root:
+```bash
+CHERRYGRAM_KEY_PASSWORD=your_keystore_password
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=-1004391377976
+TG_APP_ID=your_api_id
+TG_APP_HASH=your_api_hash
+```
+
+### ⚡ Accelerated Single-ABI Build (~3–5 minutes)
+Building all 4 ABIs (`arm64-v8a`, `armeabi-v7a`, `x86_64`, `x86`) sequentially takes ~25–40 minutes.
+For development or testing on modern Android phones, build **`arm64-v8a` only**:
+
+```bash
+# In WSL:
+cd /mnt/e/prjects/CherrygramNB
+./build_and_publish.sh beta arm64-v8a
+
+# Or from Windows:
+build_and_publish.bat beta arm64-v8a
+```
+
+### 📦 Full Universal Release Build
+```bash
+./build_and_publish.sh release
+```
+
+Built APKs are output to `TMessagesProj_App/build/outputs/apk/afat/release/`.
+
+---
+
+## 🤖 Telegram Bot Publisher
+
+CherrygramNB includes an automated publisher (`scripts/bot_publisher.py`):
+* Uses **Telethon MTProto** to bypass Telegram Bot API's 50MB file size restriction (supporting files up to 2GB).
+* Automatically uploads signed APKs to [@CherrygramNB](https://t.me/CherrygramNB).
+* Posts `#updateRelease` / `#updateBeta` metadata posts enabling client in-app auto-updates.
+
+---
+
+## 📄 License & Credits
+Licensed under the **GNU General Public License v2.0 or later**.
+
+Special thanks to:
+* Original Telegram Android Team ([DrKLO/Telegram](https://github.com/DrKLO/Telegram))
+* Cherrygram upstream author ([arsLan4k1390](https://github.com/arsLan4k1390))
+* [Catogram](https://github.com/Catogram/Catogram) & [Nekogram](https://gitlab.com/Nekogram/Nekogram)

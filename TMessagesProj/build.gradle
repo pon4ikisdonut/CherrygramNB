@@ -213,6 +213,13 @@ android {
             }
         }
 
+        def targetAbi = project.findProperty("TARGET_ABI") ?: project.findProperty("targetAbi") ?: project.findProperty("abi")
+        if (targetAbi != null && !targetAbi.toString().isEmpty()) {
+            ndk {
+                abiFilters targetAbi.toString()
+            }
+        }
+
         def cherryVersion = project.getProperty("APP_VERSION_NAME_CHERRY")
         def sourceCodeVersion = project.getProperty("APP_VERSION_CODE_SOURCE")
         def currentCodeVersion = project.getProperty("APP_VERSION_CODE")

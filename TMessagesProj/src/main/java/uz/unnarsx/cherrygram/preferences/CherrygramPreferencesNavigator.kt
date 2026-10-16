@@ -19,6 +19,9 @@ object CherrygramPreferencesNavigator {
     fun createCherrySettings(fragment: BaseFragment): BaseFragment =
         CGPreferencesEntry().also(fragment::presentFragment)
 
+    fun createCherryNB(fragment: BaseFragment): BaseFragment =
+        CherrygramNBSettingsActivity().also(fragment::presentFragment)
+
     fun createGeneral(fragment: BaseFragment): BaseFragment =
         GeneralPreferencesEntry().also(fragment::presentFragment)
 

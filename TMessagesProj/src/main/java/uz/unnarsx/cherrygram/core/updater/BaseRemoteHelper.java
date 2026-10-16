@@ -76,12 +76,61 @@ public abstract class BaseRemoteHelper {
         getMessagesController().removeDeletedMessagesFromArray(getUpdateChannelID(), res.messages);
         ArrayList<JSONObject> responses = new ArrayList<>();
         for (var message : res.messages) {
-            if (TextUtils.isEmpty(message.message) || !message.message.startsWith(tag)) {
+            if (TextUtils.isEmpty(message.message) || !message.message.contains(tag)) {
                 continue;
             }
             try {
-                responses.add(new JSONObject(message.message.substring(tag.length()).trim()));
-            } catch (JSONException e) {
+                String text = message.message;
+                int tagIdx = text.indexOf(tag);
+                String afterTag = text.substring(tagIdx + tag.length()).trim();
+
+                JSONObject json = null;
+                // 1. Try finding JSON within markdown code blocks
+                if (afterTag.contains("```")) {
+                    int startCode = afterTag.indexOf("```");
+                    int endCode = afterTag.indexOf("```", startCode + 3);
+                    if (endCode != -1) {
+                        String block = afterTag.substring(startCode + 3, endCode).trim();
+                        if (block.startsWith("json")) {
+                            block = block.substring(4).trim();
+                        }
+                        if (block.startsWith("{") && block.endsWith("}")) {
+                            json = new JSONObject(block);
+                        }
+                    }
+                }
+
+                // 2. Try finding JSON starting with { and ending with }
+                if (json == null) {
+                    int startBrace = afterTag.indexOf("{");
+                    int endBrace = afterTag.lastIndexOf("}");
+                    if (startBrace != -1 && endBrace != -1 && endBrace > startBrace) {
+                        json = new JSONObject(afterTag.substring(startBrace, endBrace + 1));
+                    }
+                }
+
+                // 3. Fallback: if message starts directly with tag
+                if (json == null && text.startsWith(tag)) {
+                    json = new JSONObject(afterTag);
+                }
+
+                if (json != null) {
+                    // Auto-fill message and document IDs if the post itself has an attached APK
+                    if (message.media != null && message.media.document != null) {
+                        if (!json.has("message")) {
+                            json.put("message", message.id);
+                        }
+                        if (!json.has("document")) {
+                            JSONObject docs = new JSONObject();
+                            docs.put("universal", message.id);
+                            docs.put("arm64-v8a", message.id);
+                            docs.put("armeabi-v7a", message.id);
+                            json.put("document", docs);
+                        }
+                    }
+                    responses.add(json);
+                }
+            } catch (Exception e) {
                 CherrygramLogger.e(e);
             }
         }

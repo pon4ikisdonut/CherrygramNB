@@ -74,6 +74,9 @@ public class FlagSecureReason {
     }
 
     public static boolean isSecuredNow(Window window) {
+        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getBypassCopyProtection()) {
+            return false;
+        }
         return currentSecureReasons != null && currentSecureReasons.get(window) != null;
     }
 

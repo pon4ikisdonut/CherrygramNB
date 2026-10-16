@@ -42,6 +42,13 @@ android {
 
     defaultConfig.applicationId = APP_PACKAGE
 
+    def targetAbi = project.findProperty("TARGET_ABI") ?: project.findProperty("targetAbi") ?: project.findProperty("abi")
+    if (targetAbi != null && !targetAbi.toString().isEmpty()) {
+        defaultConfig.ndk {
+            abiFilters targetAbi.toString()
+        }
+    }
+
     sourceSets.main.jniLibs.srcDirs = ['../TMessagesProj/jni/']
 
     lintOptions {

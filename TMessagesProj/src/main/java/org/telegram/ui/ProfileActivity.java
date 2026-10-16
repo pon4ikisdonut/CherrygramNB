@@ -10779,7 +10779,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 numberRow = rowCount++;
                 setUsernameRow = rowCount++;
 
-                if (CherrygramAppearanceConfig.INSTANCE.getShowIDDC()) {
+                if (CherrygramAppearanceConfig.INSTANCE.getShowIDDC() || uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getQuickCopyId()) {
                     idDcRow = rowCount++;
                 }
 
@@ -10877,7 +10877,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     usernameRow = rowCount++;
                 }
 
-                if (CherrygramAppearanceConfig.INSTANCE.getShowIDDC()) {
+                if (CherrygramAppearanceConfig.INSTANCE.getShowIDDC() || uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getQuickCopyId()) {
                     idDcRow = rowCount++;
                 }
 
@@ -11062,7 +11062,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
             }
 
-            if (CherrygramAppearanceConfig.INSTANCE.getShowIDDC()) {
+            if (CherrygramAppearanceConfig.INSTANCE.getShowIDDC() || uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getQuickCopyId()) {
                 idDcRow = rowCount++;
             }
 

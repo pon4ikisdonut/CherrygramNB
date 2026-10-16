@@ -31,6 +31,13 @@ export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$HOME/.gradle}"
 chmod +x ./gradlew
 
 BUILD_TYPE="${1:-release}"
+TARGET_ABI="$2"
+
+ABI_PARAM=""
+if [ -n "$TARGET_ABI" ]; then
+    ABI_PARAM="-PtargetAbi=$TARGET_ABI"
+    echo "[*] Fast build mode enabled for ABI: $TARGET_ABI"
+fi
 
 # Generate Proguard dictionaries if missing
 DICT_DIR="TMessagesProj_AppStandalone/build/tmp/dictionary"
@@ -40,14 +47,14 @@ if [ ! -f "$DICT_DIR/class_obfuscation_dictionary.txt" ]; then
 fi
 
 echo "============================================="
-echo "   Building CherrygramNB ($BUILD_TYPE)"
+echo "   Building CherrygramNB ($BUILD_TYPE $TARGET_ABI)"
 echo "============================================="
 
 if [ "$BUILD_TYPE" = "beta" ]; then
-    ./gradlew :TMessagesProj_App:assembleAfatRelease -PIS_BETA=true --console=plain
+    ./gradlew :TMessagesProj_App:assembleAfatRelease -PIS_BETA=true $ABI_PARAM --console=plain
     EXTRA_FLAG="--beta"
 else
-    ./gradlew :TMessagesProj_App:assembleAfatRelease --console=plain
+    ./gradlew :TMessagesProj_App:assembleAfatRelease $ABI_PARAM --console=plain
     EXTRA_FLAG=""
 fi
 

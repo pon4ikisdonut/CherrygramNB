@@ -47,6 +47,7 @@ import uz.unnarsx.cherrygram.preferences.helpers.TelegramSettingsHelper;
 
 public class CGPreferencesEntry extends BaseCGPreferencesEntry {
 
+    private final int cherryNBRow = 0;
     private final int generalRow = 1;
     private final int appearanceRow = 2;
     private final int chatsRow = 3;
@@ -82,6 +83,16 @@ public class CGPreferencesEntry extends BaseCGPreferencesEntry {
     @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
         items.add(UItem.asHeader(getString(R.string.Settings)));
+        items.add(
+                SettingsActivity.SettingCell.Factory.of(
+                        cherryNBRow,
+                        0xFFE040FB, 0xFF7C4DFF,
+                        R.drawable.settings_magic_stick_filled_solar,
+                        "Настройки CherrygramNB",
+                        "DevTools, антиспам, обход ограничений, OmniCore",
+                        true
+                )
+        );
         items.add(
                 SettingsActivity.SettingCell.Factory.of(
                         generalRow,
@@ -201,7 +212,9 @@ public class CGPreferencesEntry extends BaseCGPreferencesEntry {
 
     @Override
     protected void onClick(UItem item, View view, int position, float x, float y) {
-        if (item.id == generalRow) {
+        if (item.id == cherryNBRow) {
+            CherrygramPreferencesNavigator.INSTANCE.createCherryNB(this);
+        } else if (item.id == generalRow) {
             CherrygramPreferencesNavigator.INSTANCE.createGeneral(this);
         } else if (item.id == appearanceRow) {
             CherrygramPreferencesNavigator.INSTANCE.createAppearance(this);

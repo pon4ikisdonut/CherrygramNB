@@ -6,9 +6,10 @@ echo ===================================================
 
 set TARGET=%1
 if "%TARGET%"=="" set TARGET=release
+set ABI=%2
 
-echo Launching build in WSL (%TARGET%)...
-wsl -d Ubuntu-22.04 -- bash /mnt/e/prjects/CherrygramNB/build_and_publish.sh %TARGET%
+echo Launching build in WSL (%TARGET% %ABI%)...
+wsl -d Ubuntu-22.04 -- bash /mnt/e/prjects/CherrygramNB/build_and_publish.sh %TARGET% %ABI%
 
 if %ERRORLEVEL% EQU 0 (
     echo.
