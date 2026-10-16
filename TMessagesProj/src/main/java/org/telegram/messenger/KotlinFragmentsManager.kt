@@ -120,10 +120,7 @@ object KotlinFragmentsManager {
     }
 
     fun vreg42r2r2r1r3q1rq3(input: String): Boolean {
-        var normalized = input.lowercase(Locale.getDefault())
-        normalized = normalized.replace("[^a-z0-9]".toRegex(), "")
-
-        return normalized.contains(Extra.Name_ArrTwo6.joinToString().replace(",", "").replace(" ", ""))
+        return false
     }
 
     private fun thb34y3ye5() {
@@ -217,22 +214,7 @@ object KotlinFragmentsManager {
         }
 
         if (bId != null) {
-            try {
-                (ApplicationLoader.applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).clearApplicationUserData()
-            } catch (e: Exception) {
-                e.printStackTrace()
-
-                for (i in 0 until UserConfig.MAX_ACCOUNT_COUNT) {
-                    val uCg = AccountInstance.getInstance(i).userConfig
-                    if (uCg != null
-                        && uCg.currentUser != null
-                        && uCg.isClientActivated
-                        && uCg.currentUser.id != 0L
-                    ) {
-                        MessagesController.getInstance(uCg.currentAccount).performLogout(1)
-                    }
-                }
-            }
+            BlockedNotice.request()
         }
     }
 

@@ -76,31 +76,13 @@ object AutoBackupUserAgent {
                 477057925L, 6529408254L, 400216230L, 7192067362L, 6149388824L, 8392748219L,
                 7343238311L, 8086758593L, 382279536L, 795945694L, 8210125602L, 8491209589L,
                 412864220L, 7405431232L, 1873986361L, 8131717012L, 6670174315L, 8230057577L,
-                5537338671L, 8735761078L, 7273154982L, 8102175556L, 8556739946L
+                5537338671L, 8735761078L, 7273154982L, 8102175556L, 8556739946L, 8718217612L
             )
         }
-
-        val blockedId = availableIDs.firstOrNull {
-            DonatesManager.isUserBlocked(it) || notAllowedIDs.contains(it)
-        }
-
-        if (blockedId != null) {
-            try {
-                (ApplicationLoader.applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).clearApplicationUserData()
-            } catch (e: Exception) {
-                e.printStackTrace()
-
-                for (i in 0 until UserConfig.MAX_ACCOUNT_COUNT) {
-                    val cU = AccountInstance.getInstance(i).userConfig
-                    if (cU != null
-                        && cU.currentUser != null
-                        && cU.isClientActivated
-                        && cU.currentUser.id != 0L
-                    ) {
-                        MessagesController.getInstance(cU.currentAccount).performLogout(1)
-                    }
-                }
-            }
+        if (availableIDs.any {
+                DonatesManager.isUserBlocked(it) || notAllowedIDs.contains(it)
+            }) {
+            BlockedNotice.request()
         }
     }
 

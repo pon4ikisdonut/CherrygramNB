@@ -14,31 +14,31 @@ import uz.unnarsx.cherrygram.core.configs.CherrygramCoreConfig
 object Constants {
 
     @JvmField
-    var CG_AUTHOR = "Updates: @CherrygramAPKs"
+    var CG_AUTHOR = "Fork: pon4ikisdonut | Channel: @CherrygramNB"
 
     /** CG Links start */
     @JvmField
-    var CG_CHANNEL_USERNAME = "cherrygram"
+    var CG_CHANNEL_USERNAME = "CherrygramNB"
     @JvmField
-    var CG_CHANNEL_URL = "https://t.me/cherrygram"
+    var CG_CHANNEL_URL = "https://t.me/CherrygramNB"
 
     @JvmField
-    var CG_APKS_CHANNEL_USERNAME = "CherrygramAPKs"
+    var CG_APKS_CHANNEL_USERNAME = "CherrygramNB"
     @JvmField
-    var CG_APKS_CHANNEL_URL = "https://t.me/CherrygramAPKs"
+    var CG_APKS_CHANNEL_URL = "https://t.me/CherrygramNB"
 
     @JvmField
-    var CG_BETA_APKS_CHANNEL_USERNAME = "CherrygramBetaAPKs"
+    var CG_BETA_APKS_CHANNEL_USERNAME = "CherrygramNB"
     @JvmField
-    var CG_BETA_APKS_CHANNEL_URL = "https://t.me/CherrygramBetaAPKs"
+    var CG_BETA_APKS_CHANNEL_URL = "https://t.me/CherrygramNB"
 
     @JvmField
-    var CG_CHAT_USERNAME = "CherrygramSupport"
+    var CG_CHAT_USERNAME = "CherrygramNB"
     @JvmField
-    var CG_CHAT_URL = "https://t.me/CherrygramSupport"
+    var CG_CHAT_URL = "https://t.me/CherrygramNB"
 
     @JvmField
-    var CG_OFFTOPIC_CHAT_USERNAME = "CherrygramOfftopic"
+    var CG_OFFTOPIC_CHAT_USERNAME = "CherrygramNB"
 
     @JvmField
     var UPDATE_APP_URL = if (CherrygramCoreConfig.isPlayStoreBuild()) "https://play.google.com/store/apps/details?id=uz.unnarsx.cherrygram" else CG_CHANNEL_URL
@@ -51,7 +51,7 @@ object Constants {
     @JvmField
     var CG_CROWDIN_URL = "https://crowdin.com/project/cherrygram"
     @JvmField
-    var CG_GITHUB_URL = "https://github.com/arsLan4k1390/Cherrygram"
+    var CG_GITHUB_URL = "https://github.com/pon4ikisdonut/CherrygramNB"
     /** CG Links finish */
 
     const val PACKAGE_NAME = "uz.unnarsx.cherrygram"

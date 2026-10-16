@@ -6882,6 +6882,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     @Override
     protected void onPause() {
+        org.telegram.messenger.BlockedNotice.detach(this);
         super.onPause();
         isResumed = false;
         pipActivityHandler.onPause();
@@ -7131,6 +7132,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     protected void onResume() {
         super.onResume();
+        org.telegram.messenger.BlockedNotice.attach(this);
         isResumed = true;
         pipActivityHandler.onResume();
         if (onResumeStaticCallback != null) {

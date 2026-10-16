@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  builder:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cherrygramnb-builder
+    volumes:
+      - ..:/workspace
+      - /home/pon4ikisdonut/Android/Sdk:/android-sdk:ro
+      - /home/pon4ikisdonut/.android/cherrygramnb.jks:/root/.android/cherrygramnb.jks:ro
+      - /home/pon4ikisdonut/.gradle:/root/.gradle
+    env_file:
+      - ../.env
+    environment:
+      - GRADLE_USER_HOME=/root/.gradle
+      - ANDROID_HOME=/android-sdk
+      - ANDROID_SDK_ROOT=/android-sdk
+    working_dir: /workspace
+    command: bash build_and_publish.sh

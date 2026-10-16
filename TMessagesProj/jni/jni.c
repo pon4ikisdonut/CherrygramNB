@@ -12,8 +12,6 @@
 #include <sys/stat.h>
 #include <time.h>
 
-#include "colorado/colorado.h"
-
 int registerNativeTgNetFunctions(JavaVM *vm, JNIEnv *env);
 int videoOnJNILoad(JavaVM *vm, JNIEnv *env);
 int tgvoipOnJNILoad(JavaVM *vm, JNIEnv *env);

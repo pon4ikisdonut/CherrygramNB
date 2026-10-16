@@ -34,13 +34,13 @@ object CGResourcesHelper {
     @JvmStatic
     fun getAppName(): String {
         if (CherrygramCoreConfig.isStandaloneStableBuild() || CherrygramCoreConfig.isPlayStoreBuild()) {
-            return "Cherrygram"
+            return "CherrygramNB"
         } else if (CherrygramCoreConfig.isStandaloneBetaBuild()) {
-            return "Cherrygram Beta"
+            return "CherrygramNB Beta"
         } else if (CherrygramCoreConfig.isStandalonePremiumBuild()) {
-            return "Cherrygram Premium"
+            return "CherrygramNB Premium"
         } else if (CherrygramCoreConfig.isDevBuild()) {
-            return "Cherrygram Dev"
+            return "CherrygramNB Dev"
         }
         return getString(R.string.CG_AppName)
     }
@@ -97,7 +97,9 @@ object CGResourcesHelper {
     fun getAboutString(): String {
         return getAppName() + " v" + getCherryVersion() + " (" + getAbiCode() + ")" +
                     "\n" +
-                    "Based on Telegram v" + BuildVars.BUILD_VERSION_STRING + " (" + getSourceCodeVersion() + ")" +
+                    "Fork author: pon4ikisdonut" +
+                    "\n" +
+                    "Based on Cherrygram & Telegram v" + BuildVars.BUILD_VERSION_STRING + " (" + getSourceCodeVersion() + ")" +
                     "\n" +
                     Constants.CG_AUTHOR +
                     "\n" +

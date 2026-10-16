@@ -155,27 +155,15 @@ public abstract class BaseRemoteHelper {
     }
 
     public static long getUpdateChannelID() {
-        if (CherrygramCoreConfig.INSTANCE.getInstallBetas() && !CherrygramCoreConfig.isPlayStoreBuild()) {
-            return Constants.Cherrygram_Beta;
-        } else {
-            return Constants.Cherrygram_APKs;
-        }
+        return 4391377976L;
     }
 
     public static String getMetadataChannel() {
-        if (CherrygramCoreConfig.INSTANCE.getInstallBetas() && !CherrygramCoreConfig.isPlayStoreBuild()) {
-            return "cherrygram_beta_metadata";
-        } else {
-            return "cherrygram_metadata";
-        }
+        return Constants.CG_CHANNEL_USERNAME;
     }
 
     public static long getMetadataChannelID() {
-        if (CherrygramCoreConfig.INSTANCE.getInstallBetas() && !CherrygramCoreConfig.isPlayStoreBuild()) {
-            return 3710486866L;
-        } else {
-            return 3898928816L;
-        }
+        return 4391377976L;
     }
 
 }

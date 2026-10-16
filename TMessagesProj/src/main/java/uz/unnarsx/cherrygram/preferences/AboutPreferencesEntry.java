@@ -79,7 +79,7 @@ public class AboutPreferencesEntry extends BaseCGPreferencesEntry {
                         readmeRow,
                         0,
                         CGResourcesHelper.getAppName() + " " + CGResourcesHelper.getCherryVersion() + " | " + "Telegram " + BuildVars.BUILD_VERSION_STRING,
-                        getString(R.string.CGP_About_Desc)
+                        "Fork by pon4ikisdonut • " + getString(R.string.CGP_About_Desc)
                 )
         );
         items.add(

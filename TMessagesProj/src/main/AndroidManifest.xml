@@ -115,6 +115,7 @@
     </queries>
 
     <application
+        android:label="@string/CG_AppName"
         android:name="org.telegram.messenger.ApplicationLoader"
         android:allowBackup="true"
         android:restoreAnyVersion="true"
