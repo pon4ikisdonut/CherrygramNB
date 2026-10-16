@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-CherrygramNB Telegram Bot Publishe
+CherrygramNB Telegram Bot Publisher
 Sends built APKs to https://t.me/CherrygramNB (-1004391377976)
 and publishes update metadata for client in-app updater.
+Supports both MTProto (via Telethon for large APK files >50MB) and standard Bot API.
 """
 
 import sys
@@ -50,21 +51,23 @@ def send_telegram_request(token, method, data=None, headers=None):
         return {"ok": False, "description": str(e)}
 
 def send_message(token, chat_id, text, parse_mode="Markdown"):
-    payload = json.dumps({
+    payload_dict = {
         "chat_id": chat_id,
         "text": text,
-        "parse_mode": parse_mode,
         "disable_web_page_preview": True
-    }).encode("utf-8")
+    }
+    if parse_mode:
+        payload_dict["parse_mode"] = parse_mode
+    payload = json.dumps(payload_dict).encode("utf-8")
     return send_telegram_request(token, "sendMessage", data=payload, headers={"Content-Type": "application/json"})
 
-def send_document(token, chat_id, filepath, caption=None, parse_mode="Markdown"):
+def send_document_bot_api(token, chat_id, filepath, caption=None, parse_mode="Markdown"):
     boundary = "----WebKitFormBoundary" + uuid.uuid4().hex
     filename = os.path.basename(filepath)
     content_type = mimetypes.guess_type(filepath)[0] or "application/vnd.android.package-archive"
     
     file_size = os.path.getsize(filepath)
-    print(f"[*] Uploading {filename} ({file_size / (1024*1024):.2f} MB)...")
+    print(f"[*] Uploading {filename} ({file_size / (1024*1024):.2f} MB) via HTTP Bot API...")
     
     body = bytearray()
     
@@ -77,7 +80,8 @@ def send_document(token, chat_id, filepath, caption=None, parse_mode="Markdown")
     add_field("chat_id", str(chat_id))
     if caption:
         add_field("caption", caption)
-        add_field("parse_mode", parse_mode)
+        if parse_mode:
+            add_field("parse_mode", parse_mode)
         
     body.extend(f"--{boundary}\r\n".encode("utf-8"))
     body.extend(f'Content-Disposition: form-data; name="document"; filename="{filename}"\r\n'.encode("utf-8"))
@@ -95,6 +99,62 @@ def send_document(token, chat_id, filepath, caption=None, parse_mode="Markdown")
     
     return send_telegram_request(token, "sendDocument", data=body, headers=headers)
 
+def send_document_telethon(api_id, api_hash, bot_token, chat_id, filepath, caption=None):
+    from telethon.sync import TelegramClient
+    session_name = f"/tmp/cg_bot_{uuid.uuid4().hex[:8]}" if os.name != "nt" else os.path.join(PROJECT_DIR, ".bot_upload.session")
+    client = TelegramClient(session_name, int(api_id), api_hash)
+    try:
+        client.start(bot_token=bot_token)
+        try:
+            target = int(chat_id)
+        except ValueError:
+            target = chat_id
+
+        filename = os.path.basename(filepath)
+        file_size = os.path.getsize(filepath)
+        print(f"[*] Uploading {filename} ({file_size / (1024*1024):.2f} MB) via Telethon MTProto...")
+
+        last_pct = [-1]
+        def progress_callback(current, total):
+            pct = int(current * 100 / total)
+            if pct % 10 == 0 and pct != last_pct[0]:
+                last_pct[0] = pct
+                print(f"    Progress: {pct}% ({current / (1024*1024):.1f}/{total / (1024*1024):.1f} MB)")
+
+        msg = client.send_file(
+            target,
+            filepath,
+            caption=caption,
+            parse_mode="md",
+            progress_callback=progress_callback
+        )
+        return {"ok": True, "result": {"message_id": msg.id}}
+    except Exception as e:
+        return {"ok": False, "description": str(e)}
+    finally:
+        try:
+            client.disconnect()
+        except Exception:
+            pass
+        if os.name == "nt" and os.path.exists(session_name):
+            try:
+                os.remove(session_name)
+            except Exception:
+                pass
+
+def send_document(token, chat_id, filepath, caption=None, api_id=None, api_hash=None):
+    # If Telethon is available and API credentials are provided, use MTProto (supports up to 2GB)
+    if api_id and api_hash:
+        try:
+            import telethon
+            return send_document_telethon(api_id, api_hash, token, chat_id, filepath, caption)
+        except ImportError:
+            print("[!] Telethon not installed, falling back to HTTP Bot API...")
+        except Exception as e:
+            print(f"[!] Telethon error: {e}, falling back to HTTP Bot API...")
+
+    return send_document_bot_api(token, chat_id, filepath, caption)
+
 def find_latest_apks(build_type="release"):
     pattern = os.path.join(PROJECT_DIR, "TMessagesProj_App", "build", "outputs", "apk", "afat", build_type, "*.apk")
     apks = glob.glob(pattern)
@@ -107,10 +167,14 @@ def find_latest_apks(build_type="release"):
 def main():
     env_file = os.path.join(PROJECT_DIR, ".env")
     env = load_env_file(env_file)
+    ci_env_file = os.path.join(PROJECT_DIR, "secrets_for_ci.env")
+    ci_env = load_env_file(ci_env_file)
     props = get_gradle_properties()
     
-    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN") or env.get("TELEGRAM_BOT_TOKEN") or env.get("BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID") or env.get("TELEGRAM_CHAT_ID") or DEFAULT_CHANNEL_ID
+    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN") or env.get("TELEGRAM_BOT_TOKEN") or ci_env.get("TELEGRAM_BOT_TOKEN") or env.get("BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID") or env.get("TELEGRAM_CHAT_ID") or ci_env.get("TELEGRAM_CHAT_ID") or DEFAULT_CHANNEL_ID
+    api_id = os.environ.get("TG_APP_ID") or env.get("TG_APP_ID") or ci_env.get("TG_APP_ID")
+    api_hash = os.environ.get("TG_APP_HASH") or env.get("TG_APP_HASH") or ci_env.get("TG_APP_HASH")
     
     if not bot_token:
         print("[-] Error: TELEGRAM_BOT_TOKEN is not set in .env or environment!")
@@ -120,11 +184,13 @@ def main():
     cherry_version = props.get("APP_VERSION_NAME_CHERRY", "11.3.0")
     tg_version = props.get("APP_VERSION_NAME", "12.10.6")
     version_code = int(props.get("APP_VERSION_CODE", "7112"))
-    build_flavor = "Release"
+    is_beta = "--beta" in sys.argv or "beta" in sys.argv
+    build_flavor = "Beta" if is_beta else "Release"
     
     print(f"[*] CherrygramNB Publisher initialized")
     print(f"    Version: {cherry_version} (TG {tg_version}), code {version_code}")
     print(f"    Target channel: {chat_id}")
+    print(f"    Flavor: {build_flavor}")
     
     # Test bot connectivity
     me = send_telegram_request(bot_token, "getMe")
@@ -134,15 +200,25 @@ def main():
     print(f"[+] Bot connected: @{me['result'].get('username')}")
     
     target_apks = []
-    if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
+    if len(sys.argv) > 1:
         for arg in sys.argv[1:]:
-            if os.path.isfile(arg):
+            if not arg.startswith("-") and arg != "beta" and arg != "release" and os.path.isfile(arg):
                 target_apks.append(arg)
     
     if not target_apks:
         found = find_latest_apks("release")
-        if found:
-            target_apks = [found[0]]
+        if is_beta:
+            beta_apks = [a for a in found if "-beta" in os.path.basename(a).lower()]
+            if beta_apks:
+                target_apks = [beta_apks[0]]
+            elif found:
+                target_apks = [found[0]]
+        else:
+            rel_apks = [a for a in found if "-beta" not in os.path.basename(a).lower()]
+            if rel_apks:
+                target_apks = [rel_apks[0]]
+            elif found:
+                target_apks = [found[0]]
             
     if not target_apks:
         print("[-] No APKs found to upload! Please compile first.")
@@ -171,14 +247,10 @@ def main():
         )
         
         print(f"[*] Sending {filename} to {chat_id}...")
-        resp = send_document(bot_token, chat_id, apk_path, caption=caption)
+        resp = send_document(bot_token, chat_id, apk_path, caption=caption, api_id=api_id, api_hash=api_hash)
         
         if not resp.get("ok"):
             print(f"[-] Failed to upload {filename}: {resp.get('description')}")
-            # If 50MB Bot API limit is hit
-            if "file is too large" in resp.get("description", "").lower() or "413" in str(resp.get("error_code")):
-                print("[!] Note: Telegram standard Bot API has a 50MB file size limit for direct bot uploads.")
-                print("[!] For files >50MB, use a local telegram-bot-api server or MTProto client.")
             continue
             
         msg_id = resp["result"]["message_id"]
@@ -186,7 +258,7 @@ def main():
         
         # Now publish the client in-app updater metadata post
         release_date = datetime.now().strftime("%d.%m.%Y")
-        tag = "#updateRelease" if build_flavor.lower() == "release" else "#updateBeta"
+        tag = "#updateBeta" if is_beta else "#updateRelease"
         metadata = {
             "build_flavor": build_flavor,
             "release_date": release_date,

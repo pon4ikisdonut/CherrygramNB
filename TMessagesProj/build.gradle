@@ -222,6 +222,9 @@ android {
         buildConfigField "String", "BUILD_CODE_VERSION", "\"${currentCodeVersion}\""
         buildConfigField "String", "GIT_COMMIT_HASH", "\"${getGitHash()}\""
         buildConfigField "String", "GET_BUILD_DATE", "\"${getCurrentDate()}\""
+
+        def isBeta = (project.hasProperty("IS_BETA") && project.property("IS_BETA") == "true") || (project.hasProperty("isBeta") && project.property("isBeta") == "true")
+        buildConfigField "boolean", "IS_BETA", "${isBeta}"
     }
 
     buildTypes {

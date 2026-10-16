@@ -184,7 +184,9 @@ android {
         variant.outputs.configureEach { output ->
             def abi = output.getFilter('ABI')
             if (abi == null) abi = 'universal'
-            outputFileName = "CherrygramNB-${APP_VERSION_NAME_CHERRY}-TG-${defaultConfig.versionName}-${abi}.apk"
+            def isBeta = (project.hasProperty("IS_BETA") && project.property("IS_BETA") == "true") || (project.hasProperty("isBeta") && project.property("isBeta") == "true")
+            def betaSuffix = isBeta ? "-beta" : ""
+            outputFileName = "CherrygramNB-${APP_VERSION_NAME_CHERRY}${betaSuffix}-TG-${defaultConfig.versionName}-${abi}.apk"
             output.versionCodeOverride = defaultConfig.versionCode * 10
         }
     }

@@ -175,7 +175,7 @@ object CherrygramCoreConfig: CoroutineScope by CoroutineScope(
 
     @JvmStatic
     fun isStandaloneBetaBuild(): Boolean {
-        return false
+        return org.telegram.messenger.BuildConfig.IS_BETA
     }
 
     @JvmStatic
