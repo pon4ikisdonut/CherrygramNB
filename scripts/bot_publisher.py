@@ -13,7 +13,7 @@ import time
 import uuid
 import mimetypes
 import urllib.request
-import urllib.erro
+import urllib.error
 import urllib.parse
 from datetime import datetime
 
