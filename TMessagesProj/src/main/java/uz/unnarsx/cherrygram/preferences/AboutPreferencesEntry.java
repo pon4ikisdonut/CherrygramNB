@@ -108,42 +108,9 @@ public class AboutPreferencesEntry extends BaseCGPreferencesEntry {
         items.add(UItem.asHeader(getString(R.string.CGP_Links)));
         items.add(UItem.asButton(channelRow, R.drawable.msg_channel_solar, getString(R.string.CGP_ToChannel)));
         items.add(UItem.asButton(betaChannelRow, R.drawable.msg_channel_solar, getString(R.string.CGP_ToBetaChannel)));
-        if (!cherrygramSupportChatLoaded) {
-            items.add(UItem.asShadow(null));
-            items.add(UItem.asButton(chatRow, R.drawable.msg_discuss_solar, getString(R.string.CGP_ToChat)));
-            items.add(UItem.asButton(offtopicChatRow, R.drawable.msg_discuss_solar, getString(R.string.CGP_ToOfftopicChat)));
-            items.add(UItem.asShadow(null));
-
-            getChatWithFallback(Constants.Cherrygram_Support, Constants.CG_CHAT_USERNAME,
-                    cgCommunity -> {
-                        cherrygramSupportChatLoaded = true;
-                        cherrygramSupportChat = cgCommunity;
-                        updateRows(true);
-                    }
-            );
-        } else if (cherrygramSupportChat != null && cherrygramSupportChat.linked_community_id != 0) {
-            TLRPC.Chat linkedCommunity = getMessagesController().getChat(cherrygramSupportChat.linked_community_id);
-
-            if (linkedCommunity != null) {
-                CommunityLinkView communityLinkView = new CommunityLinkView(getParentActivity(), getResourceProvider());
-                communityLinkView.setChat(currentAccount, linkedCommunity);
-
-                items.add(UItem.asShadow(null));
-                items.add(UItem.asCustom(communityRow, communityLinkView));
-                items.add(UItem.asShadow(null));
-            } else {
-                items.add(UItem.asShadow(null));
-
-                items.add(UItem.asButton(chatRow, R.drawable.msg_discuss_solar, getString(R.string.CGP_ToChat)));
-                items.add(UItem.asButton(offtopicChatRow, R.drawable.msg_discuss_solar, getString(R.string.CGP_ToOfftopicChat)));
-                items.add(UItem.asShadow(null));
-            }
-        } else {
-            items.add(UItem.asShadow(null));
-            items.add(UItem.asButton(chatRow, R.drawable.msg_discuss_solar, getString(R.string.CGP_ToChat)));
-            items.add(UItem.asButton(offtopicChatRow, R.drawable.msg_discuss_solar, getString(R.string.CGP_ToOfftopicChat)));
-            items.add(UItem.asShadow(null));
-        }
+        items.add(UItem.asShadow(null));
+        items.add(UItem.asButton(chatRow, R.drawable.msg_discuss_solar, getString(R.string.CGP_ToChat), "@" + Constants.CG_CHAT_USERNAME));
+        items.add(UItem.asShadow(null));
 
         if (!CherrygramCoreConfig.isStandalonePremiumBuild()) {
             String value;
@@ -179,10 +146,8 @@ public class AboutPreferencesEntry extends BaseCGPreferencesEntry {
             getMessagesController().openByUserName(Constants.CG_CHANNEL_USERNAME, this, 1);
         } else if (item.id == betaChannelRow) {
             getMessagesController().openByUserName(Constants.CG_BETA_APKS_CHANNEL_USERNAME, this, 1);
-        } else if (item.id == chatRow) {
+        } else if (item.id == chatRow || item.id == offtopicChatRow) {
             getMessagesController().openByUserName(Constants.CG_CHAT_USERNAME, this, 1);
-        } else if (item.id == offtopicChatRow) {
-            getMessagesController().openByUserName(Constants.CG_OFFTOPIC_CHAT_USERNAME, this, 1);
         } else if (item.id == communityRow) {
             TLRPC.Chat cgCommunity = getMessagesController().getChat(Constants.Cherrygram_Support);
             if (cgCommunity != null) {
@@ -218,11 +183,8 @@ public class AboutPreferencesEntry extends BaseCGPreferencesEntry {
         } else if (item.id == betaChannelRow) {
             AndroidUtilities.addToClipboard("@" + Constants.CG_BETA_APKS_CHANNEL_USERNAME);
             return true;
-        } else if (item.id == chatRow) {
+        } else if (item.id == chatRow || item.id == offtopicChatRow) {
             AndroidUtilities.addToClipboard("@" + Constants.CG_CHAT_USERNAME);
-            return true;
-        } else if (item.id == offtopicChatRow) {
-            AndroidUtilities.addToClipboard("@" + Constants.CG_OFFTOPIC_CHAT_USERNAME);
             return true;
         } else if (item.id == crowdinRow) {
             AndroidUtilities.addToClipboard(Constants.CG_CROWDIN_URL);

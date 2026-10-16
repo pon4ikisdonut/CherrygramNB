@@ -55,10 +55,9 @@ public class CGPreferencesEntry extends BaseCGPreferencesEntry {
     private final int privacyRow = 6;
     private final int aboutRow = 7;
 
-    private final int supportRow = 8;
-    private final int proxyRow = 9;
-
-    private final int alternativeSupportRow = 10;
+    private final int donateStarsRow = 8;
+    private final int donateKofiRow = 9;
+    private final int proxyRow = 10;
 
     @Override
     protected CharSequence getTitle() {
@@ -168,24 +167,24 @@ public class CGPreferencesEntry extends BaseCGPreferencesEntry {
         items.add(UItem.asHeader(getString(R.string.DP_Support)));
         items.add(
                 SettingsActivity.SettingCell.Factory.of(
-                        supportRow,
+                        donateStarsRow,
+                        0xFFF6538A, 0xFF581668,
+                        R.drawable.settings_stars,
+                        getString(R.string.CG_Donate_Stars),
+                        getString(R.string.CG_Donate_Stars_Desc),
+                        true
+                )
+        );
+        items.add(
+                SettingsActivity.SettingCell.Factory.of(
+                        donateKofiRow,
                         0xFFB659FF, 0xFF617CFF,
                         R.drawable.settings_support_filled_solar,
-                        applyProSpan(getString(R.string.DP_DonateBadge), getResourceProvider())
+                        getString(R.string.CG_Donate_Kofi),
+                        getString(R.string.CG_Donate_Kofi_Desc),
+                        true
                 )
-                .slug(DeeplinkHelper.DeepLinksRepo.CG_Support_Force)
         );
-        if (!getConnectionsManager().isTestBackend()) {
-            items.add(
-                    SettingsActivity.SettingCell.Factory.of(
-                            alternativeSupportRow,
-                            0xFFF6538A, 0xFF581668,
-                            R.drawable.settings_stars,
-                            getString(R.string.AS_Header)
-                    )
-                    .slug(DeeplinkHelper.DeepLinksRepo.CG_Alternative_Support)
-            );
-        }
         if (CherrygramFirebaseConfig.INSTANCE.getShowProxyInSettings() && CGChatMenuInjector.INSTANCE.showProxyButton()) {
             items.add(UItem.asShadow(null));
             items.add(
@@ -216,12 +215,12 @@ public class CGPreferencesEntry extends BaseCGPreferencesEntry {
             CherrygramPreferencesNavigator.INSTANCE.createPrivacy(this);
         } else if (item.id == aboutRow) {
             CherrygramPreferencesNavigator.INSTANCE.createAbout(this);
-        } else if (item.id == supportRow) {
-            CherrygramPreferencesNavigator.INSTANCE.createDonate(this);
+        } else if (item.id == donateStarsRow) {
+            getMessagesController().openByUserName("pon4ikisdonut", this, 1);
+        } else if (item.id == donateKofiRow) {
+            Browser.openUrl(getContext(), "https://ko-fi.com/pon4ikisdonut");
         } else if (item.id == proxyRow) {
             Browser.openUrl(getContext(), CherrygramFirebaseConfig.INSTANCE.getProxyURL());
-        } else if (item.id == alternativeSupportRow) {
-            CherrygramPreferencesNavigator.INSTANCE.createAlternativeSupport(this);
         }
     }
 

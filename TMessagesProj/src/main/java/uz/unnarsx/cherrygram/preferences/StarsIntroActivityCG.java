@@ -458,7 +458,7 @@ public class StarsIntroActivityCG extends GradientHeaderActivity implements Noti
     }
 
     public static boolean allowSafeStars() {
-        return CherrygramFirebaseConfig.INSTANCE.getAllowSafeStars() && !ConnectionsManager.getInstance(UserConfig.selectedAccount).isTestBackend();
+        return false;
     }
 
 }

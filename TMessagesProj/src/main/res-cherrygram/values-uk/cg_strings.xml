@@ -150,9 +150,9 @@
     <!--Telegram screens-->
     <!--Cherrygram screens-->
     <!--Cherrygram Preferences-->
-    <string name="CGP_AdvancedSettings">Налаштування Cherrygram</string>
+    <string name="CGP_AdvancedSettings">Налаштування CherrygramNB</string>
     <string name="CGP_About_Desc">Експериментальна модифікація додатка Telegram. Торкніться тут, щоб прочитати список функцій додатка.</string>
-    <string name="CGP_Header_About">Про Cherrygram</string>
+    <string name="CGP_Header_About">Про CherrygramNB</string>
     <string name="CGP_Header_About_Desc">Оновлення, вихідний код та більше</string>
     <string name="CGP_Links">Посилання</string>
     <string name="CGP_ToChannel">Новини &amp; Оновлення</string>

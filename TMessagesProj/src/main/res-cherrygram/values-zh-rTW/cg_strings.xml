@@ -143,9 +143,9 @@
     <!--Telegram screens-->
     <!--Cherrygram screens-->
     <!--Cherrygram Preferences-->
-    <string name="CGP_AdvancedSettings">偏好設定</string>
+    <string name="CGP_AdvancedSettings">CherrygramNB 偏好設定</string>
     <string name="CGP_About_Desc">此應用程式是對 Telegram 新增實驗性功能。按一下這裡以閱讀新功能清單。</string>
-    <string name="CGP_Header_About">關於 Cherrygram</string>
+    <string name="CGP_Header_About">關於 CherrygramNB</string>
     <string name="CGP_Header_About_Desc">更新、原始碼和更多</string>
     <string name="CGP_Links">連結</string>
     <string name="CGP_ToChannel">官方頻道</string>
@@ -458,7 +458,7 @@
     <string name="DP_Donate_Counter_many">已有**%1$d**人支持此專案並獲得獎勵</string>
     <string name="DP_Donate_Counter_other">已有**%1$d**人支持此專案並獲得獎勵</string>
     <string name="DP_Donate_Bulletin">**%s** 支持了 **Cherrygram** 的開發！</string>
-    <string name="DP_Support">喜歡 Cherrygram 嗎？支持它！</string>
+    <string name="DP_Support">喜歡 CherrygramNB 嗎？支持它！</string>
     <string name="DP_SupportOptions">支持選項</string>
     <string name="DP_CameraCutoutHeader">留水印截圖</string>
     <string name="DP_CameraCutout">顯示 Cherrygram 標誌</string>

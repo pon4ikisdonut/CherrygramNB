@@ -96,7 +96,7 @@
     <!--Telegram screens-->
     <!--Cherrygram screens-->
     <!--Cherrygram Preferences-->
-    <string name="CGP_AdvancedSettings">Налады Cherrygram</string>
+    <string name="CGP_AdvancedSettings">Налады CherrygramNB</string>
     <string name="CGP_About_Desc">Эксперыментальная мадыфікацыя дадатку Telegram. Націсніце тут, каб прачытаць спіс функцый.</string>
     <string name="CGP_Header_About">Аб Cherrygram</string>
     <string name="CGP_Header_About_Desc">Абнаўлення, зыходны код і многае іншае</string>

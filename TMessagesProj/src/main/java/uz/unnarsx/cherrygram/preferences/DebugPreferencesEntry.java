@@ -90,9 +90,6 @@ public class DebugPreferencesEntry extends BaseCGPreferencesEntry {
                 .slug("oldTimeStyle")
         );
         if (CherrygramCoreConfig.isDevBuild()) {
-            items.add(SettingsHelper.asSwitchCG(safeStarsRow, "Use SafeStars *")
-                    .setChecked(CherrygramFirebaseConfig.INSTANCE.getAllowSafeStars())
-            );
             items.add(SettingsHelper.asSwitchCG(safeSurfRow, "Use SafeSurf *")
                     .setChecked(CherrygramFirebaseConfig.INSTANCE.getAllowSafeSurf())
             );
@@ -164,9 +161,6 @@ public class DebugPreferencesEntry extends BaseCGPreferencesEntry {
         } else if (item.id == oldTimeStyleRow) {
             CherrygramDebugConfig.INSTANCE.setOldTimeStyle(!CherrygramDebugConfig.INSTANCE.getOldTimeStyle());
             SettingsHelper.updateCheckState(view, CherrygramDebugConfig.INSTANCE.getOldTimeStyle());
-        } else if (item.id == safeStarsRow) {
-            CherrygramFirebaseConfig.INSTANCE.setAllowSafeStars(!CherrygramFirebaseConfig.INSTANCE.getAllowSafeStars());
-            SettingsHelper.updateCheckState(view, CherrygramFirebaseConfig.INSTANCE.getAllowSafeStars());
         } else if (item.id == safeSurfRow) {
             CherrygramFirebaseConfig.INSTANCE.setAllowSafeSurf(!CherrygramFirebaseConfig.INSTANCE.getAllowSafeSurf());
             SettingsHelper.updateCheckState(view, CherrygramFirebaseConfig.INSTANCE.getAllowSafeSurf());

@@ -180,15 +180,15 @@
     <!--Cherrygram screens-->
 
     <!--Cherrygram Preferences-->
-    <string name="CGP_AdvancedSettings">Cherrygram Preferences</string>
+    <string name="CGP_AdvancedSettings">CherrygramNB Preferences</string>
     <string name="CGP_About_Desc">An experimental Telegram app modification. Tap here to read the list of features.</string>
-    <string name="CGP_Header_About">About Cherrygram</string>
+    <string name="CGP_Header_About">About CherrygramNB</string>
     <string name="CGP_Header_About_Desc">Updates, source code and more</string>
     <string name="CGP_Links">Links</string>
     <string name="CGP_ToChannel">News &amp; Updates</string>
     <string name="CGP_ToBetaChannel">Beta Versions</string>
-    <string name="CGP_ToChat">General Chat</string>
-    <string name="CGP_ToOfftopicChat">Off-topic Chat</string>
+    <string name="CGP_ToChat">Community Chat</string>
+    <string name="CGP_ToOfftopicChat">Community Chat</string>
     <string name="CGP_Source">Source code</string>
     <string name="CGP_Crowdin">Help with translation</string>
     <string name="CGP_Header_Categories">Categories</string>
@@ -283,8 +283,8 @@
 
     <string name="CP_Filters_Header">Folders</string>
     <string name="AP_FoldersAtBottom">Show folders at the bottom</string>
-    <string name="AP_FolderNameInHeader">Folder name instead of \"Cherrygram\"</string>
-    <string name="AP_FolderNameInHeader_Desc">This will change \"Cherrygram\" in action bar to your folder\'s name (useful if you have only icons instead of folder names)</string>
+    <string name="AP_FolderNameInHeader">Folder name instead of \"CherrygramNB\"</string>
+    <string name="AP_FolderNameInHeader_Desc">This will change \"CherrygramNB\" in action bar to your folder\'s name (useful if you have only icons instead of folder names)</string>
     <string name="CP_NewTabs_RemoveAllChats">Hide \"All chats\" tab</string>
     <string name="AP_Tab_Style">Tab style</string>
     <string name="AP_Tab_Style_Stroke">Add stroke</string>
@@ -566,7 +566,11 @@
 
     <string name="DP_Donate_Bulletin">**%s** supported **Cherrygram\'s** development!</string>
 
-    <string name="DP_Support">Like Cherrygram? Support it!</string>
+    <string name="DP_Support">Like CherrygramNB? Support it!</string>
+    <string name="CG_Donate_Stars">Support with Stars or Gifts</string>
+    <string name="CG_Donate_Stars_Desc">Send to @pon4ikisdonut</string>
+    <string name="CG_Donate_Kofi">Support financially (Ko-fi)</string>
+    <string name="CG_Donate_Kofi_Desc">ko-fi.com/pon4ikisdonut</string>
     <string name="DP_SupportOptions">Support options</string>
 
     <string name="DP_CameraCutoutHeader">Branded screenshots</string>

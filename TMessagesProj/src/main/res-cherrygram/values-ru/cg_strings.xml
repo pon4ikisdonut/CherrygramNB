@@ -179,15 +179,15 @@
     <!--Cherrygram screens-->
 
     <!--Cherrygram Preferences-->
-    <string name="CGP_AdvancedSettings">Настройки Cherrygram</string>
+    <string name="CGP_AdvancedSettings">Настройки CherrygramNB</string>
     <string name="CGP_About_Desc">Экспериментальная модификация официального приложения Telegram. Нажмите здесь, чтобы получить информацию о всех функциях приложения.</string>
-    <string name="CGP_Header_About">О Cherrygram</string>
+    <string name="CGP_Header_About">О CherrygramNB</string>
     <string name="CGP_Header_About_Desc">Обновления, исходный код и другое</string>
     <string name="CGP_Links">Ссылки</string>
     <string name="CGP_ToChannel">Новости и обновления</string>
     <string name="CGP_ToBetaChannel">Бета-версии</string>
-    <string name="CGP_ToChat">Основной чат</string>
-    <string name="CGP_ToOfftopicChat">Чат для флуда</string>
+    <string name="CGP_ToChat">Чат сообщества</string>
+    <string name="CGP_ToOfftopicChat">Чат сообщества</string>
     <string name="CGP_Source">Исходный код</string>
     <string name="CGP_Crowdin">Помогите нам с переводом</string>
     <string name="CGP_Header_Categories">Категории</string>
@@ -280,8 +280,8 @@
 
     <string name="CP_Filters_Header">Папки</string>
     <string name="AP_FoldersAtBottom">Показывать папки снизу</string>
-    <string name="AP_FolderNameInHeader">Название папки вместо \"Cherrygram\"</string>
-    <string name="AP_FolderNameInHeader_Desc">Это изменит \"Cherrygram\" в заголовке сверху на название Вашей папки (удобно при отображении иконок вместо названий папок)</string>
+    <string name="AP_FolderNameInHeader">Название папки вместо \"CherrygramNB\"</string>
+    <string name="AP_FolderNameInHeader_Desc">Это изменит \"CherrygramNB\" в заголовке сверху на название Вашей папки (удобно при отображении иконок вместо названий папок)</string>
     <string name="CP_NewTabs_RemoveAllChats">Скрыть папку \"Все чаты\"</string>
     <string name="AP_Tab_Style">Стиль папок</string>
     <string name="AP_Tab_Style_Stroke">Добавить обводку</string>
@@ -557,7 +557,11 @@
 
     <string name="DP_Donate_Bulletin">**%s** поддержал(а) разработку **Cherrygram**!</string>
 
-    <string name="DP_Support">Нравится Cherrygram? Поддержите!</string>
+    <string name="DP_Support">Нравится CherrygramNB? Поддержите!</string>
+    <string name="CG_Donate_Stars">Поддержать звездами или подарками</string>
+    <string name="CG_Donate_Stars_Desc">Отправить @pon4ikisdonut</string>
+    <string name="CG_Donate_Kofi">Поддержать деньгами (Ko-fi)</string>
+    <string name="CG_Donate_Kofi_Desc">ko-fi.com/pon4ikisdonut</string>
     <string name="DP_SupportOptions">Варианты поддержки</string>
 
     <string name="DP_CameraCutoutHeader">Фирменные скриншоты</string>

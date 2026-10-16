@@ -55,25 +55,8 @@ public class AlternativeSupportScreen extends BaseCGPreferencesEntry {
 
     @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
-        if (CherrygramFirebaseConfig.INSTANCE.getAllowSafeStars() || CherrygramFirebaseConfig.INSTANCE.getAllowSafeSurf()) {
-            items.add(UItem.asHeader(getString(R.string.AS_DigitalGoods)));
-        }
-
-        if (CherrygramFirebaseConfig.INSTANCE.getAllowSafeStars()) {
-            items.add(
-                    SettingsActivity.SettingCell.Factory.of(
-                            safeStarsRow,
-                            0xFF6779E3, 0xFF7451AA,
-                            R.drawable.settings_stars,
-                            "SafeStars",
-                            getString(R.string.CG_SafeStars_Desc),
-                            true
-                    )
-                    .slug(DeeplinkHelper.DeepLinksRepo.CG_Stars)
-            );
-        }
-
         if (CherrygramFirebaseConfig.INSTANCE.getAllowSafeSurf()) {
+            items.add(UItem.asHeader(getString(R.string.AS_DigitalGoods)));
             items.add(
                     SettingsActivity.SettingCell.Factory.of(
                             safeSurfRow,
@@ -83,24 +66,6 @@ public class AlternativeSupportScreen extends BaseCGPreferencesEntry {
                     )
                     .slug(DeeplinkHelper.DeepLinksRepo.CG_Proxy)
             );
-        }
-
-        if (CherrygramFirebaseConfig.INSTANCE.getAllowSafePay()) {
-            items.add(UItem.asShadow(null));
-
-            items.add(UItem.asHeader(getString(R.string.AS_UsefulServices)));
-            items.add(
-                    SettingsActivity.SettingCell.Factory.of(
-                            safePayRow,
-                            0xFF7451AA, 0xFF6779E3,
-                            R.drawable.settings_wallet,
-                            applyNewSpan("SafePay")
-                    )
-                    .slug(DeeplinkHelper.DeepLinksRepo.CG_SafePay)
-            );
-        }
-
-        if (CherrygramFirebaseConfig.INSTANCE.getAllowSafeStars() || CherrygramFirebaseConfig.INSTANCE.getAllowSafeSurf() || CherrygramFirebaseConfig.INSTANCE.getAllowSafePay()) {
             CharSequence tosInfoText = AndroidUtilities.replaceSingleTag(LocaleController.getString(R.string.CG_SafeSurf_TOS),
                     Theme.key_windowBackgroundWhiteLinkText,
                     AndroidUtilities.REPLACING_TAG_TYPE_LINKBOLD,
@@ -154,12 +119,8 @@ public class AlternativeSupportScreen extends BaseCGPreferencesEntry {
 
     @Override
     protected void onClick(UItem item, View view, int position, float x, float y) {
-        if (item.id == safeStarsRow) {
-            StarsIntroActivity.createSafeStars(null, null, -1);
-        } else if (item.id == safeSurfRow) {
+        if (item.id == safeSurfRow) {
             Browser.openAsInternalIntent(getContext(), CherrygramFirebaseConfig.INSTANCE.getSafe_surf_URL());
-        } else if (item.id == safePayRow) {
-            Browser.openAsInternalIntent(getContext(), CherrygramFirebaseConfig.INSTANCE.getSafe_pay_URL());
         } else if (item.id == watchADSRow) {
             CherrygramPreferencesNavigator.INSTANCE.createADS(this);
         } else if (item.id == brandedScreenshotsRow) {

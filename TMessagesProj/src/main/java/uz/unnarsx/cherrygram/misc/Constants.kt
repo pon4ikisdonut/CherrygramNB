@@ -33,12 +33,12 @@ object Constants {
     var CG_BETA_APKS_CHANNEL_URL = "https://t.me/CherrygramNB"
 
     @JvmField
-    var CG_CHAT_USERNAME = "CherrygramNB"
+    var CG_CHAT_USERNAME = "cherrygramnbchat"
     @JvmField
-    var CG_CHAT_URL = "https://t.me/CherrygramNB"
+    var CG_CHAT_URL = "https://t.me/cherrygramnbchat"
 
     @JvmField
-    var CG_OFFTOPIC_CHAT_USERNAME = "CherrygramNB"
+    var CG_OFFTOPIC_CHAT_USERNAME = "cherrygramnbchat"
 
     @JvmField
     var UPDATE_APP_URL = if (CherrygramCoreConfig.isPlayStoreBuild()) "https://play.google.com/store/apps/details?id=uz.unnarsx.cherrygram" else CG_CHANNEL_URL

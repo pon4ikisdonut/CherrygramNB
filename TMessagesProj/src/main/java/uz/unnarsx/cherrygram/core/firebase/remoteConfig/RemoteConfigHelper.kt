@@ -372,12 +372,9 @@ object RemoteConfigHelper {
         { CherrygramFirebaseConfig.tbankCardNumber = it }
     )
 
-    private fun checkSafeStars() = checkAndUpdate(
-        RemoteConfigConstants.allow_use_safestars,
-        ::getBoolean,
-        { CherrygramFirebaseConfig.allowSafeStars },
-        { CherrygramFirebaseConfig.allowSafeStars = it }
-    )
+    private fun checkSafeStars() {
+        CherrygramFirebaseConfig.allowSafeStars = false
+    }
 
     private fun checkSafeStarsURL() = checkAndUpdate(
         RemoteConfigConstants.safe_stars_URL,
@@ -407,12 +404,9 @@ object RemoteConfigHelper {
         { CherrygramFirebaseConfig.safe_surf_URL = it }
     )
 
-    private fun checkSafePay() = checkAndUpdate(
-        RemoteConfigConstants.allow_use_safepay,
-        ::getBoolean,
-        { CherrygramFirebaseConfig.allowSafePay },
-        { CherrygramFirebaseConfig.allowSafePay = it }
-    )
+    private fun checkSafePay() {
+        CherrygramFirebaseConfig.allowSafePay = false
+    }
 
     private fun checkSafePayURL() = checkAndUpdate(
         RemoteConfigConstants.safe_pay_URL,

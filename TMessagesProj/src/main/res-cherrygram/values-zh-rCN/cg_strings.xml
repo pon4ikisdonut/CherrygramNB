@@ -140,9 +140,9 @@
     <!--Telegram screens-->
     <!--Cherrygram screens-->
     <!--Cherrygram Preferences-->
-    <string name="CGP_AdvancedSettings">自定义偏好</string>
+    <string name="CGP_AdvancedSettings">CherrygramNB 偏好设置</string>
     <string name="CGP_About_Desc">实验性的 Telegram 应用程序修改。点击此处阅读应用程序的特性列表。</string>
-    <string name="CGP_Header_About">关于 Cherrygram</string>
+    <string name="CGP_Header_About">关于 CherrygramNB</string>
     <string name="CGP_Header_About_Desc">更新、源代码及更多</string>
     <string name="CGP_Links">链接</string>
     <string name="CGP_ToChannel">官方频道</string>

@@ -44,7 +44,7 @@ object CherrygramFirebaseConfig: CoroutineScope by CoroutineScope(
     /** Card numbers finish */
 
     /** SafeStars start */
-    var allowSafeStars by sharedPreferences.boolean("CG_AllowSafeStarsUI1", true)
+    var allowSafeStars by sharedPreferences.boolean("CG_AllowSafeStarsUI1", false)
     var safe_stars_URL by sharedPreferences.string("CP_SafeStarsURL", "https://safe-stars.com/?partner=cherrygram")
     var safe_stars_URL_RU by sharedPreferences.string("CP_SafeStarsURL_RU", "https://safe-stars.com/ru/?partner=cherrygram")
     /** SafeStars finish */
@@ -55,7 +55,7 @@ object CherrygramFirebaseConfig: CoroutineScope by CoroutineScope(
     /** SafeSurf finish */
 
     /** SafePay start */
-    var allowSafePay by sharedPreferences.boolean("CG_AllowSafePayUI", true)
+    var allowSafePay by sharedPreferences.boolean("CG_AllowSafePayUI", false)
     var safe_pay_URL by sharedPreferences.string("CP_SafePayURL", "https://t.me/safepaycard_bot?start=cherry")
     /** SafePay finish */
 

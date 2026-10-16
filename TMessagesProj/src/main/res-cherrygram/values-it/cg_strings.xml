@@ -143,7 +143,7 @@
     <!--Telegram screens-->
     <!--Cherrygram screens-->
     <!--Cherrygram Preferences-->
-    <string name="CGP_AdvancedSettings">Preferenze Cherrygram</string>
+    <string name="CGP_AdvancedSettings">Preferenze CherrygramNB</string>
     <string name="CGP_About_Desc">Una versione modificata sperimentale dell\'app Telegram. Tocca qui per scoprire le funzionalità.</string>
     <string name="CGP_Header_About">Informazioni Su Cherrygram</string>
     <string name="CGP_Header_About_Desc">Aggiornamenti, codice sorgente e altro</string>
