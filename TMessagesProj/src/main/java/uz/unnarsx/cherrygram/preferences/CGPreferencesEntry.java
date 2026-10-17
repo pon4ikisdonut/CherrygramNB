@@ -89,7 +89,7 @@ public class CGPreferencesEntry extends BaseCGPreferencesEntry {
                         0xFFE040FB, 0xFF7C4DFF,
                         R.drawable.settings_magic_stick_filled_solar,
                         "Настройки CherrygramNB",
-                        "DevTools, антиспам, обход ограничений, OmniCore",
+                        "DevTools, антиспам, приватность, обход ограничений",
                         true
                 )
         );

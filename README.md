@@ -4,7 +4,7 @@
   <img src="TMessagesProj_App/src/main/res/mipmap-xxxhdpi/ic_launcher.png" width="128" height="128" alt="CherrygramNB Logo"/>
 </p>
 
-<h3 align="center">Clean, Fast & Independent Telegram Client with OmniCore Plugin Engine</h3>
+<h3 align="center">Clean, Fast & Independent Telegram Client</h3>
 
 <p align="center">
   <a href="https://t.me/CherrygramNB"><img src="https://img.shields.io/badge/Channel-%40CherrygramNB-blue?style=flat&logo=telegram" alt="Telegram Channel"></a>
@@ -19,7 +19,7 @@
 
 **CherrygramNB** is an advanced third-party fork of Cherrygram for Android, built on top of the latest **Telegram v12.10.6** (source codebase) and Cherrygram v11.3.0.
 
-CherrygramNB is completely decoupled from Google Play Store restrictions, removes all invasive monetization bloat, includes native developer tools, bypasses artificial restrictions, and introduces **OmniCore** — a modular event-driven plugin engine.
+CherrygramNB is completely decoupled from Google Play Store restrictions, removes all invasive monetization bloat, includes native developer tools, and bypasses artificial restrictions.
 
 * **Fork Maintainer:** [@pon4ikisdonut](https://t.me/pon4ikisdonut)
 * **Official Channel:** [@CherrygramNB](https://t.me/CherrygramNB)
@@ -57,7 +57,6 @@ CherrygramNB is completely decoupled from Google Play Store restrictions, remove
 
 ### 6. 🎨 Interface & Ergonomics
 * **Bottom Folder Tabs (Bottom Bar):** Ergonomic navigation bar placed at the bottom for effortless one-handed use on large screens.
-* **No-Bubble / IRC Mode:** Clean flat text presentation without speech bubbles.
 * **Dynamic Material You:** System wallpaper accent color harmony across icons, buttons, and switches.
 * **Custom Typography:** Full support for loading external `.ttf` and `.otf` fonts.
 
@@ -65,38 +64,6 @@ CherrygramNB is completely decoupled from Google Play Store restrictions, remove
 * **Canned Responses:** Pre-configured quick-reply snippets in the message input bar.
 * **Local Auto-Responder:** Automatically sends away messages while you are busy.
 * **Unlimited Multi-Account:** Expanded account limit supporting up to 20 active profiles simultaneously.
-
----
-
-## 🔌 OmniCore Plugin Engine
-
-**OmniCore** is an event-driven plugin architecture designed for mobile Telegram. It lets the community extend client behavior through custom scripts and plugins without needing to rebuild the entire application.
-
-### Architecture Overview
-
-```
- ┌────────────────────────────────────────────────────────┐
- │                   CherrygramNB UI                      │
- └──────────────────────────┬─────────────────────────────┘
-                            ▼
- ┌────────────────────────────────────────────────────────┐
- │              OmniCore Event Bus & Dispatcher           │
- └──────────┬───────────────────────────────┬─────────────┘
-            ▼                               ▼
- ┌──────────────────────┐       ┌───────────────────────┐
- │   Native / Dex Tier  │       │    Quick Rule Engine  │
- │  (.dex / .apk mods)  │       │    (.rule / .txt)     │
- └──────────────────────┘       └───────────────────────┘
-            │                               │
-            └───────────────┬───────────────┘
-                            ▼
- ┌────────────────────────────────────────────────────────┐
- │           OmniAPI (Chat, UI, Storage, Events)          │
- └────────────────────────────────────────────────────────┘
-```
-
-* **Plugin Directory:** `/sdcard/CherrygramNB/Plugins/` (or internal storage `files/plugins/`).
-* **Sandbox & Safety:** All plugin callbacks execute with time limiters (`OmniSandbox`) and crash catchers so faulty scripts never crash the app.
 
 ---
 

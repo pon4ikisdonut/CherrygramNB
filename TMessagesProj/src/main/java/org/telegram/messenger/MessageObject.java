@@ -11177,9 +11177,6 @@ public class MessageObject {
     }
 
     public boolean shouldDrawWithoutBackground() {
-        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getNoMessageBubbles()) {
-            return true;
-        }
         return !isSponsored() && (type == TYPE_STICKER || type == TYPE_ANIMATED_STICKER || type == TYPE_ROUND_VIDEO || type == TYPE_EMOJIS || isExpiredStory());
     }
 

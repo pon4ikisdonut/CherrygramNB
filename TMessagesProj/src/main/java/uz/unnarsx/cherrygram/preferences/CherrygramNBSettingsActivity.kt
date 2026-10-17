@@ -15,7 +15,6 @@ import org.telegram.ui.Components.UItem
 import org.telegram.ui.Components.UniversalAdapter
 import uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig
 import uz.unnarsx.cherrygram.helpers.BotTokenAuthDialog
-import uz.unnarsx.cherrygram.omnicore.OmniCore
 import uz.unnarsx.cherrygram.preferences.helpers.SettingsHelper
 
 class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
@@ -48,7 +47,6 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
 
     private val ROW_HEADER_INTERFACE = 600
     private val ROW_UI_BOTTOM_FOLDERS = 601
-    private val ROW_UI_NO_BUBBLES = 602
     private val ROW_UI_MATERIAL_YOU = 603
     private val ROW_UI_CUSTOM_FONT = 604
 
@@ -58,11 +56,6 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
     private val ROW_PROD_AUTORESPONDER = 702
     private val ROW_PROD_AUTORESPONDER_TEXT = 703
     private val ROW_PROD_UNLIMITED_ACCOUNTS = 704
-
-    private val ROW_HEADER_OMNICORE = 800
-    private val ROW_OMNICORE_TOGGLE = 801
-    private val ROW_OMNICORE_SANDBOX = 802
-    private val ROW_OMNICORE_RELOAD = 803
 
     override fun getTitle(): CharSequence {
         return "Настройки CherrygramNB"
@@ -216,13 +209,6 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
         )
         items.add(
             SettingsHelper.asSwitchCG(
-                ROW_UI_NO_BUBBLES,
-                "Режим без пузырей сообщений",
-                "Отображать сообщения сплошным текстом (IRC / Discord стиль)"
-            ).setChecked(CherrygramNBConfig.noMessageBubbles)
-        )
-        items.add(
-            SettingsHelper.asSwitchCG(
                 ROW_UI_MATERIAL_YOU,
                 "Material You акцент",
                 "Динамические акценты в цвета системной темы Android"
@@ -280,30 +266,6 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
         )
         items.add(UItem.asShadow(null))
 
-        // 8. OmniCore Plugins
-        items.add(UItem.asHeader("🔌 Система плагинов OmniCore"))
-        items.add(
-            SettingsHelper.asSwitchCG(
-                ROW_OMNICORE_TOGGLE,
-                "Включить движок OmniCore",
-                "Загрузка и выполнение внешних плагинов (.dex, .rule, .lua)"
-            ).setChecked(CherrygramNBConfig.omniCoreEnabled)
-        )
-        items.add(
-            SettingsHelper.asSwitchCG(
-                ROW_OMNICORE_SANDBOX,
-                "Строгая изоляция (Sandbox)",
-                "Ограничение времени выполнения и изоляция крашей"
-            ).setChecked(CherrygramNBConfig.omniCoreSandboxStrict)
-        )
-        items.add(
-            UItem.asButton(
-                ROW_OMNICORE_RELOAD,
-                "Перезагрузить плагины",
-                "Папка: " + OmniCore.getPluginsDirectory().path
-            )
-        )
-        items.add(UItem.asShadow(null))
     }
 
     override fun onClick(item: UItem, view: View, position: Int, x: Float, y: Float) {
@@ -395,10 +357,6 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 CherrygramNBConfig.foldersAtBottom = !CherrygramNBConfig.foldersAtBottom
                 SettingsHelper.updateCheckState(view, CherrygramNBConfig.foldersAtBottom)
             }
-            ROW_UI_NO_BUBBLES -> {
-                CherrygramNBConfig.noMessageBubbles = !CherrygramNBConfig.noMessageBubbles
-                SettingsHelper.updateCheckState(view, CherrygramNBConfig.noMessageBubbles)
-            }
             ROW_UI_MATERIAL_YOU -> {
                 CherrygramNBConfig.materialYouAccent = !CherrygramNBConfig.materialYouAccent
                 SettingsHelper.updateCheckState(view, CherrygramNBConfig.materialYouAccent)
@@ -434,19 +392,6 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
             ROW_PROD_UNLIMITED_ACCOUNTS -> {
                 CherrygramNBConfig.unlimitedAccounts = !CherrygramNBConfig.unlimitedAccounts
                 SettingsHelper.updateCheckState(view, CherrygramNBConfig.unlimitedAccounts)
-            }
-            ROW_OMNICORE_TOGGLE -> {
-                CherrygramNBConfig.omniCoreEnabled = !CherrygramNBConfig.omniCoreEnabled
-                SettingsHelper.updateCheckState(view, CherrygramNBConfig.omniCoreEnabled)
-            }
-            ROW_OMNICORE_SANDBOX -> {
-                CherrygramNBConfig.omniCoreSandboxStrict = !CherrygramNBConfig.omniCoreSandboxStrict
-                SettingsHelper.updateCheckState(view, CherrygramNBConfig.omniCoreSandboxStrict)
-            }
-            ROW_OMNICORE_RELOAD -> {
-                context?.let { OmniCore.loadAllPlugins(it) }
-                val count = OmniCore.getLoadedPlugins().size
-                BulletinFactory.of(this).createSimpleBulletin(R.raw.done, "Загружено плагинов: $count").show()
             }
         }
     }

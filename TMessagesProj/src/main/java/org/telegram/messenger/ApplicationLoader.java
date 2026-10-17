@@ -805,7 +805,6 @@ public class ApplicationLoader extends Application {
 
             memoryMonitor.start();
         }
-        uz.unnarsx.cherrygram.omnicore.OmniCore.init(applicationContext);
     }
     /** Cherrygram finish */
 

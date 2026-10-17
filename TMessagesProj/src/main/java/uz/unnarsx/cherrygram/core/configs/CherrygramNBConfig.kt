@@ -64,9 +64,14 @@ object CherrygramNBConfig {
         return willHide
     }
 
+    init {
+        if (sharedPreferences.contains("nb_no_message_bubbles")) {
+            sharedPreferences.edit().remove("nb_no_message_bubbles").apply()
+        }
+    }
+
     // 6. Interface & Customization
     var foldersAtBottom by sharedPreferences.boolean("nb_folders_at_bottom", false)
-    var noMessageBubbles by sharedPreferences.boolean("nb_no_message_bubbles", false)
     var materialYouAccent by sharedPreferences.boolean("nb_material_you_accent", true)
     var customFontPath by sharedPreferences.string("nb_custom_font_path", "")
 
@@ -76,8 +81,4 @@ object CherrygramNBConfig {
     var autoResponderEnabled by sharedPreferences.boolean("nb_auto_responder_enabled", false)
     var autoResponderText by sharedPreferences.string("nb_auto_responder_text", "Здравствуйте! Сейчас не могу ответить, напишу позже.")
     var unlimitedAccounts by sharedPreferences.boolean("nb_unlimited_accounts", true)
-
-    // 8. OmniCore Plugins
-    var omniCoreEnabled by sharedPreferences.boolean("nb_omnicore_enabled", true)
-    var omniCoreSandboxStrict by sharedPreferences.boolean("nb_omnicore_sandbox_strict", true)
 }

@@ -21988,21 +21988,6 @@ public class MessagesController extends BaseController implements NotificationCe
         }
         getNotificationCenter().postNotificationName(NotificationCenter.didReceiveNewMessages, dialogId, messages, scheduled, mode);
         try {
-            if (messages != null) {
-                for (MessageObject msgObj : messages) {
-                    if (msgObj != null && msgObj.messageOwner != null) {
-                        String text = msgObj.messageOwner.message != null ? msgObj.messageOwner.message : "";
-                        boolean isOutgoing = msgObj.isOut();
-                        boolean isChannel = msgObj.messageOwner.peer_id instanceof TLRPC.TL_peerChannel;
-                        long fromId = msgObj.getSenderId();
-                        uz.unnarsx.cherrygram.omnicore.OmniCore.onEvent(
-                            new uz.unnarsx.cherrygram.omnicore.OmniEvent.MessageReceived(
-                                dialogId, msgObj.getId(), text, isOutgoing, isChannel, fromId
-                            )
-                        );
-                    }
-                }
-            }
             if (messages != null && !messages.isEmpty() && dialogId > 0 && dialogId != getUserConfig().getClientUserId()) {
                 TLRPC.User senderUser = getUser(dialogId);
                 if (senderUser != null && !senderUser.bot && !senderUser.self) {
