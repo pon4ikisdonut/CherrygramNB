@@ -10,11 +10,10 @@
 package uz.unnarsx.cherrygram.core.updater;
 
 import static org.telegram.messenger.AndroidUtilities.dp;
-import static org.telegram.messenger.LocaleController.formatString;
 import static org.telegram.messenger.LocaleController.getString;
 
 import android.content.Context;
-import android.content.IntentSender;
+import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -27,17 +26,7 @@ import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
-import com.google.android.play.core.appupdate.AppUpdateInfo;
-import com.google.android.play.core.appupdate.AppUpdateManager;
-import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
-import com.google.android.play.core.appupdate.AppUpdateOptions;
-import com.google.android.play.core.install.InstallStateUpdatedListener;
-import com.google.android.play.core.install.model.AppUpdateType;
-import com.google.android.play.core.install.model.InstallStatus;
-import com.google.android.play.core.install.model.UpdateAvailability;
-
 import org.telegram.messenger.AndroidUtilities;
-import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.DocumentObject;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.ImageLocation;
@@ -69,6 +58,7 @@ import org.telegram.ui.Components.UniversalRecyclerView;
 import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.Stories.recorder.ButtonWithCounterView;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -77,14 +67,12 @@ import java.util.Random;
 
 import uz.unnarsx.cherrygram.core.CherrygramLogger;
 import uz.unnarsx.cherrygram.core.configs.CherrygramCoreConfig;
-import uz.unnarsx.cherrygram.core.helpers.AppRestartHelper;
-import uz.unnarsx.cherrygram.core.helpers.CGResourcesHelper;
 import uz.unnarsx.cherrygram.helpers.ui.FontHelper;
-import uz.unnarsx.cherrygram.misc.CherrygramExtras;
 import uz.unnarsx.cherrygram.misc.Constants;
+import uz.unnarsx.cherrygram.core.helpers.CGResourcesHelper;
 import uz.unnarsx.cherrygram.preferences.AboutPreferencesEntry;
 
-public class UpdaterBottomSheet extends BottomSheet {
+public class UpdaterBottomSheet extends BottomSheet implements NotificationCenter.NotificationCenterDelegate {
 
     private final int currentVersionRow = 1;
     private final int buildTypeRow = 2;
@@ -108,14 +96,6 @@ public class UpdaterBottomSheet extends BottomSheet {
 
     private final boolean available;
     private boolean isForce = false;
-
-    private AppUpdateManager appUpdateManager;
-    private InstallStateUpdatedListener installStateUpdatedListener;
-
-    private boolean gpUpdateDownloaded = false;
-    private boolean gpUpdateDownloading = false;
-    private int gpDownloadProgress = 0;
-    private static final int PLAY_UPDATE_REQUEST_CODE = 1001;
 
     public UpdaterBottomSheet(BaseFragment fragment, Context context, Theme.ResourcesProvider resourcesProvider, boolean available, TLRPC.TL_help_appUpdate update) {
         super(context, false, resourcesProvider);
@@ -156,10 +136,6 @@ public class UpdaterBottomSheet extends BottomSheet {
 
         container.addView(createBottomButtonsView(), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
         setCustomView(container);
-
-        if (available) {
-            initGooglePlayUpdate();
-        }
     }
 
     public static void showAlert(BaseFragment fragment, boolean available, TLRPC.TL_help_appUpdate update) {
@@ -180,6 +156,26 @@ public class UpdaterBottomSheet extends BottomSheet {
     // ========================================================================================
 
     @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        addNotificationObservers();
+    }
+
+    private void addNotificationObservers() {
+        NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.fileLoadProgressChanged);
+        NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.appUpdateLoading);
+        NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.fileLoaded);
+        NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.fileLoadFailed);
+    }
+
+    private void removeNotificationObservers() {
+        NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.fileLoadProgressChanged);
+        NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.appUpdateLoading);
+        NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.fileLoaded);
+        NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.fileLoadFailed);
+    }
+
+    @Override
     public void onBackPressed() {
         if (!isForce) {
             if (attachedFragment == null) {
@@ -196,8 +192,38 @@ public class UpdaterBottomSheet extends BottomSheet {
             if (stickerUpdateRunnable != null) {
                 AndroidUtilities.cancelRunOnUIThread(stickerUpdateRunnable);
             }
-            unregisterGooglePlayUpdateListener();
+            removeNotificationObservers();
             super.dismiss();
+        }
+    }
+
+    @Override
+    public void didReceivedNotification(int id, int account, Object... args) {
+        if (id == NotificationCenter.fileLoadProgressChanged || id == NotificationCenter.appUpdateLoading) {
+            updateFileProgress(args);
+        } else if (id == NotificationCenter.fileLoaded || id == NotificationCenter.fileLoadFailed) {
+            String path = (String) args[0];
+            if (SharedConfig.isAppUpdateAvailable()) {
+                String name = FileLoader.getAttachFileName(SharedConfig.pendingAppUpdate.document);
+                if (name.equals(path) && downloadButton != null) {
+                    downloadButton.setClickable(true);
+                    downloadButton.setText(getDownloadButtonText(), true);
+                }
+            }
+        }
+    }
+
+    public void updateFileProgress(Object[] args) {
+        if (downloadButton == null || args == null) return;
+        if (SharedConfig.isAppUpdateAvailable()) {
+            String location = (String) args[0];
+            String fileName = FileLoader.getAttachFileName(SharedConfig.pendingAppUpdate.document);
+            if (fileName != null && fileName.equals(location)) {
+                Long loadedSize = (Long) args[1];
+                Long totalSize = (Long) args[2];
+                float loadProgress = loadedSize / (float) totalSize;
+                downloadButton.setText(LocaleController.formatString(R.string.AppUpdateDownloading, (int) (loadProgress * 100)), true);
+            }
         }
     }
 
@@ -567,14 +593,24 @@ public class UpdaterBottomSheet extends BottomSheet {
         downloadButton.setFilled(true);
         downloadButton.setText(getDownloadButtonText(), true);
         downloadButton.setOnClickListener(v -> {
-            if (gpUpdateDownloaded) {
-                completeGooglePlayUpdate();
-            } else if (!gpUpdateDownloading) {
-                startGooglePlayUpdate();
+            if (isUpdateAlreadyDownloaded()) {
+                AndroidUtilities.openForView(SharedConfig.pendingAppUpdate.document, true, fragment.getParentActivity());
+            } else {
+                downloadButton.setClickable(false);
+                FileLoader.getInstance(fragment.getCurrentAccount()).loadFile(update.document, "update", FileLoader.PRIORITY_NORMAL, 1);
+                dismiss();
             }
         });
 
         buttonsView.addView(downloadButton, flexButtonLayoutParams());
+    }
+
+    private boolean isUpdateAlreadyDownloaded() {
+        if (SharedConfig.pendingAppUpdate == null || SharedConfig.pendingAppUpdate.document == null) {
+            return false;
+        }
+        File path = FileLoader.getInstance(currentAccount).getPathToAttach(SharedConfig.pendingAppUpdate.document, true);
+        return path != null && path.exists() && fragment != null && fragment.getParentActivity() != null;
     }
 
     private void applyForceUpdateFlagsIfNeeded() {
@@ -589,14 +625,26 @@ public class UpdaterBottomSheet extends BottomSheet {
     private StringBuilder getDownloadButtonText() {
         StringBuilder sb = new StringBuilder();
 
-        if (gpUpdateDownloaded) {
+        File path = FileLoader.getInstance(currentAccount).getPathToAttach(SharedConfig.pendingAppUpdate.document, true);
+        if (path.exists()) {
             sb.append(getString(R.string.AppUpdateNow));
-        } else if (gpUpdateDownloading) {
-            sb.append(formatString(R.string.AppUpdateDownloading, gpDownloadProgress));
         } else {
             sb.append(getString(R.string.AppUpdateDownloadNow));
+            sb.append(" (");
+            sb.append(getUpdateSizeString());
+            sb.append(")");
         }
         return sb;
+    }
+
+    private String getUpdateSizeString() {
+        if (SharedConfig.pendingAppUpdate != null && SharedConfig.pendingAppUpdate.document != null) {
+            String size = AndroidUtilities.formatFileSize(SharedConfig.pendingAppUpdate.document.size, true, false);
+            if (!TextUtils.isEmpty(size) && !size.equals("0")) {
+                return size;
+            }
+        }
+        return "";
     }
 
     private FrameLayout createScheduleLaterButtonWrapper() {
@@ -630,9 +678,7 @@ public class UpdaterBottomSheet extends BottomSheet {
         items.add(UItem.asButton(buildTypeRow, R.drawable.msg_customize, getString(R.string.UP_BuildType), buildType));
         items.add(UItem.asShadow(null));
 
-        if (CherrygramCoreConfig.isDevBuild()) {
-            items.add(UItem.asCustom(createInstallBetasCell()));
-        }
+        items.add(UItem.asCustom(createInstallBetasCell()));
         items.add(UItem.asCustom(createCheckOnLaunchCell()));
         items.add(UItem.asShadow(null));
     }
@@ -676,10 +722,7 @@ public class UpdaterBottomSheet extends BottomSheet {
         checkUpdatesButton.setText(sb, true);
         SharedConfig.lastUpdateCheckTime = System.currentTimeMillis();
 
-        if (fragment.getParentActivity() instanceof LaunchActivity launchActivity) {
-            AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(getContext());
-            appUpdateManager.getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
-                if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
+                if (fragment.getParentActivity() instanceof LaunchActivity launchActivity) {
                     launchActivity.checkAppUpdate(true, new Browser.Progress() {
                         @Override
                         public void end() {
@@ -691,39 +734,8 @@ public class UpdaterBottomSheet extends BottomSheet {
                             }
                         }
                     });
-                } else if (appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
-                    checkUpdatesButton.setText(getString(R.string.UP_CheckForUpdates), true);
-                    reopenAsUpdateAvailableIfPossible();
-                } else {
-                    checkUpdatesButton.setText(getString(R.string.UP_CheckForUpdates), true);
-                    BulletinFactory.of(getContainer(), resourcesProvider).createErrorBulletin(getString(R.string.YourVersionIsLatest)).show();
                 }
-            });
-            appUpdateManager.getAppUpdateInfo().addOnFailureListener(e -> {
-                checkUpdatesButton.setText(getString(R.string.UP_CheckForUpdates), true);
-                BulletinFactory.of(getContainer(), resourcesProvider).createErrorBulletin(e.getMessage() != null ? e.getMessage() : getString(R.string.FailedStory)).show();
-
-                CherrygramExtras.INSTANCE.openGooglePlayPage(fragment);
-            });
-        }
-    }
-
-    /**
-     * Play уже качает/докачал обновление (DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS), а эта шторка
-     * открыта в режиме available = false. Переоткрываем как available = true, чтобы юзер увидел
-     * реальный прогресс/кнопку "Установить сейчас" вместо ложного "нет обновлений".
-     */
-    private void reopenAsUpdateAvailableIfPossible() {
-        if (SharedConfig.pendingAppUpdate == null) {
-            // Загрузка по факту идёт, но TL-объекта апдейта уже нет (например, был явно очищен
-            // где-то ещё) — переоткрыть шторку с чейнджлогом нечем, показываем нейтральный
-            // фидбек вместо ложного "нет обновлений".
-            BulletinFactory.of(getContainer(), resourcesProvider).createErrorBulletin(formatString(R.string.AppUpdateDownloading, 0)).show();
-            return;
-        }
-        dismiss();
-        AndroidUtilities.runOnUIThread(() -> UpdaterBottomSheet.showAlert(fragment, true, SharedConfig.pendingAppUpdate), 200);
-    }
+            }
 
     // ----------------------------------------------------------------------------------------
     // Secondary (round icon) buttons: translate + apk source
@@ -771,11 +783,11 @@ public class UpdaterBottomSheet extends BottomSheet {
         ButtonWithCounterView apkButton = new ButtonWithCounterView(getContext(), resourcesProvider).setRound();
         SpannableStringBuilder sb = new SpannableStringBuilder();
         sb.append("+");
-        sb.setSpan(new ColoredImageSpan(ContextCompat.getDrawable(getContext(), isForce ? R.drawable.google_play_logo_filled : R.drawable.msg_folders_channels_solar)), 0, 1, 0);
+        sb.setSpan(new ColoredImageSpan(ContextCompat.getDrawable(getContext(), isForce ? R.drawable.github_cat_filled : R.drawable.msg_folders_channels_solar)), 0, 1, 0);
         apkButton.setText(sb, false);
         apkButton.setOnClickListener(v -> {
             if (isForce) {
-                CherrygramExtras.INSTANCE.openGooglePlayPage(fragment);
+                openGithubReleases();
             } else {
                 openApkChannel();
             }
@@ -785,7 +797,24 @@ public class UpdaterBottomSheet extends BottomSheet {
 
     private void openApkChannel() {
         dismiss();
-        fragment.getMessagesController().openByUserName(Constants.CG_APKS_CHANNEL_USERNAME, fragment, 1);
+
+        String username;
+        if (CherrygramCoreConfig.INSTANCE.getInstallBetas()) {
+            username = Constants.CG_BETA_APKS_CHANNEL_USERNAME;
+        } else {
+            username = Constants.CG_APKS_CHANNEL_USERNAME;
+        }
+        fragment.getMessagesController().openByUserName(username, fragment, 1);
+    }
+
+    private void openGithubReleases() {
+        String githubLink;
+        if (CherrygramCoreConfig.isStandaloneBetaBuild() || CherrygramCoreConfig.INSTANCE.getInstallBetas()) {
+            githubLink = Constants.CG_GITHUB_URL + "Beta-APKs/releases/latest";
+        } else {
+            githubLink = Constants.CG_GITHUB_URL + "/releases/latest";
+        }
+        Browser.openInExternalBrowser(fragment.getContext(), githubLink, true);
     }
 
     // ----------------------------------------------------------------------------------------
@@ -803,125 +832,6 @@ public class UpdaterBottomSheet extends BottomSheet {
     private void copyText(CharSequence text) {
         AndroidUtilities.addToClipboard(text);
         BulletinFactory.of(getContainer(), resourcesProvider).createCopyBulletin(getString(R.string.TextCopied)).show();
-    }
-
-    private void initGooglePlayUpdate() {
-        appUpdateManager = AppUpdateManagerFactory.create(getContext());
-
-        installStateUpdatedListener = state -> {
-            switch (state.installStatus()) {
-                case InstallStatus.PENDING, InstallStatus.INSTALLING,
-                     InstallStatus.REQUIRES_UI_INTENT, InstallStatus.UNKNOWN:
-                    break;
-
-                case InstallStatus.DOWNLOADING:
-                    gpUpdateDownloading = true;
-                    gpUpdateDownloaded = false;
-                    gpDownloadProgress = state.totalBytesToDownload() > 0
-                            ? (int) (state.bytesDownloaded() * 100L / state.totalBytesToDownload())
-                            : 0;
-
-                    updateDownloadButton();
-                    break;
-
-                case InstallStatus.DOWNLOADED:
-                    gpUpdateDownloading = false;
-                    gpUpdateDownloaded = true;
-
-                    updateDownloadButton();
-                    break;
-
-                case InstallStatus.INSTALLED:
-                    gpUpdateDownloading = false;
-                    gpUpdateDownloaded = false;
-
-                    unregisterGooglePlayUpdateListener();
-                    break;
-
-                case InstallStatus.FAILED:
-                case InstallStatus.CANCELED:
-                    gpUpdateDownloading = false;
-                    gpUpdateDownloaded = false;
-
-                    updateDownloadButton();
-                    break;
-            }
-        };
-
-        appUpdateManager.registerListener(installStateUpdatedListener);
-
-        appUpdateManager.getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
-            gpUpdateDownloaded = appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED;
-            gpUpdateDownloading = appUpdateInfo.installStatus() == InstallStatus.DOWNLOADING;
-            updateDownloadButton();
-        });
-    }
-
-    private void updateDownloadButton() {
-        if (downloadButton == null) {
-            return;
-        }
-        downloadButton.setText(getDownloadButtonText(), true);
-    }
-
-    private void startGooglePlayUpdate() {
-        if (appUpdateManager == null) {
-            return;
-        }
-
-        int updateType = isForce ? AppUpdateType.IMMEDIATE : AppUpdateType.FLEXIBLE;
-
-        appUpdateManager.getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
-            if (appUpdateInfo.updateAvailability() != UpdateAvailability.UPDATE_AVAILABLE) {
-                BulletinFactory.of(getContainer(), resourcesProvider).createErrorBulletin(getString(R.string.YourVersionIsLatest)).show();
-                return;
-            }
-
-            if (!appUpdateInfo.isUpdateTypeAllowed(updateType)) {
-                // fallback: если IMMEDIATE недоступен на устройстве (бывает на некоторых сборках/каналах),
-                // откатываемся на FLEXIBLE, чтобы не блокировать апдейт вовсе
-                if (isForce && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
-                    launchUpdateFlow(appUpdateInfo, AppUpdateType.FLEXIBLE);
-                } else {
-                    BulletinFactory.of(getContainer(), resourcesProvider).createErrorBulletin(getString(R.string.FailedStory)).show();
-                }
-                return;
-            }
-
-            launchUpdateFlow(appUpdateInfo, updateType);
-        }).addOnFailureListener(e -> {
-            CherrygramLogger.e(e);
-            BulletinFactory.of(getContainer(), resourcesProvider).createErrorBulletin(e.getMessage() != null ? e.getMessage() : getString(R.string.FailedStory)).show();
-        });
-    }
-
-    private void launchUpdateFlow(AppUpdateInfo appUpdateInfo, int updateType) {
-        try {
-            appUpdateManager.startUpdateFlowForResult(
-                    appUpdateInfo,
-                    fragment.getParentActivity(),
-                    AppUpdateOptions.newBuilder(updateType).build(),
-                    PLAY_UPDATE_REQUEST_CODE
-            );
-        } catch (IntentSender.SendIntentException e) {
-            CherrygramLogger.e(e);
-            BulletinFactory.of(getContainer(), resourcesProvider).createErrorBulletin(e.getMessage() != null ? e.getMessage() : getString(R.string.FailedStory)).show();
-        }
-    }
-
-    private void completeGooglePlayUpdate() {
-        if (appUpdateManager != null) {
-            appUpdateManager.completeUpdate();
-        } else {
-            AppRestartHelper.restartApp(ApplicationLoader.applicationContext);
-        }
-    }
-
-    private void unregisterGooglePlayUpdateListener() {
-        if (appUpdateManager != null && installStateUpdatedListener != null) {
-            appUpdateManager.unregisterListener(installStateUpdatedListener);
-            installStateUpdatedListener = null;
-        }
     }
 
 }

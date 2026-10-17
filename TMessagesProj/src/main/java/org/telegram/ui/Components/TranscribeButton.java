@@ -246,7 +246,8 @@ public class TranscribeButton {
         }
         pressed = false;
         if (processClick) {
-            if (!premium && toOpen) {
+            boolean allowLocal = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getLocalVoiceTranscription();
+            if (!premium && toOpen && !allowLocal) {
                 if (canTranscribeTrial(parent.getMessageObject()) || parent.getMessageObject() != null && parent.getMessageObject().messageOwner != null && !TextUtils.isEmpty(parent.getMessageObject().messageOwner.voiceTranscription)) {
                     transcribePressed(parent.getMessageObject(), toOpen, parent.getDelegate());
                 } else {
@@ -422,7 +423,7 @@ public class TranscribeButton {
     private Path lockHandlePath;
 
     private void drawLock(Canvas canvas) {
-        final float alpha = animatedDrawLock.set(drawLock && !isOpen && !loading && !useGeminiTranscription());
+        final float alpha = animatedDrawLock.set(drawLock && !isOpen && !loading && !useGeminiTranscription() && !uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getLocalVoiceTranscription());
         if (alpha <= 0) {
             return;
         }
@@ -842,6 +843,9 @@ public class TranscribeButton {
     }
 
     public static boolean canTranscribeTrial(MessageObject messageObject) {
+        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getLocalVoiceTranscription()) {
+            return true;
+        }
         if (messageObject == null || messageObject.messageOwner == null) {
             return false;
         }

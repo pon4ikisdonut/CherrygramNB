@@ -12753,6 +12753,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             (
                 UserConfig.getInstance(currentAccount).isPremium()
                 ||
+                uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getLocalVoiceTranscription()
+                ||
                 TranscribeButton.useGeminiTranscription()
                 ||
                 TranscribeButton.isFreeTranscribeInChat(currentMessageObject)
@@ -13786,6 +13788,10 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (currentMessageObject != null && currentMessageObject.shouldBlockMessage()) {
+            setMeasuredDimension(0, 0);
+            return;
+        }
         if (currentMessageObject != null && (currentMessageObject.checkLayout() || lastHeight != AndroidUtilities.displaySize.y)) {
             inLayout = true;
             MessageObject messageObject = currentMessageObject;
@@ -18601,6 +18607,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 date = currentMessageObject.messageOwner.fwd_from.date;
             }
             timeString = LocaleController.formatSeenDate(date);
+        } else if (currentMessageObject.deletedLocally) {
+            timeString = "\uD83D\uDDD1 " + LocaleController.getInstance().getFormatterDay().format((long) (messageObject.messageOwner.date) * 1000);
         } else if (currentMessageObject.shouldBlockMessage()) {
             timeString = "\uD83D\uDEAB " + LocaleController.getInstance().getFormatterDay().format((long) (messageObject.messageOwner.date) * 1000);
         } else {
@@ -20291,7 +20299,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         drawInternal(canvas);
     }
     public void drawInternal(Canvas canvas) {
-        if (currentMessageObject == null) {
+        if (currentMessageObject == null || currentMessageObject.shouldBlockMessage()) {
             return;
         }
         if (shouldMakeMessageTransparent()) {

@@ -9110,6 +9110,13 @@ public class Theme {
         if (CherrygramAppearanceConfig.INSTANCE.getDisableDividers() && key_divider == key) {
             return 0x00ffffff;
         }
+        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getMaterialYouAccent() && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            if (key == key_actionBarDefault || key == key_windowBackgroundWhiteBlueHeader || key == key_windowBackgroundWhiteBlueText || key == key_switchTrackChecked) {
+                try {
+                    return ApplicationLoader.applicationContext.getColor(android.R.color.system_accent1_500);
+                } catch (Exception ignored) {}
+            }
+        }
         if (serviceBitmapShader != null && (key_chat_serviceText == key || key_chat_serviceLink == key || key_chat_serviceIcon == key
                 || key_chat_stickerReplyLine == key || key_chat_stickerReplyNameText == key || key_chat_stickerReplyMessageText == key)) {
             return 0xffffffff;

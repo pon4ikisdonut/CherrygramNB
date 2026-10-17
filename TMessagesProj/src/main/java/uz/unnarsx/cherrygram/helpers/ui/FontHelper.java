@@ -162,6 +162,22 @@ public class FontHelper {
     }
 
     public static Typeface createTypeface(int weight, boolean italic) {
+        String customPath = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getCustomFontPath();
+        if (customPath != null && !customPath.isEmpty()) {
+            try {
+                File f = new File(customPath);
+                if (f.exists() && f.canRead()) {
+                    Typeface base = Typeface.createFromFile(f);
+                    if (base != null) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            return Typeface.create(base, weight, italic);
+                        } else {
+                            return Typeface.create(base, italic ? Typeface.ITALIC : (weight >= 600 ? Typeface.BOLD : Typeface.NORMAL));
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             return Typeface.create(null, weight, italic);
         }

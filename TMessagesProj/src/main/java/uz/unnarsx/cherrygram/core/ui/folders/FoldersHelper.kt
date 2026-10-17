@@ -12,30 +12,35 @@ package uz.unnarsx.cherrygram.core.ui.folders
 import android.content.Context
 import android.graphics.RectF
 import android.os.Build
+import android.view.Gravity
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
+import org.telegram.messenger.AndroidUtilities
 import org.telegram.ui.ActionBar.Theme
+import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable
+import org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl
 import org.telegram.ui.Components.FilterTabsView
+import org.telegram.ui.Components.LayoutHelper
 import org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory
 import org.telegram.ui.Components.blur3.DownscaleScrollableNoiseSuppressor
 import org.telegram.ui.Components.blur3.capture.IBlur3Capture
 import org.telegram.ui.DialogsActivity
-
-// Dear Nagram / Nagram X / Octogram and related fork developers:
-// Please respect this work and do not copy or reuse this feature in your forks.
-// It required a significant amount of time and effort to implement,
-// and it is provided exclusively for my users, who also support this project financially.
+import uz.unnarsx.cherrygram.core.configs.CherrygramAppearanceConfig
+import uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig
 
 object FoldersHelper {
 
+    @JvmStatic
     fun moveFoldersToBottom() : Boolean {
-        return false
+        return CherrygramAppearanceConfig.foldersAtBottom || CherrygramNBConfig.foldersAtBottom
     }
 
+    @JvmStatic
     fun getFloatingButtonsOffset(filterTabsView: FilterTabsView?) : Int {
-        return 0
+        return if (moveFoldersToBottom()) AndroidUtilities.dp(56f) else 0
     }
 
+    @JvmStatic
     fun setupFilterTabs(
         context: Context,
         contentView: ViewGroup,
@@ -45,11 +50,17 @@ object FoldersHelper {
         iBlur3FactoryFade: BlurredBackgroundDrawableViewFactory,
         inForwardMode: Boolean
     ) {
-
+        val filterTabsViewBackground = iBlur3FactoryLiquidGlass.create(filterTabsView, BlurredBackgroundProviderImpl.topPanel(resourceProvider))
+        filterTabsViewBackground.setRadius(AndroidUtilities.dp(18f).toFloat())
+        filterTabsViewBackground.setPadding(AndroidUtilities.dp(6.666f))
+        filterTabsView.setPadding(0, AndroidUtilities.dp(7f), 0, AndroidUtilities.dp(7f))
+        filterTabsView.setBlurredBackground(filterTabsViewBackground)
+        contentView.addView(filterTabsView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 50f, Gravity.BOTTOM, 4f, 0f, 4f, 4f))
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
     @Suppress("FunctionName")
+    @JvmStatic
     fun blur3_InvalidateBlur(
         dialogsActivity: DialogsActivity,
         iBlur3Capture: IBlur3Capture,
@@ -62,6 +73,7 @@ object FoldersHelper {
 
     }
 
+    @JvmStatic
     fun updateFoldersOffset(
         dialogsActivity: DialogsActivity,
         inForwardMode: Boolean,

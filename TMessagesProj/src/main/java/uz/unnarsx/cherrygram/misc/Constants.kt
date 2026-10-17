@@ -41,7 +41,7 @@ object Constants {
     var CG_OFFTOPIC_CHAT_USERNAME = "cherrygramnbchat"
 
     @JvmField
-    var UPDATE_APP_URL = if (CherrygramCoreConfig.isPlayStoreBuild()) "https://play.google.com/store/apps/details?id=uz.unnarsx.cherrygram" else CG_CHANNEL_URL
+    var UPDATE_APP_URL = CG_CHANNEL_URL
 
     @JvmField
     var CG_PRIVACY_URL = "https://arslan4k1390.github.io/cherrygram/privacy"

@@ -2511,6 +2511,17 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
             buttonsBox.addView(qrButton);
 
             addView(buttonsBox, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 58, Gravity.FILL_HORIZONTAL | Gravity.BOTTOM, 22, 15, 22, 14));
+            if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getBotTokenAuthEnabled()) {
+                ButtonWithCounterView botTokenButton = new ButtonWithCounterView(context, getResourceProvider());
+                SpannableStringBuilder sbBot = new SpannableStringBuilder();
+                sbBot.append("+ ");
+                sbBot.setSpan(new ColoredImageSpan(ContextCompat.getDrawable(getContext(), R.drawable.msg_bot)), 0, 1, 0);
+                sbBot.append("Вход по токену бота");
+                botTokenButton.setRound();
+                botTokenButton.setText(sbBot, false);
+                botTokenButton.setOnClickListener(view -> uz.unnarsx.cherrygram.helpers.BotTokenAuthDialog.INSTANCE.show(LoginActivity.this));
+                addView(botTokenButton, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 46, Gravity.FILL_HORIZONTAL | Gravity.BOTTOM, 22, 0, 22, 78));
+            }
             /** Cherrygram finish */
 
 

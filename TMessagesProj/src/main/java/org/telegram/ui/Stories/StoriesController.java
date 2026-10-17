@@ -251,7 +251,7 @@ public class StoriesController {
     }
 
     public boolean hasStories(long dialogId) {
-        if (CherrygramCoreConfig.INSTANCE.getHideStories()) return false;
+        if (CherrygramCoreConfig.INSTANCE.getHideStories() || uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getDisableStoriesTotal()) return false;
         if (dialogId == 0) {
             return false;
         }
@@ -285,7 +285,7 @@ public class StoriesController {
     }
 
     public boolean hasStories() {
-        if (CherrygramCoreConfig.INSTANCE.getHideStories()) return false;
+        if (CherrygramCoreConfig.INSTANCE.getHideStories() || uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getDisableStoriesTotal()) return false;
         return (dialogListStories != null && dialogListStories.size() > 0) || hasSelfStories();
     }
 
@@ -1081,7 +1081,7 @@ public class StoriesController {
     }
 
     public boolean hasSelfStories() {
-        if (CherrygramCoreConfig.INSTANCE.getHideStories()) return false;
+        if (CherrygramCoreConfig.INSTANCE.getHideStories() || uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getDisableStoriesTotal()) return false;
         long clientUserId = UserConfig.getInstance(currentAccount).clientUserId;
         TL_stories.PeerStories storyItem = allStoriesMap.get(clientUserId);
         if (storyItem != null && !storyItem.stories.isEmpty()) {

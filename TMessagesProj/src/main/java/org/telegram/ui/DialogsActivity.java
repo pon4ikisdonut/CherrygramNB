@@ -603,6 +603,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     @Nullable
     private ActionBarMenuSubItem readItem;
     @Nullable
+    private ActionBarMenuSubItem hideChatItem;
+    @Nullable
     private ActionBarMenuSubItem blockItem;
 
     public float additionalFloatingTranslation;
@@ -724,6 +726,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private final static int add_to_folder = 109;
     private final static int remove_from_folder = 110;
     private final static int community_ungroup = 111;
+    private final static int hide_chat = 150;
 
     private final static int ARCHIVE_ITEM_STATE_PINNED = 0;
     private final static int ARCHIVE_ITEM_STATE_SHOWED = 1;
@@ -3474,6 +3477,20 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             @Override
             public void onTextChanged(EditText editText) {
                 String text = editText.getText().toString();
+                if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getHiddenChatsEnabled()) {
+                    String pin = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getHiddenChatsPin();
+                    if (!android.text.TextUtils.isEmpty(pin) && text.equals(pin)) {
+                        boolean unlocked = !uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.isHiddenChatsUnlocked;
+                        uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.isHiddenChatsUnlocked = unlocked;
+                        editText.setText("");
+                        closeSearching();
+                        org.telegram.ui.Components.BulletinFactory.of(DialogsActivity.this).createSimpleBulletin(unlocked ? R.drawable.menu_unlock : R.drawable.msg_mini_lock2, unlocked ? "Скрытые чаты показаны" : "Скрытые чаты скрыты").show();
+                        if (viewPages[0] != null && viewPages[0].dialogsAdapter != null) {
+                            viewPages[0].dialogsAdapter.notifyDataSetChanged();
+                        }
+                        return;
+                    }
+                }
                 if (!text.isEmpty() || (searchViewPager != null && searchViewPager.dialogsSearchAdapter != null && searchViewPager.dialogsSearchAdapter.hasRecentSearch()) || searchFiltersWasShowed || hasStories) {
                     searchWas = true;
                     if (!searchIsShowed) {
@@ -4124,7 +4141,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                         undoView.showWithAction(did, UndoView.ACTION_REMOVED_FROM_FOLDER, neverShow.size(), filter, null, null);
                     }
                     hideActionMode(false);
-                } else if (id == pin || id == read || id == delete || id == clear || id == mute || id == archive || id == block || id == archive2 || id == pin2) {
+                } else if (id == pin || id == read || id == delete || id == clear || id == mute || id == archive || id == block || id == archive2 || id == pin2 || id == hide_chat) {
                     performSelectedDialogsAction(selectedDialogs, id, true, false);
                 }
             }
@@ -6912,6 +6929,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         readItem = otherItem.addSubItem(read, R.drawable.msg_markread, LocaleController.getString(R.string.MarkAsRead));
         clearItem = otherItem.addSubItem(clear, R.drawable.msg_clear, LocaleController.getString(R.string.ClearHistory));
         blockItem = otherItem.addSubItem(block, R.drawable.msg_block, LocaleController.getString(R.string.BlockUser));
+        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getHiddenChatsEnabled()) {
+            hideChatItem = otherItem.addSubItem(hide_chat, R.drawable.msg_mini_lock2, "Скрыть / Показать чат");
+        }
 
         muteItem.setOnLongClickListener(e -> {
             performSelectedDialogsAction(selectedDialogs, mute, true, true);
@@ -9765,6 +9785,17 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
             }
         }
+        if (action == hide_chat) {
+            for (int a = 0; a < selectedDialogs.size(); a++) {
+                long selectedDialog = selectedDialogs.get(a);
+                uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.toggleDialogHidden(selectedDialog);
+            }
+            if (viewPages[0] != null && viewPages[0].dialogsAdapter != null) {
+                viewPages[0].dialogsAdapter.notifyDataSetChanged();
+            }
+            hideActionMode(true);
+            return;
+        }
         if (action == mute && !(count == 1 && canMuteCount == 1)) {
             BulletinFactory.createMuteBulletin(this, canUnmuteCount == 0, null).show();
         }
@@ -11271,7 +11302,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
         MessagesController messagesController = AccountInstance.getInstance(currentAccount).getMessagesController();
         if (dialogsType == DIALOGS_TYPE_DEFAULT) {
-            return messagesController.getDialogs(folderId);
+            ArrayList<TLRPC.Dialog> list = messagesController.getDialogs(folderId);
+            if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getHiddenChatsEnabled() && !uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.isHiddenChatsUnlocked) {
+                ArrayList<TLRPC.Dialog> filtered = new ArrayList<>();
+                for (int i = 0; i < list.size(); i++) {
+                    TLRPC.Dialog d = list.get(i);
+                    if (d != null && !uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.isDialogHidden(d.id)) {
+                        filtered.add(d);
+                    }
+                }
+                return filtered;
+            }
+            return list;
         } else if (dialogsType == DIALOGS_TYPE_WIDGET || dialogsType == DIALOGS_TYPE_IMPORT_HISTORY) {
             return messagesController.dialogsServerOnly;
         } else if (dialogsType == DIALOGS_TYPE_ADD_USERS_TO) {

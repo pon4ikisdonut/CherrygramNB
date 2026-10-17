@@ -13755,7 +13755,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                             phoneNumber = vcardPhone;
                         } else if (user != null && !TextUtils.isEmpty(user.phone)) {
                             phoneNumber = user.phone;
-                            if (CherrygramAppearanceConfig.INSTANCE.getProfileHidePhoneNumber()) {
+                            if (CherrygramAppearanceConfig.INSTANCE.getProfileHidePhoneNumber() || uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getStreamerMode()) {
                                 text = getChatsPasswordHelper().replaceStringToSpoilers(
                                         PhoneFormat.getInstance().format("+ " + phoneNumber),
                                         true
@@ -13859,7 +13859,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         AtomicReference<CharSequence> value = new AtomicReference<>();
 
                         if (user != null && user.phone != null && !TextUtils.isEmpty(user.phone)) {
-                            if (CherrygramAppearanceConfig.INSTANCE.getProfileHidePhoneNumber()) {
+                            if (CherrygramAppearanceConfig.INSTANCE.getProfileHidePhoneNumber() || uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getStreamerMode()) {
                                 value.set(getChatsPasswordHelper().replaceStringToSpoilers(
                                         PhoneFormat.getInstance().format("+ " + user.phone),
                                         true

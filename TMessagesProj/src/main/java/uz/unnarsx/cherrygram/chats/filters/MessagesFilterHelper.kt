@@ -11,22 +11,22 @@ package uz.unnarsx.cherrygram.chats.filters
 
 import org.telegram.messenger.MessageObject
 import org.telegram.tgnet.TLRPC
-
-// Dear Nagram / Nagram X / Octogram and related fork developers:
-// Please respect this work and do not copy or reuse this feature in your forks.
-// It required a significant amount of time and effort to implement,
-// and it is provided exclusively for my users, who also support this project financially.
+import uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig
 
 object MessagesFilterHelper {
 
+    @JvmStatic
     fun isFiltered(messageObject: MessageObject?): Boolean {
-        return false
+        if (messageObject == null) return false
+        return shouldBlockMessage(messageObject)
     }
 
+    @JvmStatic
     fun addSpoilerEntities(messageObject: MessageObject): ArrayList<TLRPC.MessageEntity>? {
         return addSpoilerEntities(messageObject, messageObject.messageOwner.entities)
     }
 
+    @JvmStatic
     fun addSpoilerEntities(
         messageObject: MessageObject,
         original: ArrayList<TLRPC.MessageEntity>?
@@ -34,27 +34,45 @@ object MessagesFilterHelper {
         return original
     }
 
+    @JvmStatic
     fun addSpoilerEntities(originalText: String?): String? {
         return originalText
     }
 
-    fun shouldBlockMessage(messageObject: MessageObject): Boolean {
+    @JvmStatic
+    fun shouldBlockMessage(messageObject: MessageObject?): Boolean {
+        if (messageObject == null) return false
+        if (CherrygramNBConfig.regexFiltersEnabled && !CherrygramNBConfig.regexFilterPatterns.isNullOrEmpty()) {
+            try {
+                val text = messageObject.messageText?.toString() ?: messageObject.caption?.toString() ?: ""
+                if (text.isNotEmpty()) {
+                    val pattern = CherrygramNBConfig.regexFilterPatterns
+                    if (Regex(pattern, RegexOption.IGNORE_CASE).containsMatchIn(text)) {
+                        return true
+                    }
+                }
+            } catch (_: Exception) {}
+        }
         return false
     }
 
     /** Exclusions start */
+    @JvmStatic
     fun getExcludedList(): String {
         return "excluded_for_filters"
     }
 
+    @JvmStatic
     fun getExcludedChatsCount(): Int {
         return 0
     }
 
+    @JvmStatic
     fun saveArrayList(list: ArrayList<String>, key: String) {
 
     }
 
+    @JvmStatic
     fun getArrayList(key: String): ArrayList<String> {
         return arrayListOf()
     }

@@ -2944,6 +2944,36 @@ public class ChatActivityEnterView extends FrameLayout implements
                     delegate.didPressAttachButton();
                 }
             });
+            attachButton.setOnLongClickListener(v -> {
+                if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getCannedResponsesEnabled()) {
+                    String data = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getCannedResponsesData();
+                    if (!android.text.TextUtils.isEmpty(data)) {
+                        String[] items = data.split(";");
+                        if (items.length > 0) {
+                            org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(context, resourcesProvider);
+                            builder.setTitle("Быстрые ответы");
+                            builder.setItems(items, (dialog, which) -> {
+                                if (which >= 0 && which < items.length) {
+                                    String selected = items[which].trim();
+                                    if (messageEditText != null) {
+                                        CharSequence current = messageEditText.getText();
+                                        if (android.text.TextUtils.isEmpty(current)) {
+                                            messageEditText.setText(selected);
+                                        } else {
+                                            messageEditText.append(" " + selected);
+                                        }
+                                        messageEditText.setSelection(messageEditText.length());
+                                    }
+                                }
+                            });
+                            builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
+                            builder.show();
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            });
             attachButton.setContentDescription(getString(R.string.AccDescrAttachButton));
             updateFieldRight(1);
         }

@@ -122,6 +122,9 @@ public class UserConfig extends BaseController {
     }
 
     public static int getMaxAccountCount() {
+        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getUnlimitedAccounts()) {
+            return MAX_ACCOUNT_COUNT;
+        }
         return hasPremiumOnAccounts() ? 5 : 3;
     }
 

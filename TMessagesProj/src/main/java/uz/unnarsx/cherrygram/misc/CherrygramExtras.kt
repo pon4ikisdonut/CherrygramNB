@@ -213,7 +213,7 @@ object CherrygramExtras : CoroutineScope by CoroutineScope(
 
     fun openGooglePlayPage(fragment: BaseFragment) {
         val context = fragment.context ?: return
-        Browser.openUrl(context, "market://details?id=${context.packageName}")
+        Browser.openUrl(context, Constants.CG_CHANNEL_URL)
     }
 
     fun getTransparentColor(color: Int, opacity: Float): Int {

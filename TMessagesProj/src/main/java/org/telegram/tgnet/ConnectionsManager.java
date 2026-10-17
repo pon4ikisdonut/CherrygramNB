@@ -220,7 +220,11 @@ public class ConnectionsManager extends BaseController {
         try {
             systemLangCode = LocaleController.getSystemLocaleStringIso639().toLowerCase();
             langCode = LocaleController.getLocaleStringIso639().toLowerCase();
-            deviceModel = Build.MANUFACTURER + Build.MODEL;
+            if (!android.text.TextUtils.isEmpty(uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeDeviceModel())) {
+                deviceModel = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeDeviceModel();
+            } else {
+                deviceModel = Build.MANUFACTURER + " " + Build.MODEL;
+            }
             PackageInfo pInfo = ApplicationLoader.applicationContext.getPackageManager().getPackageInfo(ApplicationLoader.applicationContext.getPackageName(), 0);
             appVersion = pInfo.versionName + " (" + pInfo.versionCode + ")";
             if (BuildVars.DEBUG_PRIVATE_VERSION) {

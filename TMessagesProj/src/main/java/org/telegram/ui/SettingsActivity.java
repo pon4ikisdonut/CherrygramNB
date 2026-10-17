@@ -587,9 +587,10 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
 
         avatarDrawable.setInfo(user);
         avatarView.setForUserOrChat(user, avatarDrawable, true);
-        titleView.setText(UserObject.getUserName(user));
+        boolean isStreamer = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getStreamerMode();
+        titleView.setText(isStreamer ? "Streamer" : UserObject.getUserName(user));
         final StringBuilder sb = new StringBuilder();
-        if (hidePhoneNumber) {
+        if (hidePhoneNumber || isStreamer) {
             sb.append(getChatsPasswordHelper().replaceStringToSpoilers(
                     PhoneFormat.getInstance().format("+ " + user.phone),
                     true
@@ -599,7 +600,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         }
         final String username = UserObject.getPublicUsername(user);
         if (username != null) {
-            sb.append(" • @").append(username);
+            sb.append(" • @").append(isStreamer ? "••••••" : username);
         }
         subtitleView.setText(sb);
 

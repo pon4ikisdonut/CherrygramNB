@@ -37,6 +37,33 @@ object CherrygramNBConfig {
     var hiddenChatsPin by sharedPreferences.string("nb_hidden_chats_pin", "")
     var fakeDeviceModel by sharedPreferences.string("nb_fake_device_model", "")
 
+    @JvmField
+    var isHiddenChatsUnlocked = false
+
+    private val hiddenDialogsSet: MutableSet<Long> by lazy {
+        val set = mutableSetOf<Long>()
+        val saved = sharedPreferences.getString("nb_hidden_dialogs_list", "") ?: ""
+        if (saved.isNotEmpty()) {
+            saved.split(",").mapNotNull { it.trim().toLongOrNull() }.forEach { set.add(it) }
+        }
+        set
+    }
+
+    fun isDialogHidden(dialogId: Long): Boolean {
+        return hiddenChatsEnabled && hiddenDialogsSet.contains(dialogId)
+    }
+
+    fun toggleDialogHidden(dialogId: Long): Boolean {
+        val willHide = !hiddenDialogsSet.contains(dialogId)
+        if (willHide) {
+            hiddenDialogsSet.add(dialogId)
+        } else {
+            hiddenDialogsSet.remove(dialogId)
+        }
+        sharedPreferences.edit().putString("nb_hidden_dialogs_list", hiddenDialogsSet.joinToString(",")).apply()
+        return willHide
+    }
+
     // 6. Interface & Customization
     var foldersAtBottom by sharedPreferences.boolean("nb_folders_at_bottom", false)
     var noMessageBubbles by sharedPreferences.boolean("nb_no_message_bubbles", false)

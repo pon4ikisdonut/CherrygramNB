@@ -6750,46 +6750,52 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                 TLRPC.User user = baseFragment instanceof ChatActivity ? ((ChatActivity) baseFragment).getCurrentUser() : null;
                 TLRPC.Chat chat = baseFragment instanceof ChatActivity ? ((ChatActivity) baseFragment).getCurrentChat() : null;
                 final boolean paidUser = user != null && ((ChatActivity) baseFragment).getMessagesController().getSendPaidMessagesStars(user.id) > 0;
-                galleryButton = buttonsCount++;
-                if (CherrygramCameraConfig.INSTANCE.getDisableAttachCamera()) cameraButton = buttonsCount++;
-                if ((photosEnabled || videosEnabled) && !paidUser && (chat == null || !ChatObject.isMonoForum(chat))) {
-                    if (baseFragment instanceof ChatActivity && !((ChatActivity) baseFragment).isInScheduleMode() && !((ChatActivity) baseFragment).isSecretChat() && ((ChatActivity) baseFragment).getChatMode() != ChatActivity.MODE_QUICK_REPLIES) {
-                        ChatActivity chatActivity = (ChatActivity) baseFragment;
+                if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getMinimalAttachMenu()) {
+                    galleryButton = buttonsCount++;
+                    documentButton = buttonsCount++;
+                    musicButton = buttonsCount++;
+                } else {
+                    galleryButton = buttonsCount++;
+                    if (CherrygramCameraConfig.INSTANCE.getDisableAttachCamera()) cameraButton = buttonsCount++;
+                    if ((photosEnabled || videosEnabled) && !paidUser && (chat == null || !ChatObject.isMonoForum(chat))) {
+                        if (baseFragment instanceof ChatActivity && !((ChatActivity) baseFragment).isInScheduleMode() && !((ChatActivity) baseFragment).isSecretChat() && ((ChatActivity) baseFragment).getChatMode() != ChatActivity.MODE_QUICK_REPLIES) {
+                            ChatActivity chatActivity = (ChatActivity) baseFragment;
 
-                        attachBotsStartRow = buttonsCount;
-                        attachMenuBots.clear();
-                        for (TLRPC.TL_attachMenuBot bot : MediaDataController.getInstance(currentAccount).getAttachMenuBots().bots) {
-                            if (bot.show_in_attach_menu && MediaDataController.canShowAttachMenuBot(bot, chatActivity.getCurrentChat() != null ? chatActivity.getCurrentChat() : chatActivity.getCurrentUser())) {
-                                attachMenuBots.add(bot);
+                            attachBotsStartRow = buttonsCount;
+                            attachMenuBots.clear();
+                            for (TLRPC.TL_attachMenuBot bot : MediaDataController.getInstance(currentAccount).getAttachMenuBots().bots) {
+                                if (bot.show_in_attach_menu && MediaDataController.canShowAttachMenuBot(bot, chatActivity.getCurrentChat() != null ? chatActivity.getCurrentChat() : chatActivity.getCurrentUser())) {
+                                    attachMenuBots.add(bot);
+                                }
                             }
+
+                            buttonsCount += attachMenuBots.size();
+                            attachBotsEndRow = buttonsCount;
                         }
-
-                        buttonsCount += attachMenuBots.size();
-                        attachBotsEndRow = buttonsCount;
                     }
-                }
-                documentButton = buttonsCount++;
+                    documentButton = buttonsCount++;
 
-                if (plainTextEnabled) {
-                    locationButton = buttonsCount++;
-                }
-                if (plainTextEnabled && MessagesController.getInstance(currentAccount).richEditorAvailable()) {
-                    richButton = buttonsCount++;
-                }
+                    if (plainTextEnabled) {
+                        locationButton = buttonsCount++;
+                    }
+                    if (plainTextEnabled && MessagesController.getInstance(currentAccount).richEditorAvailable()) {
+                        richButton = buttonsCount++;
+                    }
 
-                if (pollsEnabled) {
-                    pollButton = buttonsCount++;
+                    if (pollsEnabled) {
+                        pollButton = buttonsCount++;
+                    }
+                    if (todoEnabled) {
+                        todoButton = buttonsCount++;
+                    }
+                    if (plainTextEnabled) {
+                        contactButton = buttonsCount++;
+                    }
+                    if (baseFragment instanceof ChatActivity && ((ChatActivity) baseFragment).getChatMode() == 0 && user != null && !paidUser && !user.bot && QuickRepliesController.getInstance(currentAccount).hasReplies()) {
+                        quickRepliesButton = buttonsCount++;
+                    }
+                    musicButton = buttonsCount++;
                 }
-                if (todoEnabled) {
-                    todoButton = buttonsCount++;
-                }
-                if (plainTextEnabled) {
-                    contactButton = buttonsCount++;
-                }
-                if (baseFragment instanceof ChatActivity && ((ChatActivity) baseFragment).getChatMode() == 0 && user != null && !paidUser && !user.bot && QuickRepliesController.getInstance(currentAccount).hasReplies()) {
-                    quickRepliesButton = buttonsCount++;
-                }
-                musicButton = buttonsCount++;
             }
             super.notifyDataSetChanged();
         }

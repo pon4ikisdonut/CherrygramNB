@@ -44,14 +44,17 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
     private val ROW_PRIVACY_STREAMER = 501
     private val ROW_PRIVACY_HIDDEN_CHATS = 502
     private val ROW_PRIVACY_FAKE_UA = 503
+    private val ROW_PRIVACY_HIDDEN_CHATS_PIN = 504
 
     private val ROW_HEADER_INTERFACE = 600
     private val ROW_UI_BOTTOM_FOLDERS = 601
     private val ROW_UI_NO_BUBBLES = 602
     private val ROW_UI_MATERIAL_YOU = 603
+    private val ROW_UI_CUSTOM_FONT = 604
 
     private val ROW_HEADER_PRODUCTIVITY = 700
     private val ROW_PROD_CANNED = 701
+    private val ROW_PROD_CANNED_DATA = 705
     private val ROW_PROD_AUTORESPONDER = 702
     private val ROW_PROD_AUTORESPONDER_TEXT = 703
     private val ROW_PROD_UNLIMITED_ACCOUNTS = 704
@@ -184,6 +187,15 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 "Скрывать выбранные диалоги из общего списка"
             ).setChecked(CherrygramNBConfig.hiddenChatsEnabled)
         )
+        if (CherrygramNBConfig.hiddenChatsEnabled) {
+            items.add(
+                UItem.asButton(
+                    ROW_PRIVACY_HIDDEN_CHATS_PIN,
+                    "Изменить PIN для скрытых чатов",
+                    if (CherrygramNBConfig.hiddenChatsPin.isEmpty()) "Не задан" else "••••"
+                )
+            )
+        }
         items.add(
             UItem.asButton(
                 ROW_PRIVACY_FAKE_UA,
@@ -216,6 +228,13 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 "Динамические акценты в цвета системной темы Android"
             ).setChecked(CherrygramNBConfig.materialYouAccent)
         )
+        items.add(
+            UItem.asButton(
+                ROW_UI_CUSTOM_FONT,
+                "Пользовательский шрифт (.ttf / .otf)",
+                if (CherrygramNBConfig.customFontPath.isEmpty()) "Системный" else CherrygramNBConfig.customFontPath
+            )
+        )
         items.add(UItem.asShadow(null))
 
         // 7. Productivity
@@ -227,6 +246,15 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 "Быстрый доступ к заготовленным фразам при вводе текста"
             ).setChecked(CherrygramNBConfig.cannedResponsesEnabled)
         )
+        if (CherrygramNBConfig.cannedResponsesEnabled) {
+            items.add(
+                UItem.asButton(
+                    ROW_PROD_CANNED_DATA,
+                    "Настроить шаблоны ответов",
+                    CherrygramNBConfig.cannedResponsesData
+                )
+            )
+        }
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_PROD_AUTORESPONDER,
@@ -335,8 +363,27 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 SettingsHelper.updateCheckState(view, CherrygramNBConfig.streamerMode)
             }
             ROW_PRIVACY_HIDDEN_CHATS -> {
-                CherrygramNBConfig.hiddenChatsEnabled = !CherrygramNBConfig.hiddenChatsEnabled
-                SettingsHelper.updateCheckState(view, CherrygramNBConfig.hiddenChatsEnabled)
+                if (!CherrygramNBConfig.hiddenChatsEnabled && CherrygramNBConfig.hiddenChatsPin.isEmpty()) {
+                    showTextInputDialog("Задайте PIN для скрытых чатов", "") { pin ->
+                        if (pin.isNotEmpty()) {
+                            CherrygramNBConfig.hiddenChatsPin = pin
+                            CherrygramNBConfig.hiddenChatsEnabled = true
+                            SettingsHelper.updateCheckState(view, true)
+                            updateRows(true)
+                            BulletinFactory.of(this).createSimpleBulletin(R.raw.done, "PIN установлен: $pin").show()
+                        }
+                    }
+                } else {
+                    CherrygramNBConfig.hiddenChatsEnabled = !CherrygramNBConfig.hiddenChatsEnabled
+                    SettingsHelper.updateCheckState(view, CherrygramNBConfig.hiddenChatsEnabled)
+                    updateRows(true)
+                }
+            }
+            ROW_PRIVACY_HIDDEN_CHATS_PIN -> {
+                showTextInputDialog("PIN для скрытых чатов", CherrygramNBConfig.hiddenChatsPin) { newPin ->
+                    CherrygramNBConfig.hiddenChatsPin = newPin
+                    updateRows(true)
+                }
             }
             ROW_PRIVACY_FAKE_UA -> {
                 showTextInputDialog("Фейковая модель устройства", CherrygramNBConfig.fakeDeviceModel) { newModel ->
@@ -356,9 +403,22 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 CherrygramNBConfig.materialYouAccent = !CherrygramNBConfig.materialYouAccent
                 SettingsHelper.updateCheckState(view, CherrygramNBConfig.materialYouAccent)
             }
+            ROW_UI_CUSTOM_FONT -> {
+                showTextInputDialog("Абсолютный путь к файлу шрифта (.ttf / .otf)", CherrygramNBConfig.customFontPath) { path ->
+                    CherrygramNBConfig.customFontPath = path
+                    updateRows(true)
+                }
+            }
             ROW_PROD_CANNED -> {
                 CherrygramNBConfig.cannedResponsesEnabled = !CherrygramNBConfig.cannedResponsesEnabled
                 SettingsHelper.updateCheckState(view, CherrygramNBConfig.cannedResponsesEnabled)
+                updateRows(true)
+            }
+            ROW_PROD_CANNED_DATA -> {
+                showTextInputDialog("Шаблоны ответов (разделитель ;)", CherrygramNBConfig.cannedResponsesData) { data ->
+                    CherrygramNBConfig.cannedResponsesData = data
+                    updateRows(true)
+                }
             }
             ROW_PROD_AUTORESPONDER -> {
                 CherrygramNBConfig.autoResponderEnabled = !CherrygramNBConfig.autoResponderEnabled

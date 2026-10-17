@@ -22745,6 +22745,21 @@ public class ChatActivity extends BaseFragment implements
             MessageObject conversionMessage = null;
             boolean conversion = false;
             boolean deletedThreadMessage = false;
+            if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getAntiDeleteMessages() && chatMode != MODE_SCHEDULED) {
+                ArrayList<Integer> remainingToDelete = new ArrayList<>();
+                for (int msg_id : markAsDeletedMessages) {
+                    MessageObject msg = messagesDict[0].get(msg_id);
+                    if (msg != null && !msg.isOutOwner()) {
+                        msg.deletedLocally = true;
+                    } else {
+                        remainingToDelete.add(msg_id);
+                    }
+                }
+                markAsDeletedMessages = remainingToDelete;
+                if (chatAdapter != null) {
+                    chatAdapter.notifyDataSetChanged();
+                }
+            }
             for (int msg_id : markAsDeletedMessages) {
                 MessageObject msg = messagesDict[0].get(msg_id);
                 if (msg_id == threadMessageId) {

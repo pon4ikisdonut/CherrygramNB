@@ -2437,6 +2437,16 @@ public class AndroidUtilities {
                             }
                             break;
                         default:
+                            String customFont = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getCustomFontPath();
+                            if (!android.text.TextUtils.isEmpty(customFont)) {
+                                try {
+                                    java.io.File cf = new java.io.File(customFont);
+                                    if (cf.exists() && cf.canRead()) {
+                                        t = Typeface.createFromFile(cf);
+                                        break;
+                                    }
+                                } catch (Exception ignored) {}
+                            }
                             if (Build.VERSION.SDK_INT >= 26) {
                                 Typeface.Builder builder = new Typeface.Builder(ApplicationLoader.applicationContext.getAssets(), assetPath);
                                 if (assetPath.contains("rextrabold")) {
