@@ -141,12 +141,27 @@ public abstract class BaseRemoteHelper {
                         version = mVer.group(1);
                     }
 
-                    java.util.regex.Pattern pCode = java.util.regex.Pattern.compile("\\(([0-9]{4,})\\)");
+                    java.util.regex.Pattern pCode = java.util.regex.Pattern.compile("(?i)(?:(?:\\[|\\()?\\s*(?:код|code)[:\\s]+|\\(|\\[)\\s*([0-9]{4,})");
                     java.util.regex.Matcher mCode = pCode.matcher(text);
                     if (mCode.find()) {
                         try {
                             versionCode = Integer.parseInt(mCode.group(1));
                         } catch (Exception ignored) {}
+                    }
+                    if (versionCode == 0 && message.media != null && message.media.document != null && message.media.document.attributes != null) {
+                        for (TLRPC.DocumentAttribute attr : message.media.document.attributes) {
+                            if (attr instanceof TLRPC.TL_documentAttributeFilename) {
+                                String fn = ((TLRPC.TL_documentAttributeFilename) attr).file_name;
+                                if (fn != null) {
+                                    java.util.regex.Matcher mFnCode = pCode.matcher(fn);
+                                    if (mFnCode.find()) {
+                                        try {
+                                            versionCode = Integer.parseInt(mFnCode.group(1));
+                                        } catch (Exception ignored) {}
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     if (version == null) {

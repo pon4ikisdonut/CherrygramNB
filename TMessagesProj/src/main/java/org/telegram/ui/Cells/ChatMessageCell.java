@@ -18538,7 +18538,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             } else {
                 signString = messageObject.messageOwner.post_author.replace("\n", "");
             }
-        } else if (messageObject.messageOwner.fwd_from != null && messageObject.messageOwner.fwd_from.post_author != null) {
+        } else if (messageObject.messageOwner.fwd_from != null && messageObject.messageOwner.fwd_from.post_author != null && !messageObject.needDrawForwarded()) {
             signString = messageObject.messageOwner.fwd_from.post_author.replace("\n", "");
         } else if (messageObject.messageOwner.fwd_from != null && messageObject.messageOwner.fwd_from.imported) {
             if (messageObject.messageOwner.fwd_from.date == messageObject.messageOwner.date) {
@@ -18546,7 +18546,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             } else {
                 signString = LocaleController.formatImportedDate(messageObject.messageOwner.fwd_from.date) + " " + getString("ImportedMessage", R.string.ImportedMessage);
             }
-        } else if (!messageObject.isOutOwner() && fromId > 0 && messageObject.messageOwner.post) {
+        } else if (!messageObject.isOutOwner() && fromId > 0 && messageObject.messageOwner.post && !messageObject.isForwarded()) {
             TLRPC.User signUser = MessagesController.getInstance(currentAccount).getUser(fromId);
             if (signUser != null) {
                 signString = ContactsController.formatName(signUser.first_name, signUser.last_name).replace('\n', ' ');

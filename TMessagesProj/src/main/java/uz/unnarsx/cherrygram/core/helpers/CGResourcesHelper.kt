@@ -94,6 +94,11 @@ object CGResourcesHelper {
     }
 
     @JvmStatic
+    fun getCodeVersionInt(): Int {
+        return BuildConfig.BUILD_CODE_VERSION.toIntOrNull() ?: 0
+    }
+
+    @JvmStatic
     fun getAboutString(): String {
         return getAppName() + " v" + getCherryVersion() + " (" + getAbiCode() + ")" +
                     "\n" +

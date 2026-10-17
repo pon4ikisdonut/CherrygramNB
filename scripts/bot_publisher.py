@@ -50,7 +50,7 @@ def send_telegram_request(token, method, data=None, headers=None):
     except Exception as e:
         return {"ok": False, "description": str(e)}
 
-def send_message(token, chat_id, text, parse_mode="Markdown"):
+def send_message(token, chat_id, text, parse_mode="HTML"):
     payload_dict = {
         "chat_id": chat_id,
         "text": text,
@@ -61,7 +61,7 @@ def send_message(token, chat_id, text, parse_mode="Markdown"):
     payload = json.dumps(payload_dict).encode("utf-8")
     return send_telegram_request(token, "sendMessage", data=payload, headers={"Content-Type": "application/json"})
 
-def send_document_bot_api(token, chat_id, filepath, caption=None, parse_mode="Markdown"):
+def send_document_bot_api(token, chat_id, filepath, caption=None, parse_mode="HTML"):
     boundary = "----WebKitFormBoundary" + uuid.uuid4().hex
     filename = os.path.basename(filepath)
     content_type = mimetypes.guess_type(filepath)[0] or "application/vnd.android.package-archive"
@@ -125,7 +125,7 @@ def send_document_telethon(api_id, api_hash, bot_token, chat_id, filepath, capti
             target,
             filepath,
             caption=caption,
-            parse_mode="md",
+            parse_mode="html",
             progress_callback=progress_callback
         )
         return {"ok": True, "result": {"message_id": msg.id}}
@@ -238,12 +238,18 @@ def main():
             
         tag = "#updateBeta" if is_beta else "#updateRelease"
         caption = (
-            f"🍒 *CherrygramNB v{cherry_version} ({version_code}) {build_flavor}*\n\n"
-            f"📦 *Файл:* `{filename}`\n"
-            f"📱 *Архитектура:* `{abi.capitalize()}`\n"
-            f"⚡ *База:* Telegram v{tg_version}\n"
-            f"👤 *Автор форка:* @pon4ikisdonut\n"
-            f"📢 *Канал:* @CherrygramNB\n\n"
+            f"🍒 <b>CherrygramNB v{cherry_version} {build_flavor}</b>\n\n"
+            f"📦 <b>Файл:</b> <code>{filename}</code>\n"
+            f"🔢 <b>Версия:</b> <code>{cherry_version}</code> (код: <code>{version_code}</code>)\n"
+            f"📱 <b>Архитектура:</b> <code>{abi.capitalize()}</code>\n"
+            f"⚡ <b>База:</b> Telegram v{tg_version}\n\n"
+            f"📋 <b>Что нового:</b>\n"
+            f"• Исправлено отображение автора в пересланных сообщениях (возвращён заголовок сверху)\n"
+            f"• Корректная проверка версий обновлений прямо в клиенте\n"
+            f"• Улучшена стабильность встроенного загрузчика обновлений\n"
+            f"• Все эксклюзивные функции CherrygramNB активны\n\n"
+            f"👤 <b>Автор форка:</b> @pon4ikisdonut\n"
+            f"📢 <b>Канал:</b> @CherrygramNB\n\n"
             f"#CherrygramNB #{build_flavor} #Update {tag}"
         )
         

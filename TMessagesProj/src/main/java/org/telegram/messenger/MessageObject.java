@@ -11564,18 +11564,16 @@ public class MessageObject {
         if (getDialogId() == UserObject.VERIFY) {
             return false;
         }
-        if (isSaved) {
-            if (messageOwner == null || messageOwner.fwd_from == null) return false;
-            final long selfId = UserConfig.getInstance(currentAccount).getClientUserId();
-            final long savedId = getSavedDialogId(selfId, messageOwner);
-            long fromId = DialogObject.getPeerDialogId(messageOwner.fwd_from.saved_from_peer);
-            if (fromId >= 0) {
-                fromId = DialogObject.getPeerDialogId(messageOwner.fwd_from.from_id);
-            }
-            if (fromId == 0) return savedId >= 0 && savedId != UserObject.ANONYMOUS;
-            return savedId != fromId && fromId != selfId;
+        if (messageOwner == null || messageOwner.fwd_from == null) {
+            return false;
         }
-        return ((messageOwner.flags & TLRPC.MESSAGE_FLAG_FWD) != 0 || getMedia(this) instanceof TLRPC.TL_messageMediaPaidMedia) && messageOwner.fwd_from != null && !messageOwner.fwd_from.imported && (messageOwner.fwd_from.saved_from_peer == null || !(messageOwner.fwd_from.from_id instanceof TLRPC.TL_peerChannel) || messageOwner.fwd_from.saved_from_peer.channel_id != messageOwner.fwd_from.from_id.channel_id) && UserConfig.getInstance(currentAccount).getClientUserId() != getDialogId();
+        if (messageOwner.fwd_from.imported) {
+            return false;
+        }
+        if ((messageOwner.flags & TLRPC.MESSAGE_FLAG_FWD) != 0 || getMedia(this) instanceof TLRPC.TL_messageMediaPaidMedia) {
+            return true;
+        }
+        return false;
     }
 
     public static boolean isForwardedMessage(TLRPC.Message message) {

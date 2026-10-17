@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import uz.unnarsx.cherrygram.core.configs.CherrygramCoreConfig;
 import uz.unnarsx.cherrygram.core.helpers.CGResourcesHelper;
+import uz.unnarsx.cherrygram.misc.Constants;
 
 public class UpdateHelper extends BaseRemoteHelper {
 
@@ -59,43 +60,50 @@ public class UpdateHelper extends BaseRemoteHelper {
 
     private Map<String, Integer> jsonToMap(JSONObject obj) {
         Map<String, Integer> map = new HashMap<>();
+        if (obj == null) return map;
         List<String> abis = new ArrayList<>();
         abis.add("arm64-v8a");
         abis.add("armeabi-v7a");
         abis.add("universal");
-        try {
-            for (var abi : abis) {
-                map.put(abi, obj.getInt(abi));
+        for (var abi : abis) {
+            if (obj.has(abi)) {
+                try {
+                    map.put(abi, obj.getInt(abi));
+                } catch (JSONException ignored) {
+                }
             }
-        } catch (JSONException ignored) {
         }
         return map;
     }
 
     private Update getShouldUpdateVersion(List<JSONObject> responses) {
         Update ref = null;
+        int currentCode = CGResourcesHelper.getCodeVersionInt();
+        String currentCherryVer = CGResourcesHelper.getCherryVersion();
         for (var string : responses) {
             try {
                 String remoteVersion = string.getString("version");
-                int remoteVersionCode = string.getInt("version_code");
+                int remoteVersionCode = string.optInt("version_code", 0);
 
-                boolean shouldUpdate = isNew(CGResourcesHelper.getCherryVersion(), remoteVersion)
-                        || isNew(CGResourcesHelper.getCodeVersion(), String.valueOf(remoteVersionCode));
+                boolean isStrictlyNewer;
+                if (remoteVersionCode > 0 && currentCode > 0) {
+                    isStrictlyNewer = remoteVersionCode > currentCode
+                            || (remoteVersionCode == currentCode && isNew(currentCherryVer, remoteVersion));
+                } else {
+                    isStrictlyNewer = isNew(currentCherryVer, remoteVersion);
+                }
 
-                if (shouldUpdate || updateAlways) {
-                    if (updateAlways) {
-                        updateAlways = false;
-                    }
+                if (isStrictlyNewer) {
                     ref = new Update(
-                            string.getString("build_flavor"),
-                            string.getString("release_date"),
-                            string.getBoolean("can_not_skip"),
+                            string.optString("build_flavor", "Release"),
+                            string.optString("release_date", ""),
+                            string.optBoolean("can_not_skip", false),
                             remoteVersion,
                             remoteVersionCode,
-                            string.getInt("sticker"),
-                            string.getInt("message"),
-                            jsonToMap(string.getJSONObject("document")),
-                            string.getString("url")
+                            string.optInt("sticker", 0),
+                            string.optInt("message", 0),
+                            jsonToMap(string.optJSONObject("document")),
+                            string.optString("url", Constants.CG_CHANNEL_URL != null ? Constants.CG_CHANNEL_URL : "https://t.me/CherrygramNB")
                     );
                     break;
                 }
