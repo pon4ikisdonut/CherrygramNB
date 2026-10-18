@@ -54,15 +54,19 @@ CherrygramNB is completely decoupled from Google Play Store restrictions, remove
 * **Streamer Mode:** One-tap toggle that blurs/masks your phone number, username, and avatar in the drawer and settings for safe streaming and screenshot sharing.
 * **Hidden Chats:** Hide sensitive dialogues with PIN/passcode access.
 * **Fake Device Profile:** Spoof device model and client metadata in active sessions.
+* **Session Location & IP Spoofing:** Spoof country, region, and IP address for active sessions in Settings > Devices to prevent leaking your real location.
+* **Anti-Tamper Protection:** Neutralized upstream anti-tamper crashes, remote kick triggers, and forced session wipes.
 
 ### 6. 🎨 Interface & Ergonomics
 * **Bottom Folder Tabs (Bottom Bar):** Ergonomic navigation bar placed at the bottom for effortless one-handed use on large screens.
 * **Dynamic Material You:** System wallpaper accent color harmony across icons, buttons, and switches.
 * **Custom Typography:** Full support for loading external `.ttf` and `.otf` fonts.
+* **Fixed Header & Nicknames:** Guaranteed proper rendering of forwarded author headers and contact nicknames without displacement glitches.
 
-### 7. 🚀 Productivity
+### 7. 🚀 Productivity & Updates
+* **Independent In-App Updater:** Autonomous background APK updater pulling releases and betas directly from [@CherrygramNB](https://t.me/CherrygramNB) with version intelligence.
+* **Smart Quote Auto-Responder:** Automatically responds to incoming live direct messages with real quote replies and smart cooldowns (never triggers on historical messages).
 * **Canned Responses:** Pre-configured quick-reply snippets in the message input bar.
-* **Local Auto-Responder:** Automatically sends away messages while you are busy.
 * **Unlimited Multi-Account:** Expanded account limit supporting up to 20 active profiles simultaneously.
 
 ---

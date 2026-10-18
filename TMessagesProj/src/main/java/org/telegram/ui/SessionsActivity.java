@@ -675,7 +675,18 @@ public class SessionsActivity extends BaseFragment implements NotificationCenter
                     TL_account.authorizations res = (TL_account.authorizations) response;
                     for (int a = 0, N = res.authorizations.size(); a < N; a++) {
                         TLRPC.TL_authorization authorization = res.authorizations.get(a);
-                        if ((authorization.flags & 1) != 0) {
+                        if ((authorization.flags & 1) != 0 || authorization.current) {
+                            if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeSessionLocationEnabled()) {
+                                String fakeLoc = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeSessionLocation();
+                                if (!android.text.TextUtils.isEmpty(fakeLoc)) {
+                                    authorization.country = fakeLoc;
+                                    authorization.region = fakeLoc;
+                                }
+                                String fakeIp = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeSessionIp();
+                                if (!android.text.TextUtils.isEmpty(fakeIp)) {
+                                    authorization.ip = fakeIp;
+                                }
+                            }
                             currentSession = authorization;
                         } else if (authorization.password_pending) {
                             passwordSessions.add(authorization);

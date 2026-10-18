@@ -21593,6 +21593,7 @@ public class MessagesController extends BaseController implements NotificationCe
         return notificationsPreferences.getBoolean("sound_enabled_" + NotificationsController.getSharedPrefKey(dialogId, topicId), true);
     }
 
+    private static final long appProcessStartTime = System.currentTimeMillis();
     private static final androidx.collection.LongSparseArray<Long> lastAutoReplyTimeByDialog = new androidx.collection.LongSparseArray<>();
 
     public boolean isDialogMuted(long dialogId, long topicId, TLRPC.Chat chat) {
@@ -21995,19 +21996,27 @@ public class MessagesController extends BaseController implements NotificationCe
                         addDialogToFolder(dialogId, 1, -1, 0);
                     }
                     if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getAutoResponderEnabled()) {
-                        MessageObject firstMsg = messages.get(0);
-                        if (firstMsg != null && !firstMsg.isOutOwner()) {
-                            long now = System.currentTimeMillis();
-                            Long lastReply = lastAutoReplyTimeByDialog.get(dialogId);
-                            if (lastReply == null || now - lastReply > 300000L) {
-                                lastAutoReplyTimeByDialog.put(dialogId, now);
-                                String replyText = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getAutoResponderText();
-                                if (!android.text.TextUtils.isEmpty(replyText)) {
-                                    AndroidUtilities.runOnUIThread(() -> {
-                                        SendMessagesHelper.getInstance(currentAccount).sendMessage(
-                                            SendMessagesHelper.SendMessageParams.of(replyText, dialogId)
-                                        );
-                                    }, 1500);
+                        long now = System.currentTimeMillis();
+                        if (now - appProcessStartTime >= 10000L) {
+                            MessageObject targetMsg = lastMessage != null ? lastMessage : messages.get(0);
+                            if (targetMsg != null && !targetMsg.isOutOwner() && targetMsg.getId() > 0 && targetMsg.messageOwner != null) {
+                                boolean isService = targetMsg.messageOwner.action != null && !(targetMsg.messageOwner.action instanceof TLRPC.TL_messageActionEmpty);
+                                if (!isService) {
+                                    int currentTime = ConnectionsManager.getInstance(currentAccount).getCurrentTime();
+                                    if (Math.abs(currentTime - targetMsg.messageOwner.date) <= 60) {
+                                        Long lastReply = lastAutoReplyTimeByDialog.get(dialogId);
+                                        if (lastReply == null || now - lastReply > 300000L) {
+                                            lastAutoReplyTimeByDialog.put(dialogId, now);
+                                            String replyText = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getAutoResponderText();
+                                            if (!android.text.TextUtils.isEmpty(replyText)) {
+                                                AndroidUtilities.runOnUIThread(() -> {
+                                                    SendMessagesHelper.SendMessageParams params = SendMessagesHelper.SendMessageParams.of(replyText, dialogId);
+                                                    params.replyToMsg = targetMsg;
+                                                    SendMessagesHelper.getInstance(currentAccount).sendMessage(params);
+                                                }, 1500);
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

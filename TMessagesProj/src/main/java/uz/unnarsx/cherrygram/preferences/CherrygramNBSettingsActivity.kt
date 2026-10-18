@@ -44,6 +44,9 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
     private val ROW_PRIVACY_HIDDEN_CHATS = 502
     private val ROW_PRIVACY_FAKE_UA = 503
     private val ROW_PRIVACY_HIDDEN_CHATS_PIN = 504
+    private val ROW_PRIVACY_FAKE_SESSION_TOGGLE = 505
+    private val ROW_PRIVACY_FAKE_SESSION_LOCATION = 506
+    private val ROW_PRIVACY_FAKE_SESSION_IP = 507
 
     private val ROW_HEADER_INTERFACE = 600
     private val ROW_UI_BOTTOM_FOLDERS = 601
@@ -196,6 +199,29 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 if (CherrygramNBConfig.fakeDeviceModel.isEmpty()) "По умолчанию" else CherrygramNBConfig.fakeDeviceModel
             )
         )
+        items.add(
+            SettingsHelper.asSwitchCG(
+                ROW_PRIVACY_FAKE_SESSION_TOGGLE,
+                "Спуфинг локации в сессиях",
+                "Подменять страну, город и IP-адрес текущего устройства в списке сессий"
+            ).setChecked(CherrygramNBConfig.fakeSessionLocationEnabled)
+        )
+        if (CherrygramNBConfig.fakeSessionLocationEnabled) {
+            items.add(
+                UItem.asButton(
+                    ROW_PRIVACY_FAKE_SESSION_LOCATION,
+                    "Поддельная локация (Страна, Город)",
+                    if (CherrygramNBConfig.fakeSessionLocation.isEmpty()) "Не задана" else CherrygramNBConfig.fakeSessionLocation
+                )
+            )
+            items.add(
+                UItem.asButton(
+                    ROW_PRIVACY_FAKE_SESSION_IP,
+                    "Поддельный IP-адрес",
+                    if (CherrygramNBConfig.fakeSessionIp.isEmpty()) "Не задан" else CherrygramNBConfig.fakeSessionIp
+                )
+            )
+        }
         items.add(UItem.asShadow(null))
 
         // 6. Interface
@@ -353,6 +379,20 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                     updateRows(true)
                 }
             }
+            ROW_PRIVACY_FAKE_SESSION_TOGGLE -> {
+                CherrygramNBConfig.fakeSessionLocationEnabled = !CherrygramNBConfig.fakeSessionLocationEnabled
+                SettingsHelper.updateCheckState(view, CherrygramNBConfig.fakeSessionLocationEnabled)
+                updateRows(true)
+            }
+            ROW_PRIVACY_FAKE_SESSION_LOCATION -> {
+                showLocationChoiceDialog()
+            }
+            ROW_PRIVACY_FAKE_SESSION_IP -> {
+                showTextInputDialog("Поддельный IP-адрес", CherrygramNBConfig.fakeSessionIp) { newIp ->
+                    CherrygramNBConfig.fakeSessionIp = newIp
+                    updateRows(true)
+                }
+            }
             ROW_UI_BOTTOM_FOLDERS -> {
                 CherrygramNBConfig.foldersAtBottom = !CherrygramNBConfig.foldersAtBottom
                 SettingsHelper.updateCheckState(view, CherrygramNBConfig.foldersAtBottom)
@@ -409,6 +449,34 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
 
         builder.setPositiveButton("Сохранить") { _, _ ->
             onConfirm(input.text.toString().trim())
+        }
+        builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null)
+        builder.show()
+    }
+
+    private fun showLocationChoiceDialog() {
+        val ctx = context ?: return
+        val presets = arrayOf(
+            "Германия, Франкфурт",
+            "Швейцария, Цюрих",
+            "Нидерланды, Амстердам",
+            "США, Нью-Йорк",
+            "Канада, Торонто",
+            "Япония, Токио",
+            "Ввести вручную..."
+        )
+        val builder = AlertDialog.Builder(ctx)
+        builder.setTitle("Выберите поддельную локацию")
+        builder.setItems(presets) { _, which ->
+            if (which == presets.size - 1) {
+                showTextInputDialog("Поддельная локация (Страна, Город)", CherrygramNBConfig.fakeSessionLocation) { custom ->
+                    CherrygramNBConfig.fakeSessionLocation = custom
+                    updateRows(true)
+                }
+            } else {
+                CherrygramNBConfig.fakeSessionLocation = presets[which]
+                updateRows(true)
+            }
         }
         builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null)
         builder.show()

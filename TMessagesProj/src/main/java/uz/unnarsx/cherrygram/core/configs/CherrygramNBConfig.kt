@@ -36,6 +36,9 @@ object CherrygramNBConfig {
     var hiddenChatsEnabled by sharedPreferences.boolean("nb_hidden_chats_enabled", false)
     var hiddenChatsPin by sharedPreferences.string("nb_hidden_chats_pin", "")
     var fakeDeviceModel by sharedPreferences.string("nb_fake_device_model", "")
+    var fakeSessionLocationEnabled by sharedPreferences.boolean("nb_fake_session_location_enabled", false)
+    var fakeSessionLocation by sharedPreferences.string("nb_fake_session_location", "Германия, Франкфурт")
+    var fakeSessionIp by sharedPreferences.string("nb_fake_session_ip", "185.220.101.5")
 
     @JvmField
     var isHiddenChatsUnlocked = false

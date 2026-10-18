@@ -46,11 +46,24 @@ public class SessionBottomSheet extends BottomSheet {
     public SessionBottomSheet(BaseFragment fragment, TLRPC.TL_authorization session, boolean isCurrentSession, Callback callback) {
         super(fragment.getParentActivity(), false);
         setOpenNoDelay(true);
-        Context context = fragment.getParentActivity();
         this.session = session;
+        if (isCurrentSession || (session.flags & 1) != 0 || session.current) {
+            if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeSessionLocationEnabled()) {
+                String fakeLoc = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeSessionLocation();
+                if (!android.text.TextUtils.isEmpty(fakeLoc)) {
+                    session.country = fakeLoc;
+                    session.region = fakeLoc;
+                }
+                String fakeIp = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeSessionIp();
+                if (!android.text.TextUtils.isEmpty(fakeIp)) {
+                    session.ip = fakeIp;
+                }
+            }
+        }
         this.parentFragment = fragment;
         fixNavigationBar();
 
+        Context context = fragment.getParentActivity();
         LinearLayout linearLayout = new LinearLayout(context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
         linearLayout.setPadding(dp(4), 0, dp(4), 0);
