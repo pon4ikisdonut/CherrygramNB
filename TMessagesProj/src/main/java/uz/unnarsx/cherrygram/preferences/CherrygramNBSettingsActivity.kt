@@ -241,14 +241,14 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
             SettingsHelper.asSwitchCG(
                 ROW_UI_BOTTOM_FOLDERS,
                 "Нижняя панель папок (Bottom Bar)",
-                "Перенести вкладки папок в нижнюю часть экрана для удобства одной руки"
-            ).setChecked(CherrygramNBConfig.foldersAtBottom)
+                "Перенести вкладки папок вниз экрана (вместо нижней панели навигации)"
+            ).setChecked(CherrygramNBConfig.foldersAtBottom && !CherrygramAppearanceConfig.showMainTabs)
         )
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_UI_SHOW_MAIN_TABS,
                 "Нижняя панель навигации (Main Tabs)",
-                "Плавающая панель с вкладками Чаты, Настройки, Профиль и др."
+                "Плавающая нижняя панель: Чаты, Настройки, Поиск (вкладки папок будут сверху)"
             ).setChecked(CherrygramAppearanceConfig.showMainTabs)
         )
         items.add(
@@ -418,14 +418,23 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 parentLayout?.rebuildAllFragmentViews(false, false)
             }
             ROW_UI_BOTTOM_FOLDERS -> {
-                CherrygramNBConfig.foldersAtBottom = !CherrygramNBConfig.foldersAtBottom
-                CherrygramAppearanceConfig.foldersAtBottom = CherrygramNBConfig.foldersAtBottom
-                SettingsHelper.updateCheckState(view, CherrygramNBConfig.foldersAtBottom)
+                val newState = !(CherrygramNBConfig.foldersAtBottom && !CherrygramAppearanceConfig.showMainTabs)
+                CherrygramNBConfig.foldersAtBottom = newState
+                CherrygramAppearanceConfig.foldersAtBottom = newState
+                if (newState) {
+                    CherrygramAppearanceConfig.showMainTabs = false
+                }
+                updateRows(true)
                 showRestartBulletin()
             }
             ROW_UI_SHOW_MAIN_TABS -> {
-                CherrygramAppearanceConfig.showMainTabs = !CherrygramAppearanceConfig.showMainTabs
-                SettingsHelper.updateCheckState(view, CherrygramAppearanceConfig.showMainTabs)
+                val newState = !CherrygramAppearanceConfig.showMainTabs
+                CherrygramAppearanceConfig.showMainTabs = newState
+                if (newState) {
+                    CherrygramNBConfig.foldersAtBottom = false
+                    CherrygramAppearanceConfig.foldersAtBottom = false
+                }
+                updateRows(true)
                 showRestartBulletin()
             }
             ROW_UI_MATERIAL_YOU -> {
