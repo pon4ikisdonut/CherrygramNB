@@ -37,7 +37,7 @@ object FoldersHelper {
 
     @JvmStatic
     fun getFloatingButtonsOffset(filterTabsView: FilterTabsView?) : Int {
-        return if (moveFoldersToBottom()) AndroidUtilities.dp(56f) else 0
+        return if (moveFoldersToBottom() && filterTabsView != null && filterTabsView.visibility == android.view.View.VISIBLE) AndroidUtilities.dp(54f) else 0
     }
 
     @JvmStatic
@@ -56,6 +56,7 @@ object FoldersHelper {
         filterTabsView.setPadding(0, AndroidUtilities.dp(7f), 0, AndroidUtilities.dp(7f))
         filterTabsView.setBlurredBackground(filterTabsViewBackground)
         contentView.addView(filterTabsView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 50f, Gravity.BOTTOM, 4f, 0f, 4f, 4f))
+        filterTabsView.bringToFront()
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
@@ -78,7 +79,13 @@ object FoldersHelper {
         dialogsActivity: DialogsActivity,
         inForwardMode: Boolean,
     ) {
+        val filterTabsView = dialogsActivity.filterTabsView ?: return
+        if (!moveFoldersToBottom()) return
 
+        val hasMainTabs = dialogsActivity.hasMainTabs && CherrygramAppearanceConfig.showMainTabs
+        val mainTabsHeight = if (hasMainTabs) AndroidUtilities.dp(DialogsActivity.MAIN_TABS_HEIGHT_WITH_MARGINS.toFloat()) else 0
+        val offset = dialogsActivity.navigationBarHeight + mainTabsHeight
+        filterTabsView.translationY = -offset.toFloat()
     }
 
 }

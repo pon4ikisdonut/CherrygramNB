@@ -287,6 +287,7 @@ import uz.unnarsx.cherrygram.core.CGBiometricPrompt;
 import uz.unnarsx.cherrygram.core.configs.CherrygramCoreConfig;
 import uz.unnarsx.cherrygram.core.configs.CherrygramMessagesConfig;
 import uz.unnarsx.cherrygram.core.configs.CherrygramPrivacyConfig;
+import uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig;
 import uz.unnarsx.cherrygram.core.firebase.crashlytics.FirebaseCrashlyticsHelper;
 import uz.unnarsx.cherrygram.core.ui.folders.FoldersHelper;
 import uz.unnarsx.cherrygram.misc.Constants;
@@ -302,7 +303,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private static final boolean TMP_DISABLE_TOPICS_TWO_COLUMNS = false;
 
     public static final int MAIN_TABS_HEIGHT = 56;
-    public static final int MAIN_TABS_MARGIN = dp(6);
+    public static final int MAIN_TABS_MARGIN = 6;
     public static final int MAIN_TABS_HEIGHT_WITH_MARGINS = MAIN_TABS_HEIGHT + MAIN_TABS_MARGIN * 2;
     public static final int FILTER_TABS_HEIGHT = 36;
     public static final int SEARCH_TABS_HEIGHT = 36 + 7 + 7;
@@ -3050,8 +3051,15 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
 
         BirthdayController.getInstance(currentAccount).check();
-        additionNavigationBarHeight = hasMainTabs || foldersAtBottom && !CherrygramAppearanceConfig.INSTANCE.getShowMainTabs() ? dp(MAIN_TABS_HEIGHT_WITH_MARGINS) : 0;
-        additionFloatingButtonOffset = hasMainTabs || foldersAtBottom && !CherrygramAppearanceConfig.INSTANCE.getShowMainTabs() ? dp(DialogsActivity.MAIN_TABS_HEIGHT + DialogsActivity.MAIN_TABS_MARGIN) : 0;
+        int extraNavHeight = 0;
+        if (hasMainTabs && CherrygramAppearanceConfig.INSTANCE.getShowMainTabs()) {
+            extraNavHeight += dp(MAIN_TABS_HEIGHT_WITH_MARGINS);
+        }
+        if (foldersAtBottom) {
+            extraNavHeight += dp(54);
+        }
+        additionNavigationBarHeight = extraNavHeight;
+        additionFloatingButtonOffset = extraNavHeight > 0 ? (extraNavHeight - dp(6)) : 0;
 
         return true;
     }
@@ -7041,7 +7049,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             filterOptions = null;
         }
         final ArrayList<MessagesController.DialogFilter> filters = getMessagesController().getDialogFilters();
-        if (filters.size() > 1) {
+        if (filters.size() > 1 || (CherrygramNBConfig.INSTANCE.getAlwaysShowFolderTabs() && !filters.isEmpty() && (!CherrygramAppearanceConfig.INSTANCE.getTabsHideAllChats() || filters.size() > 1))) {
             if (force || filterTabsView.getVisibility() != View.VISIBLE) {
                 boolean animatedUpdateItems = animated;
                 if (filterTabsView.getVisibility() != View.VISIBLE) {
@@ -14352,6 +14360,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             filterTabsView.setScaleX(s);
             filterTabsView.setScaleY(s);
             filterTabsView.setVisibility(factor > 0 ? View.VISIBLE : View.GONE);
+            if (foldersAtBottom) {
+                FoldersHelper.INSTANCE.updateFoldersOffset(this, onlySelect);
+            }
 
             if (alphaChanged && viewPages[0] != null) {
                 viewPages[0].listView.requestLayout();
@@ -14633,6 +14644,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         checkUi_chatListViewPaddingsBottom();
         blur3_InvalidateBlur();
         checkUi_fadeView();
+        if (foldersAtBottom) {
+            FoldersHelper.INSTANCE.updateFoldersOffset(this, onlySelect);
+        }
 
         if (writeButton != null) {
             writeButton.setTranslationY(-windowInsetsStateHolder.getAnimatedMaxBottomInset());

@@ -74,6 +74,7 @@ object CherrygramNBConfig {
     }
 
     // 6. Interface & Customization
+    var alwaysShowFolderTabs by sharedPreferences.boolean("nb_always_show_folder_tabs", true)
     var foldersAtBottom by sharedPreferences.boolean("nb_folders_at_bottom", false)
     var materialYouAccent by sharedPreferences.boolean("nb_material_you_accent", true)
     var customFontPath by sharedPreferences.string("nb_custom_font_path", "")

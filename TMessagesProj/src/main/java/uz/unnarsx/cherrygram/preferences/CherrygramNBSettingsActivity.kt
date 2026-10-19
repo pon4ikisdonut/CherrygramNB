@@ -12,7 +12,9 @@ import org.telegram.messenger.R
 import org.telegram.ui.ActionBar.Theme
 import org.telegram.ui.Components.BulletinFactory
 import org.telegram.ui.Components.UItem
+import org.telegram.messenger.NotificationCenter
 import org.telegram.ui.Components.UniversalAdapter
+import uz.unnarsx.cherrygram.core.configs.CherrygramAppearanceConfig
 import uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig
 import uz.unnarsx.cherrygram.helpers.BotTokenAuthDialog
 import uz.unnarsx.cherrygram.preferences.helpers.SettingsHelper
@@ -49,9 +51,11 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
     private val ROW_PRIVACY_FAKE_SESSION_IP = 507
 
     private val ROW_HEADER_INTERFACE = 600
-    private val ROW_UI_BOTTOM_FOLDERS = 601
-    private val ROW_UI_MATERIAL_YOU = 603
-    private val ROW_UI_CUSTOM_FONT = 604
+    private val ROW_UI_ALWAYS_SHOW_FOLDERS = 601
+    private val ROW_UI_BOTTOM_FOLDERS = 602
+    private val ROW_UI_SHOW_MAIN_TABS = 603
+    private val ROW_UI_MATERIAL_YOU = 604
+    private val ROW_UI_CUSTOM_FONT = 605
 
     private val ROW_HEADER_PRODUCTIVITY = 700
     private val ROW_PROD_CANNED = 701
@@ -228,10 +232,24 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
         items.add(UItem.asHeader("🎨 Интерфейс и Кастомизация"))
         items.add(
             SettingsHelper.asSwitchCG(
+                ROW_UI_ALWAYS_SHOW_FOLDERS,
+                "Всегда показывать панель вкладок",
+                "Отображать панель папок даже если создана только вкладка «Все чаты»"
+            ).setChecked(CherrygramNBConfig.alwaysShowFolderTabs)
+        )
+        items.add(
+            SettingsHelper.asSwitchCG(
                 ROW_UI_BOTTOM_FOLDERS,
                 "Нижняя панель папок (Bottom Bar)",
                 "Перенести вкладки папок в нижнюю часть экрана для удобства одной руки"
             ).setChecked(CherrygramNBConfig.foldersAtBottom)
+        )
+        items.add(
+            SettingsHelper.asSwitchCG(
+                ROW_UI_SHOW_MAIN_TABS,
+                "Нижняя панель навигации (Main Tabs)",
+                "Плавающая панель с вкладками Чаты, Настройки, Профиль и др."
+            ).setChecked(CherrygramAppearanceConfig.showMainTabs)
         )
         items.add(
             SettingsHelper.asSwitchCG(
@@ -393,9 +411,22 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                     updateRows(true)
                 }
             }
+            ROW_UI_ALWAYS_SHOW_FOLDERS -> {
+                CherrygramNBConfig.alwaysShowFolderTabs = !CherrygramNBConfig.alwaysShowFolderTabs
+                SettingsHelper.updateCheckState(view, CherrygramNBConfig.alwaysShowFolderTabs)
+                NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.dialogFiltersUpdated)
+                parentLayout?.rebuildAllFragmentViews(false, false)
+            }
             ROW_UI_BOTTOM_FOLDERS -> {
                 CherrygramNBConfig.foldersAtBottom = !CherrygramNBConfig.foldersAtBottom
+                CherrygramAppearanceConfig.foldersAtBottom = CherrygramNBConfig.foldersAtBottom
                 SettingsHelper.updateCheckState(view, CherrygramNBConfig.foldersAtBottom)
+                showRestartBulletin()
+            }
+            ROW_UI_SHOW_MAIN_TABS -> {
+                CherrygramAppearanceConfig.showMainTabs = !CherrygramAppearanceConfig.showMainTabs
+                SettingsHelper.updateCheckState(view, CherrygramAppearanceConfig.showMainTabs)
+                showRestartBulletin()
             }
             ROW_UI_MATERIAL_YOU -> {
                 CherrygramNBConfig.materialYouAccent = !CherrygramNBConfig.materialYouAccent

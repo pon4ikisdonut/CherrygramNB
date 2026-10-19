@@ -58,7 +58,7 @@ CherrygramNB is completely decoupled from Google Play Store restrictions, remove
 * **Anti-Tamper Protection:** Neutralized upstream anti-tamper crashes, remote kick triggers, and forced session wipes.
 
 ### 6. 🎨 Interface & Ergonomics
-* **Bottom Folder Tabs (Bottom Bar):** Ergonomic navigation bar placed at the bottom for effortless one-handed use on large screens.
+* **Enhanced Tabs & Navigation:** Toggleable bottom navigation bar (Main Tabs) and bottom folder tabs with proper z-ordering, smooth gestures, and optional "Always show folder tabs" mode.
 * **Dynamic Material You:** System wallpaper accent color harmony across icons, buttons, and switches.
 * **Custom Typography:** Full support for loading external `.ttf` and `.otf` fonts.
 * **Fixed Header & Nicknames:** Guaranteed proper rendering of forwarded author headers and contact nicknames without displacement glitches.
