@@ -437,7 +437,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             tabsContainer.setOrientation(LinearLayout.HORIZONTAL);
             tabsContainer.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
 
-            LinearLayout.LayoutParams tabsParams = LayoutHelper.createLinear(0, DialogsActivity.MAIN_TABS_HEIGHT_WITH_MARGINS, 1.0f);
+            LinearLayout.LayoutParams tabsParams = LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, DialogsActivity.MAIN_TABS_HEIGHT_WITH_MARGINS);
             tabsContainer.addView(tabsView, tabsParams);
 
             searchButton = GlassTabView.createStaticTab(
@@ -458,7 +458,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             searchButton.setBackground(searchButtonBackground);
 
             int searchSize = DialogsActivity.MAIN_TABS_HEIGHT_WITH_MARGINS;
-            tabsContainer.addView(searchButton, LayoutHelper.createLinear(searchSize, searchSize, -dp(10), 0, 0, 0));
+            tabsContainer.addView(searchButton, LayoutHelper.createLinear(searchSize, searchSize, 8, 0, 0, 0));
 
             contentView.addView(tabsContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, DialogsActivity.MAIN_TABS_HEIGHT_WITH_MARGINS, Gravity.BOTTOM));
             tabsContainer.setPadding(dp(2), dp(2), dp(2), dp(2));
