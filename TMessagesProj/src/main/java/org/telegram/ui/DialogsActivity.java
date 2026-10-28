@@ -1327,7 +1327,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     childTop = actionBar.getMeasuredHeight();
                 } else if (child instanceof ViewPage) {
                     childTop = 0;
-                } else if (child == topPanelLayout || child == topBubblesFadeView || child == filterTabsView) {
+                } else if (child == topPanelLayout || child == topBubblesFadeView || (child == filterTabsView && !foldersAtBottom)) {
                     childTop += actionBar.getMeasuredHeight();
                     childTop += searching || searchIsShowed ? dp(SEARCH_FIELD_HEIGHT) : getSearchFieldReservedHeight();
                 } else if (dialogStoriesCell != null && dialogStoriesCell.getPremiumHint() == child) {
@@ -3053,9 +3053,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         BirthdayController.getInstance(currentAccount).check();
         final boolean mainTabsActive = hasMainTabs && CherrygramAppearanceConfig.INSTANCE.getShowMainTabs();
         final boolean foldersBottomActive = foldersAtBottom && !mainTabsActive;
-        if (mainTabsActive || foldersBottomActive) {
+        if (mainTabsActive) {
             additionNavigationBarHeight = dp(MAIN_TABS_HEIGHT_WITH_MARGINS);
-            additionFloatingButtonOffset = dp(DialogsActivity.MAIN_TABS_HEIGHT + DialogsActivity.MAIN_TABS_MARGIN);
+            additionFloatingButtonOffset = dp(50);
+        } else if (foldersBottomActive) {
+            additionNavigationBarHeight = dp(50);
+            additionFloatingButtonOffset = dp(46);
         } else {
             additionNavigationBarHeight = 0;
             additionFloatingButtonOffset = 0;

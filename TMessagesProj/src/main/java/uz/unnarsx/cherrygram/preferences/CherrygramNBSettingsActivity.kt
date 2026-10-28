@@ -1,18 +1,22 @@
 package uz.unnarsx.cherrygram.preferences
 
-import android.app.AlertDialog
 import android.content.Context
-import android.text.InputType
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
-import android.widget.EditText
-import android.widget.Toast
+import android.view.inputmethod.EditorInfo
+import android.widget.FrameLayout
 import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.LocaleController
+import org.telegram.messenger.LocaleController.getString
+import org.telegram.messenger.NotificationCenter
 import org.telegram.messenger.R
+import org.telegram.ui.ActionBar.AlertDialog
 import org.telegram.ui.ActionBar.Theme
 import org.telegram.ui.Components.BulletinFactory
+import org.telegram.ui.Components.EditTextBoldCursor
+import org.telegram.ui.Components.LayoutHelper
 import org.telegram.ui.Components.UItem
-import org.telegram.messenger.NotificationCenter
 import org.telegram.ui.Components.UniversalAdapter
 import uz.unnarsx.cherrygram.core.configs.CherrygramAppearanceConfig
 import uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig
@@ -46,9 +50,6 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
     private val ROW_PRIVACY_HIDDEN_CHATS = 502
     private val ROW_PRIVACY_FAKE_UA = 503
     private val ROW_PRIVACY_HIDDEN_CHATS_PIN = 504
-    private val ROW_PRIVACY_FAKE_SESSION_TOGGLE = 505
-    private val ROW_PRIVACY_FAKE_SESSION_LOCATION = 506
-    private val ROW_PRIVACY_FAKE_SESSION_IP = 507
 
     private val ROW_HEADER_INTERFACE = 600
     private val ROW_UI_ALWAYS_SHOW_FOLDERS = 601
@@ -65,49 +66,49 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
     private val ROW_PROD_UNLIMITED_ACCOUNTS = 704
 
     override fun getTitle(): CharSequence {
-        return "Настройки CherrygramNB"
+        return getString(R.string.CGNB_SettingsTitle)
     }
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
         // 1. DevTools
-        items.add(UItem.asHeader("🛠️ Инструменты разработчика (DevTools)"))
+        items.add(UItem.asHeader(getString(R.string.CGNB_HeaderDevTools)))
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_DEV_RAW_JSON,
-                "Raw JSON в контекстном меню",
-                "Кнопка в меню сообщения для просмотра сырого объекта TL/JSON"
+                getString(R.string.CGNB_DevRawJson),
+                getString(R.string.CGNB_DevRawJsonDesc)
             ).setChecked(CherrygramNBConfig.showRawJson)
         )
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_DEV_COPY_ID,
-                "Быстрый копипаст ID",
-                "Отображать кликабельный ID и DC в профиле пользователей, каналов и чатов"
+                getString(R.string.CGNB_DevCopyId),
+                getString(R.string.CGNB_DevCopyIdDesc)
             ).setChecked(CherrygramNBConfig.quickCopyId)
         )
         items.add(
             UItem.asButton(
                 ROW_DEV_BOT_TOKEN_LOGIN,
-                "Токен-менеджер: Войти по бот-токену",
-                "Авторизация в аккаунт бота через токен для тестирования"
+                getString(R.string.CGNB_DevBotTokenLogin),
+                getString(R.string.CGNB_DevBotTokenLoginDesc)
             )
         )
         items.add(UItem.asShadow(null))
 
         // 2. AntiSpam
-        items.add(UItem.asHeader("🛡️ Фильтрация и антиспам"))
+        items.add(UItem.asHeader(getString(R.string.CGNB_HeaderAntispam)))
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_ANTISPAM_REGEX,
-                "Regex-фильтры для ленты",
-                "Локально скрывать посты в каналах по регулярным выражениям"
+                getString(R.string.CGNB_AntispamRegex),
+                getString(R.string.CGNB_AntispamRegexDesc)
             ).setChecked(CherrygramNBConfig.regexFiltersEnabled)
         )
         if (CherrygramNBConfig.regexFiltersEnabled) {
             items.add(
                 UItem.asButton(
                     ROW_ANTISPAM_REGEX_EDIT,
-                    "Настроить паттерны Regex",
+                    getString(R.string.CGNB_AntispamRegexEdit),
                     CherrygramNBConfig.regexFilterPatterns
                 )
             )
@@ -115,172 +116,149 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_ANTISPAM_AUTOMUTE,
-                "Авто-мут неизвестных чатов",
-                "Автоматически отправлять в архив и глушить сообщения от неизвестных контактов"
+                getString(R.string.CGNB_AntispamAutomute),
+                getString(R.string.CGNB_AntispamAutomuteDesc)
             ).setChecked(CherrygramNBConfig.autoMuteUnknown)
         )
         items.add(UItem.asShadow(null))
 
         // 3. Debloat
-        items.add(UItem.asHeader("🧹 Вырезание мусора (Де-блоат)"))
+        items.add(UItem.asHeader(getString(R.string.CGNB_HeaderDebloat)))
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_DEBLOAT_STORIES,
-                "Тотальное отключение Историй",
-                "Скрыть верхнюю панель историй и цветные кружки вокруг аватарок"
+                getString(R.string.CGNB_DebloatStories),
+                getString(R.string.CGNB_DebloatStoriesDesc)
             ).setChecked(CherrygramNBConfig.disableStoriesTotal)
         )
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_DEBLOAT_SPONSORED,
-                "Отключение спонсорских сообщений",
-                "Полностью вырезать рекламные сообщения (Sponsored Ads) из каналов"
+                getString(R.string.CGNB_DebloatSponsored),
+                getString(R.string.CGNB_DebloatSponsoredDesc)
             ).setChecked(CherrygramNBConfig.hideSponsoredMessages)
         )
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_DEBLOAT_MIN_ATTACH,
-                "Минималистичное меню вложений",
-                "Убрать лишние элементы из меню прикрепления файлов"
+                getString(R.string.CGNB_DebloatMinAttach),
+                getString(R.string.CGNB_DebloatMinAttachDesc)
             ).setChecked(CherrygramNBConfig.minimalAttachMenu)
         )
         items.add(UItem.asShadow(null))
 
         // 4. Content
-        items.add(UItem.asHeader("⚡ Работа с контентом и ограничениями"))
+        items.add(UItem.asHeader(getString(R.string.CGNB_HeaderContent)))
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_CONTENT_BYPASS_COPY,
-                "Обход запрета на сохранение (Bypass)",
-                "Разрешить копирование, пересылку и скриншоты в защищенных чатах и каналах"
+                getString(R.string.CGNB_ContentBypassCopy),
+                getString(R.string.CGNB_ContentBypassCopyDesc)
             ).setChecked(CherrygramNBConfig.bypassCopyProtection)
         )
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_CONTENT_LOCAL_VOICE,
-                "Локальная расшифровка голосовых",
-                "Использовать встроенный движок распознавания речи без Telegram Premium"
+                getString(R.string.CGNB_ContentLocalVoice),
+                getString(R.string.CGNB_ContentLocalVoiceDesc)
             ).setChecked(CherrygramNBConfig.localVoiceTranscription)
         )
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_CONTENT_ANTI_DELETE,
-                "Сохранение удаленных сообщений",
-                "Не удалять сообщения, если их удалил собеседник, а помечать как [Удалено]"
+                getString(R.string.CGNB_ContentAntiDelete),
+                getString(R.string.CGNB_ContentAntiDeleteDesc)
             ).setChecked(CherrygramNBConfig.antiDeleteMessages)
         )
         items.add(UItem.asShadow(null))
 
         // 5. Privacy
-        items.add(UItem.asHeader("🔒 Приватность и Безопасность"))
+        items.add(UItem.asHeader(getString(R.string.CGNB_HeaderPrivacy)))
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_PRIVACY_STREAMER,
-                "Режим стримера",
-                "Скрывать номер телефона, юзернейм и аватарку при записи экрана"
+                getString(R.string.CGNB_PrivacyStreamer),
+                getString(R.string.CGNB_PrivacyStreamerDesc)
             ).setChecked(CherrygramNBConfig.streamerMode)
         )
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_PRIVACY_HIDDEN_CHATS,
-                "Скрытые чаты под паролем",
-                "Скрывать выбранные диалоги из общего списка"
+                getString(R.string.CGNB_PrivacyHiddenChats),
+                getString(R.string.CGNB_PrivacyHiddenChatsDesc)
             ).setChecked(CherrygramNBConfig.hiddenChatsEnabled)
         )
         if (CherrygramNBConfig.hiddenChatsEnabled) {
             items.add(
                 UItem.asButton(
                     ROW_PRIVACY_HIDDEN_CHATS_PIN,
-                    "Изменить PIN для скрытых чатов",
-                    if (CherrygramNBConfig.hiddenChatsPin.isEmpty()) "Не задан" else "••••"
+                    getString(R.string.CGNB_PrivacyHiddenChatsPin),
+                    if (CherrygramNBConfig.hiddenChatsPin.isEmpty()) getString(R.string.CGNB_NotSet) else "••••"
                 )
             )
         }
         items.add(
             UItem.asButton(
                 ROW_PRIVACY_FAKE_UA,
-                "Фейковый статус устройства (User-Agent)",
-                if (CherrygramNBConfig.fakeDeviceModel.isEmpty()) "По умолчанию" else CherrygramNBConfig.fakeDeviceModel
+                getString(R.string.CGNB_PrivacyFakeUa),
+                if (CherrygramNBConfig.fakeDeviceModel.isEmpty()) getString(R.string.CGNB_Default) else CherrygramNBConfig.fakeDeviceModel
             )
         )
-        items.add(
-            SettingsHelper.asSwitchCG(
-                ROW_PRIVACY_FAKE_SESSION_TOGGLE,
-                "Спуфинг локации в сессиях",
-                "Подменять страну, город и IP-адрес текущего устройства в списке сессий"
-            ).setChecked(CherrygramNBConfig.fakeSessionLocationEnabled)
-        )
-        if (CherrygramNBConfig.fakeSessionLocationEnabled) {
-            items.add(
-                UItem.asButton(
-                    ROW_PRIVACY_FAKE_SESSION_LOCATION,
-                    "Поддельная локация (Страна, Город)",
-                    if (CherrygramNBConfig.fakeSessionLocation.isEmpty()) "Не задана" else CherrygramNBConfig.fakeSessionLocation
-                )
-            )
-            items.add(
-                UItem.asButton(
-                    ROW_PRIVACY_FAKE_SESSION_IP,
-                    "Поддельный IP-адрес",
-                    if (CherrygramNBConfig.fakeSessionIp.isEmpty()) "Не задан" else CherrygramNBConfig.fakeSessionIp
-                )
-            )
-        }
         items.add(UItem.asShadow(null))
 
         // 6. Interface
-        items.add(UItem.asHeader("🎨 Интерфейс и Кастомизация"))
+        items.add(UItem.asHeader(getString(R.string.CGNB_HeaderInterface)))
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_UI_ALWAYS_SHOW_FOLDERS,
-                "Всегда показывать панель вкладок",
-                "Отображать панель папок даже если создана только вкладка «Все чаты»"
+                getString(R.string.CGNB_UiAlwaysShowFolders),
+                getString(R.string.CGNB_UiAlwaysShowFoldersDesc)
             ).setChecked(CherrygramNBConfig.alwaysShowFolderTabs)
         )
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_UI_BOTTOM_FOLDERS,
-                "Нижняя панель папок (Bottom Bar)",
-                "Перенести вкладки папок вниз экрана (вместо нижней панели навигации)"
+                getString(R.string.CGNB_UiBottomFolders),
+                getString(R.string.CGNB_UiBottomFoldersDesc)
             ).setChecked(CherrygramNBConfig.foldersAtBottom && !CherrygramAppearanceConfig.showMainTabs)
         )
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_UI_SHOW_MAIN_TABS,
-                "Нижняя панель навигации (Main Tabs)",
-                "Плавающая нижняя панель: Чаты, Настройки, Поиск (вкладки папок будут сверху)"
+                getString(R.string.CGNB_UiShowMainTabs),
+                getString(R.string.CGNB_UiShowMainTabsDesc)
             ).setChecked(CherrygramAppearanceConfig.showMainTabs)
         )
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_UI_MATERIAL_YOU,
-                "Material You акцент",
-                "Динамические акценты в цвета системной темы Android"
+                getString(R.string.CGNB_UiMaterialYou),
+                getString(R.string.CGNB_UiMaterialYouDesc)
             ).setChecked(CherrygramNBConfig.materialYouAccent)
         )
         items.add(
             UItem.asButton(
                 ROW_UI_CUSTOM_FONT,
-                "Пользовательский шрифт (.ttf / .otf)",
-                if (CherrygramNBConfig.customFontPath.isEmpty()) "Системный" else CherrygramNBConfig.customFontPath
+                getString(R.string.CGNB_UiCustomFont),
+                if (CherrygramNBConfig.customFontPath.isEmpty()) getString(R.string.CGNB_System) else CherrygramNBConfig.customFontPath
             )
         )
         items.add(UItem.asShadow(null))
 
         // 7. Productivity
-        items.add(UItem.asHeader("🚀 Продуктивность и Автоматизация"))
+        items.add(UItem.asHeader(getString(R.string.CGNB_HeaderProductivity)))
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_PROD_CANNED,
-                "Шаблоны быстрых ответов",
-                "Быстрый доступ к заготовленным фразам при вводе текста"
+                getString(R.string.CGNB_ProdCanned),
+                getString(R.string.CGNB_ProdCannedDesc)
             ).setChecked(CherrygramNBConfig.cannedResponsesEnabled)
         )
         if (CherrygramNBConfig.cannedResponsesEnabled) {
             items.add(
                 UItem.asButton(
                     ROW_PROD_CANNED_DATA,
-                    "Настроить шаблоны ответов",
+                    getString(R.string.CGNB_ProdCannedData),
                     CherrygramNBConfig.cannedResponsesData
                 )
             )
@@ -288,15 +266,15 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_PROD_AUTORESPONDER,
-                "Локальный автоответчик",
-                "Автоматически отвечать на входящие сообщения заготовленным текстом"
+                getString(R.string.CGNB_ProdAutoresponder),
+                getString(R.string.CGNB_ProdAutoresponderDesc)
             ).setChecked(CherrygramNBConfig.autoResponderEnabled)
         )
         if (CherrygramNBConfig.autoResponderEnabled) {
             items.add(
                 UItem.asButton(
                     ROW_PROD_AUTORESPONDER_TEXT,
-                    "Текст автоответчика",
+                    getString(R.string.CGNB_ProdAutoresponderText),
                     CherrygramNBConfig.autoResponderText
                 )
             )
@@ -304,12 +282,11 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
         items.add(
             SettingsHelper.asSwitchCG(
                 ROW_PROD_UNLIMITED_ACCOUNTS,
-                "Мультиаккаунт без лимитов",
-                "Поддержка до 20 аккаунтов одновременно"
+                getString(R.string.CGNB_ProdUnlimitedAccounts),
+                getString(R.string.CGNB_ProdUnlimitedAccountsDesc)
             ).setChecked(CherrygramNBConfig.unlimitedAccounts)
         )
         items.add(UItem.asShadow(null))
-
     }
 
     override fun onClick(item: UItem, view: View, position: Int, x: Float, y: Float) {
@@ -331,7 +308,7 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 updateRows(true)
             }
             ROW_ANTISPAM_REGEX_EDIT -> {
-                showTextInputDialog("Паттерны Regex (разделитель |)", CherrygramNBConfig.regexFilterPatterns) { newText ->
+                showTextInputDialog(getString(R.string.CGNB_DialogRegexPatterns), CherrygramNBConfig.regexFilterPatterns) { newText ->
                     CherrygramNBConfig.regexFilterPatterns = newText
                     updateRows(true)
                 }
@@ -370,13 +347,16 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
             }
             ROW_PRIVACY_HIDDEN_CHATS -> {
                 if (!CherrygramNBConfig.hiddenChatsEnabled && CherrygramNBConfig.hiddenChatsPin.isEmpty()) {
-                    showTextInputDialog("Задайте PIN для скрытых чатов", "") { pin ->
+                    showTextInputDialog(getString(R.string.CGNB_DialogSetPin), "") { pin ->
                         if (pin.isNotEmpty()) {
                             CherrygramNBConfig.hiddenChatsPin = pin
                             CherrygramNBConfig.hiddenChatsEnabled = true
                             SettingsHelper.updateCheckState(view, true)
                             updateRows(true)
-                            BulletinFactory.of(this).createSimpleBulletin(R.raw.done, "PIN установлен: $pin").show()
+                            BulletinFactory.of(this).createSimpleBulletin(
+                                R.raw.done,
+                                LocaleController.formatString(R.string.CGNB_PinSet, pin)
+                            ).show()
                         }
                     }
                 } else {
@@ -386,28 +366,14 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 }
             }
             ROW_PRIVACY_HIDDEN_CHATS_PIN -> {
-                showTextInputDialog("PIN для скрытых чатов", CherrygramNBConfig.hiddenChatsPin) { newPin ->
+                showTextInputDialog(getString(R.string.CGNB_DialogPin), CherrygramNBConfig.hiddenChatsPin) { newPin ->
                     CherrygramNBConfig.hiddenChatsPin = newPin
                     updateRows(true)
                 }
             }
             ROW_PRIVACY_FAKE_UA -> {
-                showTextInputDialog("Фейковая модель устройства", CherrygramNBConfig.fakeDeviceModel) { newModel ->
+                showTextInputDialog(getString(R.string.CGNB_DialogFakeDeviceModel), CherrygramNBConfig.fakeDeviceModel) { newModel ->
                     CherrygramNBConfig.fakeDeviceModel = newModel
-                    updateRows(true)
-                }
-            }
-            ROW_PRIVACY_FAKE_SESSION_TOGGLE -> {
-                CherrygramNBConfig.fakeSessionLocationEnabled = !CherrygramNBConfig.fakeSessionLocationEnabled
-                SettingsHelper.updateCheckState(view, CherrygramNBConfig.fakeSessionLocationEnabled)
-                updateRows(true)
-            }
-            ROW_PRIVACY_FAKE_SESSION_LOCATION -> {
-                showLocationChoiceDialog()
-            }
-            ROW_PRIVACY_FAKE_SESSION_IP -> {
-                showTextInputDialog("Поддельный IP-адрес", CherrygramNBConfig.fakeSessionIp) { newIp ->
-                    CherrygramNBConfig.fakeSessionIp = newIp
                     updateRows(true)
                 }
             }
@@ -425,6 +391,7 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                     CherrygramAppearanceConfig.showMainTabs = false
                 }
                 updateRows(true)
+                parentLayout?.rebuildAllFragmentViews(true, true)
                 showRestartBulletin()
             }
             ROW_UI_SHOW_MAIN_TABS -> {
@@ -435,6 +402,7 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                     CherrygramAppearanceConfig.foldersAtBottom = false
                 }
                 updateRows(true)
+                parentLayout?.rebuildAllFragmentViews(true, true)
                 showRestartBulletin()
             }
             ROW_UI_MATERIAL_YOU -> {
@@ -442,7 +410,7 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 SettingsHelper.updateCheckState(view, CherrygramNBConfig.materialYouAccent)
             }
             ROW_UI_CUSTOM_FONT -> {
-                showTextInputDialog("Абсолютный путь к файлу шрифта (.ttf / .otf)", CherrygramNBConfig.customFontPath) { path ->
+                showTextInputDialog(getString(R.string.CGNB_DialogCustomFont), CherrygramNBConfig.customFontPath) { path ->
                     CherrygramNBConfig.customFontPath = path
                     updateRows(true)
                 }
@@ -453,7 +421,7 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 updateRows(true)
             }
             ROW_PROD_CANNED_DATA -> {
-                showTextInputDialog("Шаблоны ответов (разделитель ;)", CherrygramNBConfig.cannedResponsesData) { data ->
+                showTextInputDialog(getString(R.string.CGNB_DialogCannedResponses), CherrygramNBConfig.cannedResponsesData) { data ->
                     CherrygramNBConfig.cannedResponsesData = data
                     updateRows(true)
                 }
@@ -464,7 +432,7 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
                 updateRows(true)
             }
             ROW_PROD_AUTORESPONDER_TEXT -> {
-                showTextInputDialog("Текст автоответчика", CherrygramNBConfig.autoResponderText) { newText ->
+                showTextInputDialog(getString(R.string.CGNB_DialogAutoresponderText), CherrygramNBConfig.autoResponderText) { newText ->
                     CherrygramNBConfig.autoResponderText = newText
                     updateRows(true)
                 }
@@ -478,47 +446,48 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
 
     private fun showTextInputDialog(title: String, initialValue: String, onConfirm: (String) -> Unit) {
         val ctx = context ?: return
-        val builder = AlertDialog.Builder(ctx)
+        val builder = AlertDialog.Builder(ctx, resourceProvider)
         builder.setTitle(title)
 
-        val input = EditText(ctx).apply {
+        val container = FrameLayout(ctx)
+        container.setPadding(AndroidUtilities.dp(24f), 0, AndroidUtilities.dp(24f), 0)
+
+        val field = EditTextBoldCursor(ctx).apply {
+            setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18f)
+            setTextColor(Theme.getColor(Theme.key_dialogTextBlack, resourceProvider))
+            setHintColor(Theme.getColor(Theme.key_windowBackgroundWhiteHintText, resourceProvider))
+            setHeaderHintColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader, resourceProvider))
+            setCursorColor(Theme.getColor(Theme.key_windowBackgroundWhiteInputFieldActivated, resourceProvider))
+            setLineColors(
+                Theme.getColor(Theme.key_windowBackgroundWhiteInputField, resourceProvider),
+                Theme.getColor(Theme.key_windowBackgroundWhiteInputFieldActivated, resourceProvider),
+                Theme.getColor(Theme.key_text_RedRegular, resourceProvider)
+            )
             setText(initialValue)
-            inputType = InputType.TYPE_CLASS_TEXT
+            setSingleLine(true)
+            isFocusable = true
+            imeOptions = EditorInfo.IME_ACTION_DONE
+            background = null
+            setPadding(0, 0, 0, 0)
         }
-        builder.setView(input)
+        val params = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT)
+        params.gravity = Gravity.TOP
+        params.topMargin = AndroidUtilities.dp(10f)
+        params.bottomMargin = AndroidUtilities.dp(10f)
+        container.addView(field, params)
+        builder.setView(container)
 
-        builder.setPositiveButton("Сохранить") { _, _ ->
-            onConfirm(input.text.toString().trim())
+        builder.setPositiveButton(LocaleController.getString("Save", R.string.Save)) { _, _ ->
+            onConfirm(field.text.toString().trim())
         }
         builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null)
-        builder.show()
-    }
 
-    private fun showLocationChoiceDialog() {
-        val ctx = context ?: return
-        val presets = arrayOf(
-            "Германия, Франкфурт",
-            "Швейцария, Цюрих",
-            "Нидерланды, Амстердам",
-            "США, Нью-Йорк",
-            "Канада, Торонто",
-            "Япония, Токио",
-            "Ввести вручную..."
-        )
-        val builder = AlertDialog.Builder(ctx)
-        builder.setTitle("Выберите поддельную локацию")
-        builder.setItems(presets) { _, which ->
-            if (which == presets.size - 1) {
-                showTextInputDialog("Поддельная локация (Страна, Город)", CherrygramNBConfig.fakeSessionLocation) { custom ->
-                    CherrygramNBConfig.fakeSessionLocation = custom
-                    updateRows(true)
-                }
-            } else {
-                CherrygramNBConfig.fakeSessionLocation = presets[which]
-                updateRows(true)
-            }
+        val dialog = builder.create()
+        dialog.setOnShowListener {
+            field.requestFocus()
+            AndroidUtilities.showKeyboard(field)
+            field.setSelection(0, field.length())
         }
-        builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null)
-        builder.show()
+        dialog.showDelayed(250)
     }
 }

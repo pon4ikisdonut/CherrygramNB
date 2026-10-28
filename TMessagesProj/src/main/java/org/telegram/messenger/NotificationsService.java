@@ -32,7 +32,7 @@ public class NotificationsService extends Service {
         ApplicationLoader.postInitApplication();
 
         if (allowResidentNotification()) {
-            NotificationChannelCompat channel = new NotificationChannelCompat.Builder("cgPush", NotificationManagerCompat.IMPORTANCE_DEFAULT)
+            NotificationChannelCompat channel = new NotificationChannelCompat.Builder("cgPush", NotificationManagerCompat.IMPORTANCE_LOW)
                     .setName(LocaleController.getString(R.string.CG_PushService))
                     .setLightsEnabled(false)
                     .setVibrationEnabled(false)
@@ -95,7 +95,7 @@ public class NotificationsService extends Service {
     }
 
     private boolean allowResidentNotification() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM && CherrygramCoreConfig.INSTANCE.getResidentNotification();
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && (CherrygramCoreConfig.INSTANCE.getResidentNotification() || ApplicationLoader.isStandaloneBuild());
     }
 
 }

@@ -207,19 +207,6 @@ public class SessionCell extends FrameLayout {
             }
         } else if (object instanceof TLRPC.TL_authorization) {
             final TLRPC.TL_authorization session = (TLRPC.TL_authorization) object;
-            if ((session.flags & 1) != 0 || session.current) {
-                if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeSessionLocationEnabled()) {
-                    String fakeLoc = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeSessionLocation();
-                    if (!android.text.TextUtils.isEmpty(fakeLoc)) {
-                        session.country = fakeLoc;
-                        session.region = fakeLoc;
-                    }
-                    String fakeIp = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeSessionIp();
-                    if (!android.text.TextUtils.isEmpty(fakeIp)) {
-                        session.ip = fakeIp;
-                    }
-                }
-            }
             imageView.setImageDrawable(createDrawable(42, session));
 
             StringBuilder stringBuilder = new StringBuilder();

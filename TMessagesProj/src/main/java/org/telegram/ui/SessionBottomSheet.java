@@ -47,19 +47,6 @@ public class SessionBottomSheet extends BottomSheet {
         super(fragment.getParentActivity(), false);
         setOpenNoDelay(true);
         this.session = session;
-        if (isCurrentSession || (session.flags & 1) != 0 || session.current) {
-            if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeSessionLocationEnabled()) {
-                String fakeLoc = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeSessionLocation();
-                if (!android.text.TextUtils.isEmpty(fakeLoc)) {
-                    session.country = fakeLoc;
-                    session.region = fakeLoc;
-                }
-                String fakeIp = uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getFakeSessionIp();
-                if (!android.text.TextUtils.isEmpty(fakeIp)) {
-                    session.ip = fakeIp;
-                }
-            }
-        }
         this.parentFragment = fragment;
         fixNavigationBar();
 

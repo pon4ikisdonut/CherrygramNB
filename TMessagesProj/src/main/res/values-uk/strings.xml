@@ -276,4 +276,77 @@
     <string name="RemindTodayAt">\'Нагадати сьогодні,\' HH:mm</string>
     <string name="RemindDayAt">\'Нагадати\' d MMM\',\' HH:mm</string>
     <string name="RemindDayYearAt">\'Нагадати\' d MMM yyyy\',\' HH:mm</string>
+    <!-- CherrygramNB Settings -->
+    <string name="CGNB_SettingsTitle">Налаштування CherrygramNB</string>
+    <string name="CGNB_HeaderDevTools">🛠️ Інструменти розробника (DevTools)</string>
+    <string name="CGNB_DevRawJson">Raw JSON у контекстному меню</string>
+    <string name="CGNB_DevRawJsonDesc">Кнопка в меню повідомлення для перегляду сирого обʼєкта TL/JSON</string>
+    <string name="CGNB_DevCopyId">Швидке копіювання ID</string>
+    <string name="CGNB_DevCopyIdDesc">Відображати клікабельний ID та DC у профілі користувачів, каналів і чатів</string>
+    <string name="CGNB_DevBotTokenLogin">Токен-менеджер: Увійти за бот-токеном</string>
+    <string name="CGNB_DevBotTokenLoginDesc">Авторизація в обліковий запис бота через токен для тестування</string>
+
+    <string name="CGNB_HeaderAntispam">🛡️ Фільтрація та антиспам</string>
+    <string name="CGNB_AntispamRegex">Regex-фільтри для стрічки</string>
+    <string name="CGNB_AntispamRegexDesc">Локально приховувати дописи в каналах за регулярними виразами</string>
+    <string name="CGNB_AntispamRegexEdit">Налаштувати патерни Regex</string>
+    <string name="CGNB_AntispamAutomute">Авто-мут невідомих чатів</string>
+    <string name="CGNB_AntispamAutomuteDesc">Автоматично надсилати до архіву та глушити повідомлення від невідомих контактів</string>
+
+    <string name="CGNB_HeaderDebloat">🧹 Очищення інтерфейсу (Де-блоат)</string>
+    <string name="CGNB_DebloatStories">Повне вимкнення Історій</string>
+    <string name="CGNB_DebloatStoriesDesc">Приховати верхню панель історій та кольорові кільця навколо аватарів</string>
+    <string name="CGNB_DebloatSponsored">Вимкнення спонсорських повідомлень</string>
+    <string name="CGNB_DebloatSponsoredDesc">Повністю прибрати рекламні повідомлення (Sponsored Ads) з каналів</string>
+    <string name="CGNB_DebloatMinAttach">Мінімалістичне меню вкладень</string>
+    <string name="CGNB_DebloatMinAttachDesc">Прибрати зайві елементи з меню прикріплення файлів</string>
+
+    <string name="CGNB_HeaderContent">⚡ Робота з контентом та обмеженнями</string>
+    <string name="CGNB_ContentBypassCopy">Обхід заборони на збереження (Bypass)</string>
+    <string name="CGNB_ContentBypassCopyDesc">Дозволити копіювання, пересилання та скриншоти в захищених чатах і каналах</string>
+    <string name="CGNB_ContentLocalVoice">Локальна розшифровка голосових</string>
+    <string name="CGNB_ContentLocalVoiceDesc">Використовувати вбудоване розпізнавання мови без Telegram Premium</string>
+    <string name="CGNB_ContentAntiDelete">Збереження видалених повідомлень</string>
+    <string name="CGNB_ContentAntiDeleteDesc">Не видаляти повідомлення, якщо їх видалив співрозмовник, а позначати як [Видалено]</string>
+
+    <string name="CGNB_HeaderPrivacy">🔒 Приватність і Безпека</string>
+    <string name="CGNB_PrivacyStreamer">Режим стрімера</string>
+    <string name="CGNB_PrivacyStreamerDesc">Приховувати номер телефону, юзернейм та аватар під час запису екрана</string>
+    <string name="CGNB_PrivacyHiddenChats">Приховані чати під паролем</string>
+    <string name="CGNB_PrivacyHiddenChatsDesc">Приховувати вибрані діалоги з загального списку</string>
+    <string name="CGNB_PrivacyHiddenChatsPin">Змінити PIN для прихованих чатів</string>
+    <string name="CGNB_PrivacyFakeUa">Фейкова назва пристрою (User-Agent)</string>
+
+    <string name="CGNB_HeaderInterface">🎨 Інтерфейс та Кастомізація</string>
+    <string name="CGNB_UiAlwaysShowFolders">Завжди показувати панель вкладок</string>
+    <string name="CGNB_UiAlwaysShowFoldersDesc">"Відображати панель папок, навіть якщо існує лише вкладка «Всі чати»"</string>
+    <string name="CGNB_UiBottomFolders">Нижня панель папок (Bottom Bar)</string>
+    <string name="CGNB_UiBottomFoldersDesc">Перенести вкладки папок донизу екрана (замість нижньої панелі навігації)</string>
+    <string name="CGNB_UiShowMainTabs">Нижня панель навігації (Main Tabs)</string>
+    <string name="CGNB_UiShowMainTabsDesc">"Плаваюча нижня панель: Чати, Налаштування, Пошук (папки будуть зверху)"</string>
+    <string name="CGNB_UiMaterialYou">Material You акцент</string>
+    <string name="CGNB_UiMaterialYouDesc">Динамічні акценти під колір системної теми Android</string>
+    <string name="CGNB_UiCustomFont">Власний шрифт (.ttf / .otf)</string>
+
+    <string name="CGNB_HeaderProductivity">🚀 Продуктивність та Автоматизація</string>
+    <string name="CGNB_ProdCanned">Шаблони швидких відповідей</string>
+    <string name="CGNB_ProdCannedDesc">Швидкий доступ до заготовлених фраз під час введення тексту</string>
+    <string name="CGNB_ProdCannedData">Налаштувати шаблони відповідей</string>
+    <string name="CGNB_ProdAutoresponder">Локальний автовідповідач</string>
+    <string name="CGNB_ProdAutoresponderDesc">Автоматично відповідати на вхідні повідомлення заготовленим текстом</string>
+    <string name="CGNB_ProdAutoresponderText">Текст автовідповідача</string>
+    <string name="CGNB_ProdUnlimitedAccounts">Мультиакаунт без лімітів</string>
+    <string name="CGNB_ProdUnlimitedAccountsDesc">Підтримка до 20 акаунтів одночасно</string>
+
+    <string name="CGNB_NotSet">Не задано</string>
+    <string name="CGNB_Default">За замовчуванням</string>
+    <string name="CGNB_System">Системний</string>
+    <string name="CGNB_DialogRegexPatterns">Патерни Regex (роздільник |)</string>
+    <string name="CGNB_DialogSetPin">Введіть PIN для прихованих чатів</string>
+    <string name="CGNB_DialogPin">PIN для прихованих чатів</string>
+    <string name="CGNB_DialogFakeDeviceModel">Фейкова назва моделі</string>
+    <string name="CGNB_DialogCustomFont">Абсолютний шлях до файлу шрифту (.ttf / .otf)</string>
+    <string name="CGNB_DialogCannedResponses">Шаблони відповідей (роздільник ;)</string>
+    <string name="CGNB_DialogAutoresponderText">Текст автовідповідача</string>
+    <string name="CGNB_PinSet">PIN встановлено: %1$s</string>
 </resources>

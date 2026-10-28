@@ -242,7 +242,6 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
                 super.dispatchDraw(canvas);
                 blur3_invalidateBlur();
-                blur3_updateFadeColors();
             }
         };
     }

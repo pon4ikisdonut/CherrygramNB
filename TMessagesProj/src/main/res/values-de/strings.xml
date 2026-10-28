@@ -1375,4 +1375,77 @@
     <string name="RemindTodayAt">\'Heute um\' HH:mm \'erinnern\'</string>
     <string name="RemindDayAt">\'Am\' d MMM \'um\' HH:mm \'erinnern\'</string>
     <string name="RemindDayYearAt">\'Am\' d\'.\' MMM yyyy \'um\' HH:mm \'erinnern\'</string>
+    <!-- CherrygramNB Settings -->
+    <string name="CGNB_SettingsTitle">CherrygramNB-Einstellungen</string>
+    <string name="CGNB_HeaderDevTools">🛠️ Entwickler-Tools (DevTools)</string>
+    <string name="CGNB_DevRawJson">Rohes JSON im Nachrichtenmenü</string>
+    <string name="CGNB_DevRawJsonDesc">Schaltfläche zur Anzeige des rohen TL/JSON-Objekts</string>
+    <string name="CGNB_DevCopyId">Schnelles Kopieren von ID und DC</string>
+    <string name="CGNB_DevCopyIdDesc">Klickbare ID und DC in Profilen anzeigen</string>
+    <string name="CGNB_DevBotTokenLogin">Token-Manager: Mit Bot-Token anmelden</string>
+    <string name="CGNB_DevBotTokenLoginDesc">Über Token in Bot-Konto zum Testen einloggen</string>
+
+    <string name="CGNB_HeaderAntispam">🛡️ Filterung &amp; Anti-Spam</string>
+    <string name="CGNB_AntispamRegex">Kanal-Regex-Filter</string>
+    <string name="CGNB_AntispamRegexDesc">Kanalbeiträge lokal nach regulären Ausdrücken ausblenden</string>
+    <string name="CGNB_AntispamRegexEdit">Regex-Muster konfigurieren</string>
+    <string name="CGNB_AntispamAutomute">Unbekannte Chats stummschalten</string>
+    <string name="CGNB_AntispamAutomuteDesc">Nachrichten unbekannter Kontakte archivieren und stummschalten</string>
+
+    <string name="CGNB_HeaderDebloat">🧹 UI-Bereinigung (Debloat)</string>
+    <string name="CGNB_DebloatStories">Stories vollständig deaktivieren</string>
+    <string name="CGNB_DebloatStoriesDesc">Stories-Leiste und Ringe um Avatare ausblenden</string>
+    <string name="CGNB_DebloatSponsored">Gesponserte Nachrichten deaktivieren</string>
+    <string name="CGNB_DebloatSponsoredDesc">Werbung in Kanälen vollständig entfernen</string>
+    <string name="CGNB_DebloatMinAttach">Minimalistisches Anhang-Menü</string>
+    <string name="CGNB_DebloatMinAttachDesc">Unnötige Elemente aus dem Anhang-Menü entfernen</string>
+
+    <string name="CGNB_HeaderContent">⚡ Inhalte &amp; Einschränkungen</string>
+    <string name="CGNB_ContentBypassCopy">Kopierschutz umgehen (Bypass)</string>
+    <string name="CGNB_ContentBypassCopyDesc">Kopieren, Weiterleiten und Screenshots in geschützten Chats erlauben</string>
+    <string name="CGNB_ContentLocalVoice">Lokale Sprachnachrichten-Transkription</string>
+    <string name="CGNB_ContentLocalVoiceDesc">On-Device Spracherkennung ohne Telegram Premium</string>
+    <string name="CGNB_ContentAntiDelete">Gelöschte Nachrichten behalten</string>
+    <string name="CGNB_ContentAntiDeleteDesc">Von anderen gelöschte Nachrichten nicht entfernen, als [Gelöscht] markieren</string>
+
+    <string name="CGNB_HeaderPrivacy">🔒 Datenschutz &amp; Sicherheit</string>
+    <string name="CGNB_PrivacyStreamer">Streamer-Modus</string>
+    <string name="CGNB_PrivacyStreamerDesc">Telefonnummer, Benutzername und Avatar bei Bildschirmaufnahme verbergen</string>
+    <string name="CGNB_PrivacyHiddenChats">Versteckte Chats mit PIN</string>
+    <string name="CGNB_PrivacyHiddenChatsDesc">Ausgewählte Chats in der Chatliste verbergen</string>
+    <string name="CGNB_PrivacyHiddenChatsPin">PIN für versteckte Chats ändern</string>
+    <string name="CGNB_PrivacyFakeUa">Gefälschtes Gerätemodell (User-Agent)</string>
+
+    <string name="CGNB_HeaderInterface">🎨 Oberfläche &amp; Anpassung</string>
+    <string name="CGNB_UiAlwaysShowFolders">Ordnerleiste immer anzeigen</string>
+    <string name="CGNB_UiAlwaysShowFoldersDesc">"Reiter auch bei nur 'Alle Chats' anzeigen"</string>
+    <string name="CGNB_UiBottomFolders">Ordner-Reiter unten (Bottom Bar)</string>
+    <string name="CGNB_UiBottomFoldersDesc">Ordner-Reiter an den unteren Bildschirmrand verschieben</string>
+    <string name="CGNB_UiShowMainTabs">Untere Navigationsleiste (Main Tabs)</string>
+    <string name="CGNB_UiShowMainTabsDesc">"Schwebende Leiste: Chats, Einstellungen, Suche"</string>
+    <string name="CGNB_UiMaterialYou">Material You-Akzent</string>
+    <string name="CGNB_UiMaterialYouDesc">Dynamische Farbgebung passend zum Systemdesign</string>
+    <string name="CGNB_UiCustomFont">Benutzerdefinierte Schriftart (.ttf / .otf)</string>
+
+    <string name="CGNB_HeaderProductivity">🚀 Produktivität &amp; Automatisierung</string>
+    <string name="CGNB_ProdCanned">Schnellantwort-Vorlagen</string>
+    <string name="CGNB_ProdCannedDesc">Schnellzugriff auf vorgefertigte Phrasen beim Tippen</string>
+    <string name="CGNB_ProdCannedData">Antwortvorlagen konfigurieren</string>
+    <string name="CGNB_ProdAutoresponder">Lokaler Anrufbeantworter / Auto-Responder</string>
+    <string name="CGNB_ProdAutoresponderDesc">Automatisch mit vorgefertigtem Text auf Nachrichten antworten</string>
+    <string name="CGNB_ProdAutoresponderText">Auto-Responder Nachricht</string>
+    <string name="CGNB_ProdUnlimitedAccounts">Unbegrenzte Konten</string>
+    <string name="CGNB_ProdUnlimitedAccountsDesc">Unterstützung für bis zu 20 Konten gleichzeitig</string>
+
+    <string name="CGNB_NotSet">Nicht festgelegt</string>
+    <string name="CGNB_Default">Standard</string>
+    <string name="CGNB_System">System</string>
+    <string name="CGNB_DialogRegexPatterns">Regex-Muster (Trennzeichen |)</string>
+    <string name="CGNB_DialogSetPin">PIN für versteckte Chats festlegen</string>
+    <string name="CGNB_DialogPin">PIN für versteckte Chats</string>
+    <string name="CGNB_DialogFakeDeviceModel">Gefälschtes Gerätemodell</string>
+    <string name="CGNB_DialogCustomFont">Pfad zur Schriftdatei (.ttf / .otf)</string>
+    <string name="CGNB_DialogCannedResponses">Antwortvorlagen (Trennzeichen ;)</string>
+    <string name="CGNB_DialogAutoresponderText">Auto-Responder Nachricht</string>
+    <string name="CGNB_PinSet">PIN festgelegt: %1$s</string>
 </resources>

@@ -412,7 +412,7 @@ public class ApplicationLoader extends Application {
 
         try {
             if (enabled) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM && CherrygramCoreConfig.INSTANCE.getResidentNotification()) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && (CherrygramCoreConfig.INSTANCE.getResidentNotification() || isStandaloneBuild())) {
                     applicationContext.startForegroundService(new Intent(applicationContext, NotificationsService.class));
                 } else {
                     applicationContext.startService(new Intent(applicationContext, NotificationsService.class));

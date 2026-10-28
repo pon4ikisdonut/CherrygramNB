@@ -263,4 +263,78 @@
     <string name="RemindTodayAt">\'Отправить сегодня в\' HH:mm</string>
     <string name="RemindDayAt">\'Отправить\' d MMM \'в\' HH:mm</string>
     <string name="RemindDayYearAt">\'Напомнить\' d MMM yyyy \'в\' HH:mm</string>
+    <!-- CherrygramNB Settings -->
+    <string name="CGNB_SettingsTitle">Настройки CherrygramNB</string>
+    <string name="CGNB_HeaderDevTools">🛠️ Инструменты разработчика (DevTools)</string>
+    <string name="CGNB_DevRawJson">Raw JSON в контекстном меню</string>
+    <string name="CGNB_DevRawJsonDesc">Кнопка в меню сообщения для просмотра сырого объекта TL/JSON</string>
+    <string name="CGNB_DevCopyId">Быстрый копипаст ID</string>
+    <string name="CGNB_DevCopyIdDesc">Отображать кликабельный ID и DC в профиле пользователей, каналов и чатов</string>
+    <string name="CGNB_DevBotTokenLogin">Токен-менеджер: Войти по бот-токену</string>
+    <string name="CGNB_DevBotTokenLoginDesc">Авторизация в аккаунт бота через токен для тестирования</string>
+
+    <string name="CGNB_HeaderAntispam">🛡️ Фильтрация и антиспам</string>
+    <string name="CGNB_AntispamRegex">Regex-фильтры для ленты</string>
+    <string name="CGNB_AntispamRegexDesc">Локально скрывать посты в каналах по регулярным выражениям</string>
+    <string name="CGNB_AntispamRegexEdit">Настроить паттерны Regex</string>
+    <string name="CGNB_AntispamAutomute">Авто-мут неизвестных чатов</string>
+    <string name="CGNB_AntispamAutomuteDesc">Автоматически отправлять в архив и глушить сообщения от неизвестных контактов</string>
+
+    <string name="CGNB_HeaderDebloat">🧹 Вырезание мусора (Де-блоат)</string>
+    <string name="CGNB_DebloatStories">Тотальное отключение Историй</string>
+    <string name="CGNB_DebloatStoriesDesc">Скрыть верхнюю панель историй и цветные кружки вокруг аватарок</string>
+    <string name="CGNB_DebloatSponsored">Отключение спонсорских сообщений</string>
+    <string name="CGNB_DebloatSponsoredDesc">Полностью вырезать рекламные сообщения (Sponsored Ads) из каналов</string>
+    <string name="CGNB_DebloatMinAttach">Минималистичное меню вложений</string>
+    <string name="CGNB_DebloatMinAttachDesc">Убрать лишние элементы из меню прикрепления файлов</string>
+
+    <string name="CGNB_HeaderContent">⚡ Работа с контентом и ограничениями</string>
+    <string name="CGNB_ContentBypassCopy">Обход запрета на сохранение (Bypass)</string>
+    <string name="CGNB_ContentBypassCopyDesc">Разрешить копирование, пересылку и скриншоты в защищенных чатах и каналах</string>
+    <string name="CGNB_ContentLocalVoice">Локальная расшифровка голосовых</string>
+    <string name="CGNB_ContentLocalVoiceDesc">Использовать встроенный движок распознавания речи без Telegram Premium</string>
+    <string name="CGNB_ContentAntiDelete">Сохранение удаленных сообщений</string>
+    <string name="CGNB_ContentAntiDeleteDesc">Не удалять сообщения, если их удалил собеседник, а помечать как [Удалено]</string>
+
+    <string name="CGNB_HeaderPrivacy">🔒 Приватность и Безопасность</string>
+    <string name="CGNB_PrivacyStreamer">Режим стримера</string>
+    <string name="CGNB_PrivacyStreamerDesc">Скрывать номер телефона, юзернейм и аватарку при записи экрана</string>
+    <string name="CGNB_PrivacyHiddenChats">Скрытые чаты под паролем</string>
+    <string name="CGNB_PrivacyHiddenChatsDesc">Скрывать выбранные диалоги из общего списка</string>
+    <string name="CGNB_PrivacyHiddenChatsPin">Изменить PIN для скрытых чатов</string>
+    <string name="CGNB_PrivacyFakeUa">Фейковый статус устройства (User-Agent)</string>
+
+    <string name="CGNB_HeaderInterface">🎨 Интерфейс и Кастомизация</string>
+    <string name="CGNB_UiAlwaysShowFolders">Всегда показывать панель вкладок</string>
+    <string name="CGNB_UiAlwaysShowFoldersDesc">Отображать панель папок даже если создана только вкладка «Все чаты»</string>
+    <string name="CGNB_UiBottomFolders">Нижняя панель папок (Bottom Bar)</string>
+    <string name="CGNB_UiBottomFoldersDesc">Перенести вкладки папок вниз экрана (вместо нижней панели навигации)</string>
+    <string name="CGNB_UiShowMainTabs">Нижняя панель навигации (Main Tabs)</string>
+    <string name="CGNB_UiShowMainTabsDesc">Плавающая нижняя панель: Чаты, Настройки, Поиск (вкладки папок будут сверху)</string>
+    <string name="CGNB_UiMaterialYou">Material You акцент</string>
+    <string name="CGNB_UiMaterialYouDesc">Динамические акценты в цвета системной темы Android</string>
+    <string name="CGNB_UiCustomFont">Пользовательский шрифт (.ttf / .otf)</string>
+
+    <string name="CGNB_HeaderProductivity">🚀 Продуктивность и Автоматизация</string>
+    <string name="CGNB_ProdCanned">Шаблоны быстрых ответов</string>
+    <string name="CGNB_ProdCannedDesc">Быстрый доступ к заготовленным фразам при вводе текста</string>
+    <string name="CGNB_ProdCannedData">Настроить шаблоны ответов</string>
+    <string name="CGNB_ProdAutoresponder">Локальный автоответчик</string>
+    <string name="CGNB_ProdAutoresponderDesc">Автоматически отвечать на входящие сообщения заготовленным текстом</string>
+    <string name="CGNB_ProdAutoresponderText">Текст автоответчика</string>
+    <string name="CGNB_ProdUnlimitedAccounts">Мультиаккаунт без лимитов</string>
+    <string name="CGNB_ProdUnlimitedAccountsDesc">Поддержка до 20 аккаунтов одновременно</string>
+
+    <string name="CGNB_NotSet">Не задан</string>
+    <string name="CGNB_Default">По умолчанию</string>
+    <string name="CGNB_System">Системный</string>
+    <string name="CGNB_DialogRegexPatterns">Паттерны Regex (разделитель |)</string>
+    <string name="CGNB_DialogSetPin">Задайте PIN для скрытых чатов</string>
+    <string name="CGNB_DialogPin">PIN для скрытых чатов</string>
+    <string name="CGNB_DialogFakeDeviceModel">Фейковая модель устройства</string>
+    <string name="CGNB_DialogCustomFont">Абсолютный путь к файлу шрифта (.ttf / .otf)</string>
+    <string name="CGNB_DialogCannedResponses">Шаблоны ответов (разделитель ;)</string>
+    <string name="CGNB_DialogAutoresponderText">Текст автоответчика</string>
+    <string name="CGNB_PinSet">PIN установлен: %1$s</string>
+
 </resources>
