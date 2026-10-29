@@ -2904,29 +2904,17 @@ public class StoryViewer implements NotificationCenter.NotificationCenterDelegat
             this.allowScreenshots = allowScreenshots;
 
             if (surfaceView != null) {
-                surfaceView.setSecure(!allowScreenshots);
+                surfaceView.setSecure(false);
             }
             if (liveView != null) {
-                liveView.setSecure(!allowScreenshots);
+                liveView.setSecure(false);
             }
             if (ATTACH_TO_FRAGMENT && fragment != null) {
                 if (fragment.getParentActivity() != null) {
-                    if (allowScreenshots) {
-                        fragment.getParentActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
-                        AndroidUtilities.logFlagSecure();
-                    } else {
-                        fragment.getParentActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
-                        AndroidUtilities.logFlagSecure();
-                    }
+                    fragment.getParentActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
                 }
             } else {
-                if (allowScreenshots) {
-                    windowLayoutParams.flags &= ~WindowManager.LayoutParams.FLAG_SECURE;
-                    AndroidUtilities.logFlagSecure();
-                } else {
-                    windowLayoutParams.flags |= WindowManager.LayoutParams.FLAG_SECURE;
-                    AndroidUtilities.logFlagSecure();
-                }
+                windowLayoutParams.flags &= ~WindowManager.LayoutParams.FLAG_SECURE;
                 try {
                     windowManager.updateViewLayout(windowView, windowLayoutParams);
                 } catch (Exception e) {

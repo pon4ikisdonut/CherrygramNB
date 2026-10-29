@@ -236,7 +236,7 @@ public class SharedConfig {
     public static int autoLockIn = 60 * 60;
 
     public static boolean saveIncomingPhotos;
-    public static boolean allowScreenCapture;
+    public static boolean allowScreenCapture = true;
     public static int lastPauseTime;
     public static boolean isWaitingForPasscodeEnter;
     public static boolean useFingerprintLock = true;
@@ -527,7 +527,7 @@ public class SharedConfig {
             autoLockIn = preferences.getInt("autoLockIn", 60 * 60);
             lastPauseTime = preferences.getInt("lastPauseTime", 0);
             useFingerprintLock = preferences.getBoolean("useFingerprint", true);
-            allowScreenCapture = preferences.getBoolean("allowScreenCapture", false);
+            allowScreenCapture = preferences.getBoolean("allowScreenCapture", true);
             lastLocalId = preferences.getInt("lastLocalId", -210000);
             pushString = preferences.getString("pushString2", "");
             pushType = preferences.getInt("pushType", PushListenerController.PUSH_TYPE_FIREBASE);
@@ -878,7 +878,7 @@ public class SharedConfig {
         lastPauseTime = 0;
         useFingerprintLock = true;
         isWaitingForPasscodeEnter = false;
-        allowScreenCapture = false;
+        allowScreenCapture = true;
         textSelectionHintShows = 0;
         scheduledOrNoSoundHintShows = 0;
         scheduledOrNoSoundHintSeenAt = 0;

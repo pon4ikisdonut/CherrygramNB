@@ -5291,7 +5291,7 @@ public class AndroidUtilities {
     }
 
     public static boolean allowScreenCapture() {
-        return SharedConfig.passcodeHash.length() == 0 || SharedConfig.allowScreenCapture;
+        return true;
     }
 
     public static File getSharingDirectory() {
