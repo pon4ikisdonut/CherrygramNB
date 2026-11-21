@@ -20,12 +20,12 @@ on:
           - 'beta'
           - 'release'
       target_abi:
-        description: 'Целевая ABI архитектура (оставьте пустым для universal / всех 4 ABI)'
-        required: false
-        default: ''
+        description: 'Целевая ABI архитектура (all для универсальной сборки всех 4 ABI)'
+        required: true
+        default: 'all'
         type: choice
         options:
-          - ''
+          - 'all'
           - 'arm64-v8a'
           - 'armeabi-v7a'
           - 'x86_64'
@@ -86,6 +86,7 @@ jobs:
           CHERRYGRAM_KEY_PASSWORD: ${{ secrets.CHERRYGRAM_KEY_PASSWORD }}
         run: |
           mkdir -p ~/.android
+          KEY_PASS="${CHERRYGRAM_KEY_PASSWORD:-android}"
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > ~/.android/cherrygramnb.jks
             echo "[+] Official keystore restored from secrets.KEYSTORE_BASE64"
@@ -93,8 +94,8 @@ jobs:
             echo "[!] KEYSTORE_BASE64 secret not found. Generating fallback CI keystore..."
             keytool -genkey -v -keystore ~/.android/cherrygramnb.jks \
               -alias cherrygramnb -keyalg RSA -keysize 2048 -validity 10000 \
-              -storepass "${CHERRYGRAM_KEY_PASSWORD:-android}" \
-              -keypass "${CHERRYGRAM_KEY_PASSWORD:-android}" \
+              -storepass "$KEY_PASS" \
+              -keypass "$KEY_PASS" \
               -dname "CN=CherrygramNB CI, OU=CI, O=CherrygramNB, L=City, S=State, C=US"
           fi
 
@@ -105,22 +106,32 @@ jobs:
 
       - name: Build CherrygramNB APK
         env:
-          CHERRYGRAM_KEY_PASSWORD: ${{ secrets.CHERRYGRAM_KEY_PASSWORD || 'android' }}
+          CHERRYGRAM_KEY_PASSWORD: ${{ secrets.CHERRYGRAM_KEY_PASSWORD }}
+          INPUT_BUILD_TYPE: ${{ inputs.build_type }}
+          INPUT_TARGET_ABI: ${{ inputs.target_abi }}
         run: |
-          BUILD_TYPE="${{ github.event.inputs.build_type || (startsWith(github.ref, 'refs/tags/') && 'release' || 'beta') }}"
-          TARGET_ABI="${{ github.event.inputs.target_abi || '' }}"
+          export CHERRYGRAM_KEY_PASSWORD="${CHERRYGRAM_KEY_PASSWORD:-android}"
+          
+          BUILD_TYPE="${INPUT_BUILD_TYPE}"
+          if [ -z "$BUILD_TYPE" ]; then
+            if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+              BUILD_TYPE="release"
+            else
+              BUILD_TYPE="beta"
+            fi
+          fi
           
           ABI_PARAM=""
-          if [ -n "$TARGET_ABI" ]; then
-            ABI_PARAM="-PtargetAbi=$TARGET_ABI"
-            echo "[*] Fast build mode enabled for ABI: $TARGET_ABI"
+          if [ -n "$INPUT_TARGET_ABI" ] && [ "$INPUT_TARGET_ABI" != "all" ]; then
+            ABI_PARAM="-PtargetAbi=$INPUT_TARGET_ABI"
+            echo "[*] Fast build mode enabled for ABI: $INPUT_TARGET_ABI"
           fi
           
           if [ "$BUILD_TYPE" = "beta" ]; then
-            echo "[*] Building Beta APK..."
+            echo "[*] Building Beta APK ($BUILD_TYPE $ABI_PARAM)..."
             ./gradlew :TMessagesProj_App:assembleAfatRelease -PIS_BETA=true $ABI_PARAM --console=plain
           else
-            echo "[*] Building Release APK..."
+            echo "[*] Building Release APK ($BUILD_TYPE $ABI_PARAM)..."
             ./gradlew :TMessagesProj_App:assembleAfatRelease $ABI_PARAM --console=plain
           fi
 
@@ -133,17 +144,29 @@ jobs:
           if-no-files-found: error
 
       - name: Publish to Telegram Channel
-        if: ${{ github.event_name != 'pull_request' && (github.event.inputs.publish_telegram != 'false') && secrets.TELEGRAM_BOT_TOKEN != '' }}
+        if: ${{ github.event_name != 'pull_request' && (inputs.publish_telegram != false) }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TG_APP_ID: ${{ secrets.TG_APP_ID }}
           TG_APP_HASH: ${{ secrets.TG_APP_HASH }}
           CHERRYGRAM_KEY_PASSWORD: ${{ secrets.CHERRYGRAM_KEY_PASSWORD }}
+          INPUT_BUILD_TYPE: ${{ inputs.build_type }}
         run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
+            echo "[!] TELEGRAM_BOT_TOKEN secret is not configured. Skipping Telegram publishing."
+            exit 0
+          fi
           python3 -m pip install --upgrade pip
           pip install telethon requests
-          BUILD_TYPE="${{ github.event.inputs.build_type || (startsWith(github.ref, 'refs/tags/') && 'release' || 'beta') }}"
+          BUILD_TYPE="${INPUT_BUILD_TYPE}"
+          if [ -z "$BUILD_TYPE" ]; then
+            if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+              BUILD_TYPE="release"
+            else
+              BUILD_TYPE="beta"
+            fi
+          fi
           EXTRA_FLAG=""
           if [ "$BUILD_TYPE" = "beta" ]; then
             EXTRA_FLAG="--beta"
