@@ -44,6 +44,7 @@ jobs:
   build:
     name: Build CherrygramNB APK
     runs-on: ubuntu-latest
+    environment: main
     timeout-minutes: 120
 
     steps:
@@ -52,6 +53,22 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 1
+
+      - name: Create CI secrets file
+        env:
+          CHERRYGRAM_KEY_PASSWORD: ${{ secrets.CHERRYGRAM_KEY_PASSWORD }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TG_APP_ID: ${{ secrets.TG_APP_ID }}
+          TG_APP_HASH: ${{ secrets.TG_APP_HASH }}
+        run: |
+          touch secrets_for_ci.env
+          [ -n "$CHERRYGRAM_KEY_PASSWORD" ] && echo "CHERRYGRAM_KEY_PASSWORD=$CHERRYGRAM_KEY_PASSWORD" >> secrets_for_ci.env
+          [ -n "$TELEGRAM_BOT_TOKEN" ] && echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> secrets_for_ci.env
+          [ -n "$TELEGRAM_CHAT_ID" ] && echo "TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID" >> secrets_for_ci.env
+          [ -n "$TG_APP_ID" ] && echo "TG_APP_ID=$TG_APP_ID" >> secrets_for_ci.env
+          [ -n "$TG_APP_HASH" ] && echo "TG_APP_HASH=$TG_APP_HASH" >> secrets_for_ci.env
+          echo "[+] CI secrets file initialized."
 
       - name: Free runner disk space
         run: |
