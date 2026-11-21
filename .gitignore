@@ -6,7 +6,6 @@ build/
 obj/
 TMessagesProj/jni/colorado
 TMessagesProj/jni/security
-/TMessagesProj/src/main/java/uz/unnarsx/cherrygram/Extra.kt
 *.iml
 local.properties
 TMessagesProj/.cxx/

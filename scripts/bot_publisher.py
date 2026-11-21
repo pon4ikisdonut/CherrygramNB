@@ -173,8 +173,8 @@ def main():
     
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN") or env.get("TELEGRAM_BOT_TOKEN") or ci_env.get("TELEGRAM_BOT_TOKEN") or env.get("BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID") or env.get("TELEGRAM_CHAT_ID") or ci_env.get("TELEGRAM_CHAT_ID") or DEFAULT_CHANNEL_ID
-    api_id = os.environ.get("TG_APP_ID") or env.get("TG_APP_ID") or ci_env.get("TG_APP_ID")
-    api_hash = os.environ.get("TG_APP_HASH") or env.get("TG_APP_HASH") or ci_env.get("TG_APP_HASH")
+    api_id = os.environ.get("TG_APP_ID") or env.get("TG_APP_ID") or ci_env.get("TG_APP_ID") or 27827667
+    api_hash = os.environ.get("TG_APP_HASH") or env.get("TG_APP_HASH") or ci_env.get("TG_APP_HASH") or "8f885d1bebe32da81c42677c42aed659"
     
     if not bot_token:
         print("[-] Error: TELEGRAM_BOT_TOKEN is not set in .env or environment!")

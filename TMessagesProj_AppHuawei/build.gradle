@@ -87,16 +87,16 @@ android {
     signingConfigs {
         debug {
             storeFile file(System.getProperty('user.home') + '/.android/cherrygramnb.jks')
-            storePassword System.getenv('CHERRYGRAM_KEY_PASSWORD')
+            storePassword System.getenv('CHERRYGRAM_KEY_PASSWORD') ?: project.findProperty('RELEASE_KEY_PASSWORD') ?: 'android'
             keyAlias 'cherrygramnb'
-            keyPassword System.getenv('CHERRYGRAM_KEY_PASSWORD')
+            keyPassword System.getenv('CHERRYGRAM_KEY_PASSWORD') ?: project.findProperty('RELEASE_KEY_PASSWORD') ?: 'android'
         }
 
         release {
             storeFile file(System.getProperty('user.home') + '/.android/cherrygramnb.jks')
-            storePassword System.getenv('CHERRYGRAM_KEY_PASSWORD')
+            storePassword System.getenv('CHERRYGRAM_KEY_PASSWORD') ?: project.findProperty('RELEASE_KEY_PASSWORD') ?: 'android'
             keyAlias 'cherrygramnb'
-            keyPassword System.getenv('CHERRYGRAM_KEY_PASSWORD')
+            keyPassword System.getenv('CHERRYGRAM_KEY_PASSWORD') ?: project.findProperty('RELEASE_KEY_PASSWORD') ?: 'android'
         }
     }
 

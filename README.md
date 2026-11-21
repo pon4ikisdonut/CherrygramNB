@@ -119,6 +119,21 @@ CherrygramNB includes an automated publisher (`scripts/bot_publisher.py`):
 
 ---
 
+## 🚀 GitHub Actions CI/CD Autobuild
+
+CherrygramNB features fully automated builds on GitHub Actions (`.github/workflows/build.yml`):
+* **Automatic Triggers:** Builds on push to `main`, release tags (`v*`), and PRs.
+* **Manual Dispatch:** Supports triggering builds from GitHub Actions UI with custom options (`release` / `beta`, target ABI, and Telegram publishing toggle).
+* **Artifact Upload:** Built APKs are automatically uploaded to workflow artifacts (`actions/upload-artifact@v4`).
+* **Optional Secrets:**
+  * `KEYSTORE_BASE64`: Base64-encoded release keystore (`cherrygramnb.jks`). If not set, a CI test keystore is generated automatically.
+  * `CHERRYGRAM_KEY_PASSWORD`: Keystore and key password.
+  * `TELEGRAM_BOT_TOKEN`: Bot token for channel publishing.
+  * `TELEGRAM_CHAT_ID`: Channel/chat ID (defaults to `@CherrygramNB` / `-1004391377976`).
+  * `TG_APP_ID` & `TG_APP_HASH`: Telegram API credentials (defaults to built-in app credentials).
+
+---
+
 ## 📄 License & Credits
 Licensed under the **GNU General Public License v2.0 or later**.
 

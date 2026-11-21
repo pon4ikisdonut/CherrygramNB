@@ -1,0 +1,151 @@
+name: Build & Publish CherrygramNB
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Тип сборки (release или beta)'
+        required: true
+        default: 'beta'
+        type: choice
+        options:
+          - 'beta'
+          - 'release'
+      target_abi:
+        description: 'Целевая ABI архитектура (оставьте пустым для universal / всех 4 ABI)'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - 'arm64-v8a'
+          - 'armeabi-v7a'
+          - 'x86_64'
+          - 'x86'
+      publish_telegram:
+        description: 'Опубликовать собранный APK в Telegram-канал (@CherrygramNB)'
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build CherrygramNB APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository & submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Free runner disk space
+        run: |
+          echo "=== Disk space before cleanup ==="
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          echo "=== Disk space after cleanup ==="
+          df -h
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Android SDK, NDK & CMake
+        run: |
+          echo "y" | sudo ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install \
+            "ndk;27.2.12479018" \
+            "cmake;3.22.1" \
+            "platforms;android-36" \
+            "build-tools;36.0.0"
+          echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
+
+      - name: Setup Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          CHERRYGRAM_KEY_PASSWORD: ${{ secrets.CHERRYGRAM_KEY_PASSWORD }}
+        run: |
+          mkdir -p ~/.android
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > ~/.android/cherrygramnb.jks
+            echo "[+] Official keystore restored from secrets.KEYSTORE_BASE64"
+          else
+            echo "[!] KEYSTORE_BASE64 secret not found. Generating fallback CI keystore..."
+            keytool -genkey -v -keystore ~/.android/cherrygramnb.jks \
+              -alias cherrygramnb -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "${CHERRYGRAM_KEY_PASSWORD:-android}" \
+              -keypass "${CHERRYGRAM_KEY_PASSWORD:-android}" \
+              -dname "CN=CherrygramNB CI, OU=CI, O=CherrygramNB, L=City, S=State, C=US"
+          fi
+
+      - name: Generate Proguard Dictionaries
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :TMessagesProj_AppStandalone:generateProguardDictAfatStandalone --console=plain
+
+      - name: Build CherrygramNB APK
+        env:
+          CHERRYGRAM_KEY_PASSWORD: ${{ secrets.CHERRYGRAM_KEY_PASSWORD || 'android' }}
+        run: |
+          BUILD_TYPE="${{ github.event.inputs.build_type || (startsWith(github.ref, 'refs/tags/') && 'release' || 'beta') }}"
+          TARGET_ABI="${{ github.event.inputs.target_abi || '' }}"
+          
+          ABI_PARAM=""
+          if [ -n "$TARGET_ABI" ]; then
+            ABI_PARAM="-PtargetAbi=$TARGET_ABI"
+            echo "[*] Fast build mode enabled for ABI: $TARGET_ABI"
+          fi
+          
+          if [ "$BUILD_TYPE" = "beta" ]; then
+            echo "[*] Building Beta APK..."
+            ./gradlew :TMessagesProj_App:assembleAfatRelease -PIS_BETA=true $ABI_PARAM --console=plain
+          else
+            echo "[*] Building Release APK..."
+            ./gradlew :TMessagesProj_App:assembleAfatRelease $ABI_PARAM --console=plain
+          fi
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CherrygramNB-APKs
+          path: |
+            TMessagesProj_App/build/outputs/apk/afat/release/*.apk
+          if-no-files-found: error
+
+      - name: Publish to Telegram Channel
+        if: ${{ github.event_name != 'pull_request' && (github.event.inputs.publish_telegram != 'false') && secrets.TELEGRAM_BOT_TOKEN != '' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TG_APP_ID: ${{ secrets.TG_APP_ID }}
+          TG_APP_HASH: ${{ secrets.TG_APP_HASH }}
+          CHERRYGRAM_KEY_PASSWORD: ${{ secrets.CHERRYGRAM_KEY_PASSWORD }}
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install telethon requests
+          BUILD_TYPE="${{ github.event.inputs.build_type || (startsWith(github.ref, 'refs/tags/') && 'release' || 'beta') }}"
+          EXTRA_FLAG=""
+          if [ "$BUILD_TYPE" = "beta" ]; then
+            EXTRA_FLAG="--beta"
+          fi
+          python3 scripts/bot_publisher.py $EXTRA_FLAG
