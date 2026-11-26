@@ -58,8 +58,8 @@ public class MessageMenuPreferencesEntry extends BaseCGPreferencesEntry {
 
     @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
-        boolean requireDonate = !DonatesManager.INSTANCE.checkAllDonatedAccountsForMarketplace();
-        boolean requireDonate2 = !DonatesManager.INSTANCE.checkAllDonatedAccounts() && !DonatesManager.INSTANCE.checkAllDonatedAccountsForMarketplace();
+        boolean requireDonate = false;
+        boolean requireDonate2 = false;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             items.add(UItem.asHeader(getString(R.string.AP_Header_Appearance)));
@@ -131,13 +131,7 @@ public class MessageMenuPreferencesEntry extends BaseCGPreferencesEntry {
 
     @Override
     protected void onClick(UItem item, View view, int position, float x, float y) {
-        boolean requireDonate;
-
-        if (item.id == messageMenuItemsCompactViewRow) {
-            requireDonate = !DonatesManager.INSTANCE.checkAllDonatedAccounts() && !DonatesManager.INSTANCE.checkAllDonatedAccountsForMarketplace();
-        } else {
-            requireDonate = !DonatesManager.INSTANCE.checkAllDonatedAccountsForMarketplace();
-        }
+        boolean requireDonate = false;
 
         var holder = listView.findViewHolderForAdapterPosition(position);
         if (holder == null || !listView.adapter.isEnabled(holder)) {

@@ -19040,7 +19040,11 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             currentNameStatus = null;
             nameStatusSlug = null;
             currentNameBotVerificationId = 0;
-            if (messageObject.customName != null) {
+            if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.shouldHideUnderSpoiler(messageObject)) {
+                currentNameString = LocaleController.getString("CG_HiddenUser", R.string.CG_HiddenUser);
+                currentNameStatus = null;
+                currentNameBotVerificationId = 0;
+            } else if (messageObject.customName != null) {
                 currentNameString = messageObject.customName;
             } else if (needAuthorName) {
                 currentNameString = getAuthorName();
@@ -19277,8 +19281,13 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                             forwardAvatar.setChat(currentForwardChannel);
                         }
                     } else if (currentForwardUser != null) {
-                        currentForwardNameString = UserObject.getUserName(currentForwardUser);
-                        forwardAvatar.setUser(currentForwardUser);
+                        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.isUserSpoilerHidden(currentForwardUser.id) || (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.getHideBlockedUsersSpoilers() && MessagesController.getInstance(currentAccount).blockePeers.indexOfKey(currentForwardUser.id) >= 0)) {
+                            currentForwardNameString = LocaleController.getString("CG_HiddenUser", R.string.CG_HiddenUser);
+                            includeAvatar = false;
+                        } else {
+                            currentForwardNameString = UserObject.getUserName(currentForwardUser);
+                            forwardAvatar.setUser(currentForwardUser);
+                        }
                     } else {
                         currentForwardNameString = currentForwardName;
                         includeAvatar = false;
@@ -19694,8 +19703,13 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                                 forwardAvatar.setChat(currentForwardChannel);
                             }
                         } else if (currentForwardUser != null) {
-                            currentForwardNameString = UserObject.getUserName(currentForwardUser);
-                            forwardAvatar.setUser(currentForwardUser);
+                            if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.isUserSpoilerHidden(currentForwardUser.id) || (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.getHideBlockedUsersSpoilers() && MessagesController.getInstance(currentAccount).blockePeers.indexOfKey(currentForwardUser.id) >= 0)) {
+                                currentForwardNameString = LocaleController.getString("CG_HiddenUser", R.string.CG_HiddenUser);
+                                includeAvatar = false;
+                            } else {
+                                currentForwardNameString = UserObject.getUserName(currentForwardUser);
+                                forwardAvatar.setUser(currentForwardUser);
+                            }
                         } else {
                             currentForwardNameString = currentForwardName;
                             includeAvatar = false;
@@ -29387,6 +29401,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     }
 
     public boolean needDrawAvatar() {
+        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.shouldHideUnderSpoiler(currentMessageObject)) {
+            return false;
+        }
         return (
             isChat && !isSavedPreviewChat && (!isThreadPost || isForum) && (
                 currentMessageObject != null && !currentMessageObject.isOutOwner() && currentMessageObject.needDrawAvatar()

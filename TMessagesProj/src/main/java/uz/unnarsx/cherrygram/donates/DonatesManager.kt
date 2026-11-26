@@ -42,62 +42,12 @@ object DonatesManager {
     private val REFRESH_INTERVAL = if (CherrygramCoreConfig.isDevBuild()) 60 * 60 * 1000L else 6 * 60 * 60 * 1000L // 6 hours
 
     suspend fun startAutoRefresh(context: Context, force: Boolean, fromIntegrityChecker: Boolean) = coroutineScope {
-        val lastUpdateTime = CherrygramCoreConfig.lastDonatesCheckTime
-        val currentTime = System.currentTimeMillis()
-
-        if (fromIntegrityChecker || force || currentTime - lastUpdateTime > REFRESH_INTERVAL) {
-            var progressDialog: AlertDialog? = null
-
-            if (force) {
-                AndroidUtilities.runOnUIThread {
-                    try {
-                        progressDialog = AlertDialog(context, AlertDialog.ALERT_TYPE_SPINNER)
-                        progressDialog.show()
-                    } catch (e: Exception) {
-                        CherrygramLogger.e(e, true)
-                    }
-                }
+        if (force) {
+            AndroidUtilities.runOnUIThread {
+                try {
+                    showToast("CherrygramNB: Все функции разблокированы навсегда")
+                } catch (_: Exception) {}
             }
-
-            try {
-                val donateJob = async { updateDonateList(context) }
-                val marketplaceJob = async { updateDonateListMarketplace(context) }
-                val blockedJob = async { updateBlockedList(context) }
-                val colorsJob = async { updateBadgeColors(context) }
-                val tonRateJob = async { updateTonUsdtRate(context) }
-
-                awaitAll(donateJob, marketplaceJob, blockedJob, colorsJob, tonRateJob)
-
-                if (!force) showToast("Loaded remote donate list")
-            } catch (e: Exception) {
-                CherrygramLogger.e(e, true)
-                showToast("Error loading donate list, using local cache")
-
-                if (!fromIntegrityChecker) {
-                    loadLocalDonateList(context)
-                    loadLocalDonateListMarketplace(context)
-                    loadLocalBlockedList(context)
-                    loadLocalBadgeColors(context, FILE_NAME_BADGE_COLORS)
-                }
-            } finally {
-                CherrygramCoreConfig.lastDonatesCheckTime = System.currentTimeMillis()
-                if (force) {
-                    AndroidUtilities.runOnUIThread {
-                        try {
-                            progressDialog?.dismiss()
-                            NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.cgDonatesLoaded)
-                        } catch (e: Exception) {
-                            CherrygramLogger.e(e, true)
-                        }
-                    }
-                }
-            }
-        } else {
-            loadLocalDonateList(context)
-            loadLocalDonateListMarketplace(context)
-            loadLocalBlockedList(context)
-            loadLocalBadgeColors(context, FILE_NAME_BADGE_COLORS)
-            showToast("Loaded local donate list")
         }
     }
 
@@ -215,39 +165,13 @@ object DonatesManager {
     private suspend fun loadLocalDonateList(context: Context) =
         loadLocalList(context, FILE_NAME, verifiedUserIds)
 
-    fun checkAllDonatedAccounts(): Boolean {
-        for (i in 0 until UserConfig.MAX_ACCOUNT_COUNT) {
-            val userConfig = AccountInstance.getInstance(i).userConfig
-            val currentUser = userConfig?.currentUser
-            val userId = currentUser?.id ?: 0L
+    fun checkAllDonatedAccounts(): Boolean = true
 
-            if (userConfig != null && userConfig.isClientActivated && userId != 0L) {
-                if (didUserDonate(userId)) {
-                    if (CherrygramCoreConfig.isDevBuild()) println("Account's ID is in the list: $userId")
-                    return true
-                } else {
-                    if (CherrygramCoreConfig.isDevBuild()) println("Account's ID is not in the list: $userId")
-                }
-            }
-        }
-        return false
-    }
+    fun didUserDonate(userId: Long): Boolean = true
 
-    fun didUserDonate(userId: Long): Boolean {
-        synchronized(verifiedUserIds) {
-            return verifiedUserIds.contains(userId) || didUserDonateForMarketplace(userId)
-        }
-    }
+    fun didUserDonate2(userId: Long): Boolean = true
 
-    fun didUserDonate2(userId: Long): Boolean {
-        synchronized(verifiedUserIds) {
-            return verifiedUserIds.contains(userId)
-        }
-    }
-
-    fun didUserDonateForFeature() : Boolean {
-        return checkAllDonatedAccounts() || checkAllDonatedAccountsForMarketplace()
-    }
+    fun didUserDonateForFeature() : Boolean = true
     /** Donates finish */
 
     /** Stars start */
@@ -262,30 +186,9 @@ object DonatesManager {
     private suspend fun loadLocalDonateListMarketplace(context: Context) =
         loadLocalList(context, FILE_NAME_MARKETPLACE, verifiedUserIdsMarketplace)
 
-    fun checkAllDonatedAccountsForMarketplace(): Boolean {
-        for (i in 0 until UserConfig.MAX_ACCOUNT_COUNT) {
-            val userConfig = AccountInstance.getInstance(i).userConfig
-            val currentUser = userConfig?.currentUser
-            val userId = currentUser?.id ?: 0L
+    fun checkAllDonatedAccountsForMarketplace(): Boolean = true
 
-            if (userConfig != null && userConfig.isClientActivated && userId != 0L) {
-                if (didUserDonateForMarketplace(userId)) {
-                    if (CherrygramCoreConfig.isDevBuild()) println("Account's ID is in the list: $userId")
-                    CherrygramCoreConfig.showNotifications = true
-                    return true
-                } else {
-                    if (CherrygramCoreConfig.isDevBuild()) println("Account's ID is not in the list: $userId")
-                }
-            }
-        }
-        return false
-    }
-
-    fun didUserDonateForMarketplace(userId: Long): Boolean {
-        synchronized(verifiedUserIdsMarketplace) {
-            return verifiedUserIdsMarketplace.contains(userId)
-        }
-    }
+    fun didUserDonateForMarketplace(userId: Long): Boolean = true
     /** Stars finish */
 
     /** Blocked start */
@@ -300,11 +203,7 @@ object DonatesManager {
     private suspend fun loadLocalBlockedList(context: Context) =
         loadLocalList(context, FILE_NAME_BLOCKED, blockedUserIds)
 
-    fun isUserBlocked(userId: Long): Boolean {
-        synchronized(blockedUserIds) {
-            return blockedUserIds.contains(userId)
-        }
-    }
+    fun isUserBlocked(userId: Long): Boolean = false
     /** Blocked finish */
 
     /** Badge colors start */

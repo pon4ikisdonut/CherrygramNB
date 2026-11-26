@@ -185,7 +185,7 @@ object CherrygramCoreConfig: CoroutineScope by CoroutineScope(
 
     @JvmStatic
     fun isStandalonePremiumBuild(): Boolean {
-        return false
+        return true
     }
 
     @JvmStatic

@@ -31,6 +31,17 @@ object MessagesFilterHelper {
         messageObject: MessageObject,
         original: ArrayList<TLRPC.MessageEntity>?
     ): ArrayList<TLRPC.MessageEntity>? {
+        if (CherrygramNBConfig.shouldHideUnderSpoiler(messageObject)) {
+            val entities = if (original != null) ArrayList(original) else ArrayList<TLRPC.MessageEntity>()
+            val textLen = messageObject.messageText?.length ?: 0
+            if (textLen > 0) {
+                val spoiler = TLRPC.TL_messageEntitySpoiler()
+                spoiler.offset = 0
+                spoiler.length = textLen
+                entities.add(spoiler)
+            }
+            return entities
+        }
         return original
     }
 
@@ -42,6 +53,10 @@ object MessagesFilterHelper {
     @JvmStatic
     fun shouldBlockMessage(messageObject: MessageObject?): Boolean {
         if (messageObject == null) return false
+        val senderId = messageObject.senderId
+        if (CherrygramNBConfig.isUserCompletelyHidden(senderId)) {
+            return true
+        }
         if (CherrygramNBConfig.regexFiltersEnabled && !CherrygramNBConfig.regexFilterPatterns.isNullOrEmpty()) {
             try {
                 val text = messageObject.messageText?.toString() ?: messageObject.caption?.toString() ?: ""

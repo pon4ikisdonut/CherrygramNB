@@ -315,7 +315,7 @@ public class BaseCGPreferencesEntry extends UniversalFragment {
     }
 
     protected void showDonateBulletin() {
-        CGBulletinCreator.INSTANCE.createRequireDonateBulletin(this);
+        // Unlocked in CherrygramNB
     }
 
     protected void showSuccessBulletin() {

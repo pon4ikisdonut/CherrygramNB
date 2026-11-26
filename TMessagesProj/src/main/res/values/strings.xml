@@ -11317,4 +11317,30 @@
     <string name="CGNB_DialogCannedResponses">Response templates (separator ;)</string>
     <string name="CGNB_DialogAutoresponderText">Auto-responder message</string>
     <string name="CGNB_PinSet">PIN set: %1$s</string>
+
+    <string name="CG_HiddenUser">Hidden User</string>
+
+    <string name="CGNB_HeaderGhostMode">👻 Ghost Mode</string>
+    <string name="CGNB_GhostMaster">Enable Ghost Mode</string>
+    <string name="CGNB_GhostMasterDesc">Full invisibility: hides online, typing status, read receipts and story views</string>
+    <string name="CGNB_GhostHideOnline">Hide online status</string>
+    <string name="CGNB_GhostHideOnlineDesc">Do not update online status upon opening the app</string>
+    <string name="CGNB_GhostHideTyping">Hide typing &amp; actions status</string>
+    <string name="CGNB_GhostHideTypingDesc">Do not send typing, voice recording, sticker choosing or video indicators</string>
+    <string name="CGNB_GhostRead">Do not mark messages as read</string>
+    <string name="CGNB_GhostReadDesc">Keep messages unread for senders when reading them</string>
+    <string name="CGNB_GhostStories">Stealth story viewing</string>
+    <string name="CGNB_GhostStoriesDesc">View stories anonymously without leaving a view record</string>
+
+    <string name="CGNB_HeaderUserHiding">👁️ User &amp; Message Hiding</string>
+    <string name="CGNB_HideBlockedSpoilers">Hide blocked users behind spoilers</string>
+    <string name="CGNB_HideBlockedSpoilersDesc">Blur and cover name, avatar and message text of blocked users with spoilers</string>
+    <string name="CGNB_HideByIdSpoiler">Hide users by ID behind spoilers</string>
+    <string name="CGNB_HideByIdSpoilerDesc">Cover name, avatar and messages under spoilers for specified user IDs without blocking them</string>
+    <string name="CGNB_HideByIdSpoilerEdit">Configure spoiler user IDs</string>
+    <string name="CGNB_CompletelyHideUsers">Completely erase users by ID</string>
+    <string name="CGNB_CompletelyHideUsersDesc">Completely remove specified users and their messages from view as if they never existed</string>
+    <string name="CGNB_CompletelyHideUsersEdit">Configure completely hidden user IDs</string>
+    <string name="CGNB_DialogSpoilerIds">User IDs to hide under spoilers (separated by comma, space or newline)</string>
+    <string name="CGNB_DialogCompleteHideIds">User IDs to completely hide (separated by comma, space or newline)</string>
 </resources>

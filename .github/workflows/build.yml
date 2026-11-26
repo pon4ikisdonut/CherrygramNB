@@ -103,17 +103,32 @@ jobs:
           CHERRYGRAM_KEY_PASSWORD: ${{ secrets.CHERRYGRAM_KEY_PASSWORD }}
         run: |
           mkdir -p ~/.android
-          KEY_PASS="${CHERRYGRAM_KEY_PASSWORD:-android}"
+          KEY_PASS="$(echo -n "${CHERRYGRAM_KEY_PASSWORD:-android}" | tr -d '\r\n ')"
+          if [ -z "$KEY_PASS" ]; then
+            KEY_PASS="android"
+          fi
+          echo "CHERRYGRAM_KEY_PASSWORD=$KEY_PASS" >> $GITHUB_ENV
+          
+          KEYSTORE_VALID=false
           if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > ~/.android/cherrygramnb.jks
-            echo "[+] Official keystore restored from secrets.KEYSTORE_BASE64"
-          else
-            echo "[!] KEYSTORE_BASE64 secret not found. Generating fallback CI keystore..."
+            echo -n "$KEYSTORE_BASE64" | tr -d '\r\n ' | base64 -d > ~/.android/cherrygramnb.jks
+            if keytool -list -keystore ~/.android/cherrygramnb.jks -alias cherrygramnb -storepass "$KEY_PASS" > /dev/null 2>&1; then
+              echo "[+] Official keystore successfully restored and verified with keytool!"
+              KEYSTORE_VALID=true
+            else
+              echo "[!] Warning: Restored keystore verification failed (bad password or corrupted base64)."
+            fi
+          fi
+          
+          if [ "$KEYSTORE_VALID" = false ]; then
+            echo "[!] Generating fresh valid CI keystore..."
+            rm -f ~/.android/cherrygramnb.jks
             keytool -genkey -v -keystore ~/.android/cherrygramnb.jks \
               -alias cherrygramnb -keyalg RSA -keysize 2048 -validity 10000 \
               -storepass "$KEY_PASS" \
               -keypass "$KEY_PASS" \
               -dname "CN=CherrygramNB CI, OU=CI, O=CherrygramNB, L=City, S=State, C=US"
+            echo "[+] Fresh keystore generated and verified."
           fi
 
       - name: Generate Proguard Dictionaries

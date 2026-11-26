@@ -99,7 +99,7 @@ public class MessageFiltersPreferencesEntry extends BaseCGPreferencesEntry {
 
     @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
-        boolean requireDonate = !DonatesManager.INSTANCE.checkAllDonatedAccountsForMarketplace();
+        boolean requireDonate = false;
 
         items.add(UItem.asHeader(getString(R.string.General)));
         items.add(SettingsHelper.asSwitchCG(enableFilterRow, SettingsHelper.applyProSpan(getString(R.string.CP_Message_Filtering_Filter), getResourceProvider()), getString(R.string.CP_Message_Filtering_Filter_Desc))
@@ -181,7 +181,7 @@ public class MessageFiltersPreferencesEntry extends BaseCGPreferencesEntry {
 
     @Override
     protected void onClick(UItem item, View view, int position, float x, float y) {
-        boolean requireDonate = !DonatesManager.INSTANCE.checkAllDonatedAccountsForMarketplace();
+        boolean requireDonate = false;
 
         var holder = listView.findViewHolderForAdapterPosition(position);
         if (holder == null || !listView.adapter.isEnabled(holder)) {

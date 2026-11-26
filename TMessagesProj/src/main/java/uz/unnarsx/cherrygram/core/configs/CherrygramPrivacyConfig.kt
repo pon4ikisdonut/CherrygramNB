@@ -37,6 +37,29 @@ object CherrygramPrivacyConfig: CoroutineScope by CoroutineScope(
     var googleAnalytics by sharedPreferences.boolean("SP_GoogleAnalytics1", true)
     /** Privacy finish */
 
+    /** Ghost Mode start */
+    var ghostMode by sharedPreferences.boolean("CG_GhostMode", false)
+    var hideOnline by sharedPreferences.boolean("CG_GhostHideOnline", false)
+    var hideTyping by sharedPreferences.boolean("CG_GhostHideTyping", false)
+    var ghostRead by sharedPreferences.boolean("CG_GhostRead", false)
+    var ghostStories by sharedPreferences.boolean("CG_GhostStories", false)
+
+    @JvmStatic
+    fun isGhostModeActive(): Boolean = ghostMode
+
+    @JvmStatic
+    fun isHideOnlineActive(): Boolean = ghostMode || hideOnline
+
+    @JvmStatic
+    fun isHideTypingActive(): Boolean = ghostMode || hideTyping
+
+    @JvmStatic
+    fun isGhostReadActive(): Boolean = ghostMode || ghostRead
+
+    @JvmStatic
+    fun isGhostStoriesActive(): Boolean = ghostMode || ghostStories
+    /** Ghost Mode finish */
+
     /** Passcode lock start */
     var hideArchiveFromChatsList by sharedPreferences.boolean("SP_HideArchiveFromChatsList", false)
     var askBiometricsToOpenArchive by sharedPreferences.boolean("SP_AskBiometricsToOpenArchive", false)

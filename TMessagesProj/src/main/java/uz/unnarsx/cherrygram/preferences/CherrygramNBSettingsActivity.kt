@@ -20,10 +20,18 @@ import org.telegram.ui.Components.UItem
 import org.telegram.ui.Components.UniversalAdapter
 import uz.unnarsx.cherrygram.core.configs.CherrygramAppearanceConfig
 import uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig
+import uz.unnarsx.cherrygram.core.configs.CherrygramPrivacyConfig
 import uz.unnarsx.cherrygram.helpers.BotTokenAuthDialog
 import uz.unnarsx.cherrygram.preferences.helpers.SettingsHelper
 
 class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
+
+    private val ROW_HEADER_GHOST = 50
+    private val ROW_GHOST_MASTER = 51
+    private val ROW_GHOST_HIDE_ONLINE = 52
+    private val ROW_GHOST_HIDE_TYPING = 53
+    private val ROW_GHOST_READ = 54
+    private val ROW_GHOST_STORIES = 55
 
     private val ROW_HEADER_DEVTOOLS = 100
     private val ROW_DEV_RAW_JSON = 101
@@ -51,6 +59,13 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
     private val ROW_PRIVACY_FAKE_UA = 503
     private val ROW_PRIVACY_HIDDEN_CHATS_PIN = 504
 
+    private val ROW_HEADER_USER_HIDING = 510
+    private val ROW_HIDE_BLOCKED_SPOILERS = 511
+    private val ROW_HIDE_BY_ID_SPOILER = 512
+    private val ROW_HIDE_BY_ID_SPOILER_EDIT = 513
+    private val ROW_COMPLETELY_HIDE_USERS = 514
+    private val ROW_COMPLETELY_HIDE_USERS_EDIT = 515
+
     private val ROW_HEADER_INTERFACE = 600
     private val ROW_UI_ALWAYS_SHOW_FOLDERS = 601
     private val ROW_UI_BOTTOM_FOLDERS = 602
@@ -70,6 +85,47 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
     }
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
+        // 0. Ghost Mode
+        items.add(UItem.asHeader(getString(R.string.CGNB_HeaderGhostMode)))
+        items.add(
+            SettingsHelper.asSwitchCG(
+                ROW_GHOST_MASTER,
+                getString(R.string.CGNB_GhostMaster),
+                getString(R.string.CGNB_GhostMasterDesc)
+            ).setChecked(CherrygramPrivacyConfig.ghostMode)
+        )
+        if (!CherrygramPrivacyConfig.ghostMode) {
+            items.add(
+                SettingsHelper.asSwitchCG(
+                    ROW_GHOST_HIDE_ONLINE,
+                    getString(R.string.CGNB_GhostHideOnline),
+                    getString(R.string.CGNB_GhostHideOnlineDesc)
+                ).setChecked(CherrygramPrivacyConfig.hideOnline)
+            )
+            items.add(
+                SettingsHelper.asSwitchCG(
+                    ROW_GHOST_HIDE_TYPING,
+                    getString(R.string.CGNB_GhostHideTyping),
+                    getString(R.string.CGNB_GhostHideTypingDesc)
+                ).setChecked(CherrygramPrivacyConfig.hideTyping)
+            )
+            items.add(
+                SettingsHelper.asSwitchCG(
+                    ROW_GHOST_READ,
+                    getString(R.string.CGNB_GhostRead),
+                    getString(R.string.CGNB_GhostReadDesc)
+                ).setChecked(CherrygramPrivacyConfig.ghostRead)
+            )
+            items.add(
+                SettingsHelper.asSwitchCG(
+                    ROW_GHOST_STORIES,
+                    getString(R.string.CGNB_GhostStories),
+                    getString(R.string.CGNB_GhostStoriesDesc)
+                ).setChecked(CherrygramPrivacyConfig.ghostStories)
+            )
+        }
+        items.add(UItem.asShadow(null))
+
         // 1. DevTools
         items.add(UItem.asHeader(getString(R.string.CGNB_HeaderDevTools)))
         items.add(
@@ -206,6 +262,49 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
         )
         items.add(UItem.asShadow(null))
 
+        // 5.1 User Hiding
+        items.add(UItem.asHeader(getString(R.string.CGNB_HeaderUserHiding)))
+        items.add(
+            SettingsHelper.asSwitchCG(
+                ROW_HIDE_BLOCKED_SPOILERS,
+                getString(R.string.CGNB_HideBlockedSpoilers),
+                getString(R.string.CGNB_HideBlockedSpoilersDesc)
+            ).setChecked(CherrygramNBConfig.hideBlockedUsersSpoilers)
+        )
+        items.add(
+            SettingsHelper.asSwitchCG(
+                ROW_HIDE_BY_ID_SPOILER,
+                getString(R.string.CGNB_HideByIdSpoiler),
+                getString(R.string.CGNB_HideByIdSpoilerDesc)
+            ).setChecked(CherrygramNBConfig.hideUsersByIdSpoilerEnabled)
+        )
+        if (CherrygramNBConfig.hideUsersByIdSpoilerEnabled) {
+            items.add(
+                UItem.asButton(
+                    ROW_HIDE_BY_ID_SPOILER_EDIT,
+                    getString(R.string.CGNB_HideByIdSpoilerEdit),
+                    if (CherrygramNBConfig.hideUsersByIdSpoilerList.isEmpty()) getString(R.string.CGNB_NotSet) else CherrygramNBConfig.hideUsersByIdSpoilerList
+                )
+            )
+        }
+        items.add(
+            SettingsHelper.asSwitchCG(
+                ROW_COMPLETELY_HIDE_USERS,
+                getString(R.string.CGNB_CompletelyHideUsers),
+                getString(R.string.CGNB_CompletelyHideUsersDesc)
+            ).setChecked(CherrygramNBConfig.completelyHideUsersEnabled)
+        )
+        if (CherrygramNBConfig.completelyHideUsersEnabled) {
+            items.add(
+                UItem.asButton(
+                    ROW_COMPLETELY_HIDE_USERS_EDIT,
+                    getString(R.string.CGNB_CompletelyHideUsersEdit),
+                    if (CherrygramNBConfig.completelyHideUsersList.isEmpty()) getString(R.string.CGNB_NotSet) else CherrygramNBConfig.completelyHideUsersList
+                )
+            )
+        }
+        items.add(UItem.asShadow(null))
+
         // 6. Interface
         items.add(UItem.asHeader(getString(R.string.CGNB_HeaderInterface)))
         items.add(
@@ -291,6 +390,60 @@ class CherrygramNBSettingsActivity : BaseCGPreferencesEntry() {
 
     override fun onClick(item: UItem, view: View, position: Int, x: Float, y: Float) {
         when (item.id) {
+            ROW_GHOST_MASTER -> {
+                CherrygramPrivacyConfig.ghostMode = !CherrygramPrivacyConfig.ghostMode
+                SettingsHelper.updateCheckState(view, CherrygramPrivacyConfig.ghostMode)
+                updateRows(true)
+            }
+            ROW_GHOST_HIDE_ONLINE -> {
+                CherrygramPrivacyConfig.hideOnline = !CherrygramPrivacyConfig.hideOnline
+                SettingsHelper.updateCheckState(view, CherrygramPrivacyConfig.hideOnline)
+            }
+            ROW_GHOST_HIDE_TYPING -> {
+                CherrygramPrivacyConfig.hideTyping = !CherrygramPrivacyConfig.hideTyping
+                SettingsHelper.updateCheckState(view, CherrygramPrivacyConfig.hideTyping)
+            }
+            ROW_GHOST_READ -> {
+                CherrygramPrivacyConfig.ghostRead = !CherrygramPrivacyConfig.ghostRead
+                SettingsHelper.updateCheckState(view, CherrygramPrivacyConfig.ghostRead)
+            }
+            ROW_GHOST_STORIES -> {
+                CherrygramPrivacyConfig.ghostStories = !CherrygramPrivacyConfig.ghostStories
+                SettingsHelper.updateCheckState(view, CherrygramPrivacyConfig.ghostStories)
+            }
+
+            ROW_HIDE_BLOCKED_SPOILERS -> {
+                CherrygramNBConfig.hideBlockedUsersSpoilers = !CherrygramNBConfig.hideBlockedUsersSpoilers
+                SettingsHelper.updateCheckState(view, CherrygramNBConfig.hideBlockedUsersSpoilers)
+                parentLayout?.rebuildAllFragmentViews(false, false)
+            }
+            ROW_HIDE_BY_ID_SPOILER -> {
+                CherrygramNBConfig.hideUsersByIdSpoilerEnabled = !CherrygramNBConfig.hideUsersByIdSpoilerEnabled
+                SettingsHelper.updateCheckState(view, CherrygramNBConfig.hideUsersByIdSpoilerEnabled)
+                updateRows(true)
+                parentLayout?.rebuildAllFragmentViews(false, false)
+            }
+            ROW_HIDE_BY_ID_SPOILER_EDIT -> {
+                showTextInputDialog(getString(R.string.CGNB_DialogSpoilerIds), CherrygramNBConfig.hideUsersByIdSpoilerList) { newList ->
+                    CherrygramNBConfig.hideUsersByIdSpoilerList = newList
+                    updateRows(true)
+                    parentLayout?.rebuildAllFragmentViews(false, false)
+                }
+            }
+            ROW_COMPLETELY_HIDE_USERS -> {
+                CherrygramNBConfig.completelyHideUsersEnabled = !CherrygramNBConfig.completelyHideUsersEnabled
+                SettingsHelper.updateCheckState(view, CherrygramNBConfig.completelyHideUsersEnabled)
+                updateRows(true)
+                parentLayout?.rebuildAllFragmentViews(false, false)
+            }
+            ROW_COMPLETELY_HIDE_USERS_EDIT -> {
+                showTextInputDialog(getString(R.string.CGNB_DialogCompleteHideIds), CherrygramNBConfig.completelyHideUsersList) { newList ->
+                    CherrygramNBConfig.completelyHideUsersList = newList
+                    updateRows(true)
+                    parentLayout?.rebuildAllFragmentViews(false, false)
+                }
+            }
+
             ROW_DEV_RAW_JSON -> {
                 CherrygramNBConfig.showRawJson = !CherrygramNBConfig.showRawJson
                 SettingsHelper.updateCheckState(view, CherrygramNBConfig.showRawJson)

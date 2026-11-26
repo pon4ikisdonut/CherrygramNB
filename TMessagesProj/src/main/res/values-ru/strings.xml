@@ -337,4 +337,29 @@
     <string name="CGNB_DialogAutoresponderText">Текст автоответчика</string>
     <string name="CGNB_PinSet">PIN установлен: %1$s</string>
 
+    <string name="CG_HiddenUser">Скрытый пользователь</string>
+
+    <string name="CGNB_HeaderGhostMode">👻 Режим призрака</string>
+    <string name="CGNB_GhostMaster">Включить режим призрака</string>
+    <string name="CGNB_GhostMasterDesc">Полная невидимость: скрывает онлайн, статус набора текста, прочтение сообщений и историй</string>
+    <string name="CGNB_GhostHideOnline">Скрывать статус «В сети»</string>
+    <string name="CGNB_GhostHideOnlineDesc">Не отправлять статус онлайна при открытии приложения</string>
+    <string name="CGNB_GhostHideTyping">Скрывать набор текста и действия</string>
+    <string name="CGNB_GhostHideTypingDesc">Не отправлять индикаторы набора текста, записи аудио, кружков и стикеров</string>
+    <string name="CGNB_GhostRead">Не отмечать сообщения прочитанными</string>
+    <string name="CGNB_GhostReadDesc">Оставлять сообщения непрочитанными для собеседников при открытии диалогов</string>
+    <string name="CGNB_GhostStories">Анонимный просмотр историй</string>
+    <string name="CGNB_GhostStoriesDesc">Смотреть истории инкогнито без отправки отметки о просмотре</string>
+
+    <string name="CGNB_HeaderUserHiding">👁️ Скрытие пользователей и сообщений</string>
+    <string name="CGNB_HideBlockedSpoilers">Скрывать сообщения заблокированных спойлером</string>
+    <string name="CGNB_HideBlockedSpoilersDesc">Скрывать ник, аватарку и текст сообщений от заблокированных под спойлер</string>
+    <string name="CGNB_HideByIdSpoiler">Скрывать пользователей по ID под спойлер</string>
+    <string name="CGNB_HideByIdSpoilerDesc">Скрывать ник, аватарку и сообщения под спойлер по списку ID без блокировки в Telegram</string>
+    <string name="CGNB_HideByIdSpoilerEdit">Настроить ID пользователей (под спойлер)</string>
+    <string name="CGNB_CompletelyHideUsers">Полное скрытие пользователей по ID</string>
+    <string name="CGNB_CompletelyHideUsersDesc">Полностью стереть пользователей и их сообщения с экрана, как будто их никогда не существовало</string>
+    <string name="CGNB_CompletelyHideUsersEdit">Настроить ID полностью скрытых пользователей</string>
+    <string name="CGNB_DialogSpoilerIds">ID пользователей под спойлер (через запятую, пробел или новую строку)</string>
+    <string name="CGNB_DialogCompleteHideIds">ID пользователей для полного скрытия (через запятую, пробел или новую строку)</string>
 </resources>

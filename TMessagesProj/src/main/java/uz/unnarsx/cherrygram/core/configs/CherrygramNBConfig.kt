@@ -82,4 +82,55 @@ object CherrygramNBConfig {
     var autoResponderEnabled by sharedPreferences.boolean("nb_auto_responder_enabled", false)
     var autoResponderText by sharedPreferences.string("nb_auto_responder_text", "Здравствуйте! Сейчас не могу ответить, напишу позже.")
     var unlimitedAccounts by sharedPreferences.boolean("nb_unlimited_accounts", true)
+
+    // 8. User & Message Hiding
+    var hideBlockedUsersSpoilers by sharedPreferences.boolean("nb_hide_blocked_users_spoilers", true)
+    var hideUsersByIdSpoilerEnabled by sharedPreferences.boolean("nb_hide_users_by_id_spoiler_enabled", false)
+    var hideUsersByIdSpoilerList by sharedPreferences.string("nb_hide_users_by_id_spoiler_list", "")
+
+    var completelyHideUsersEnabled by sharedPreferences.boolean("nb_completely_hide_users_enabled", false)
+    var completelyHideUsersList by sharedPreferences.string("nb_completely_hide_users_list", "")
+
+    @JvmStatic
+    fun isUserSpoilerHidden(userId: Long): Boolean {
+        if (!hideUsersByIdSpoilerEnabled || userId == 0L) return false
+        val list = hideUsersByIdSpoilerList
+        if (list.isNullOrBlank()) return false
+        return list.split(",", ";", " ", "\n")
+            .mapNotNull { it.trim().toLongOrNull() }
+            .contains(userId)
+    }
+
+    @JvmStatic
+    fun isUserCompletelyHidden(userId: Long): Boolean {
+        if (!completelyHideUsersEnabled || userId == 0L) return false
+        val list = completelyHideUsersList
+        if (list.isNullOrBlank()) return false
+        return list.split(",", ";", " ", "\n")
+            .mapNotNull { it.trim().toLongOrNull() }
+            .contains(userId)
+    }
+
+    @JvmStatic
+    fun isMessageFromBlockedUser(messageObject: org.telegram.messenger.MessageObject?): Boolean {
+        if (messageObject == null) return false
+        val senderId = messageObject.senderId
+        if (senderId == 0L) return false
+        val account = messageObject.currentAccount
+        val messagesController = org.telegram.messenger.MessagesController.getInstance(account) ?: return false
+        return messagesController.blockePeers.indexOfKey(senderId) >= 0
+    }
+
+    @JvmStatic
+    fun shouldHideUnderSpoiler(messageObject: org.telegram.messenger.MessageObject?): Boolean {
+        if (messageObject == null) return false
+        val senderId = messageObject.senderId
+        if (hideBlockedUsersSpoilers && isMessageFromBlockedUser(messageObject)) {
+            return true
+        }
+        if (isUserSpoilerHidden(senderId)) {
+            return true
+        }
+        return false
+    }
 }

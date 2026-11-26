@@ -13678,6 +13678,9 @@ public class MessageObject {
     }
 
     public boolean hasMediaSpoilersCG(boolean notifications) {
+        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.shouldHideUnderSpoiler(this)) {
+            return true;
+        }
         long chatID;
         boolean require;
         boolean addSpoiler = false;
