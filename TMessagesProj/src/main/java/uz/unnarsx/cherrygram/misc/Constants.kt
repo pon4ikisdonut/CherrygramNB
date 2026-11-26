@@ -44,6 +44,8 @@ object Constants {
     var UPDATE_APP_URL = CG_CHANNEL_URL
 
     @JvmField
+    var CG_WEB_SITE_URL = "https://arslan4k1390.github.io/cherrygram/"
+    @JvmField
     var CG_PRIVACY_URL = "https://arslan4k1390.github.io/cherrygram/privacy"
     @JvmField
     var CG_DONATIONS_AND_TERMS_URL = "https://arslan4k1390.github.io/cherrygram/donation-terms"
@@ -52,6 +54,9 @@ object Constants {
     var CG_CROWDIN_URL = "https://crowdin.com/project/cherrygram"
     @JvmField
     var CG_GITHUB_URL = "https://github.com/pon4ikisdonut/CherrygramNB"
+
+    @JvmField
+    var TIKTOK_URL = "https://www.tiktok.com/@cherrygram_official"
     /** CG Links finish */
 
     const val PACKAGE_NAME = "uz.unnarsx.cherrygram"

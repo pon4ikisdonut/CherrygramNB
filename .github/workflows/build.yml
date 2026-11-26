@@ -176,7 +176,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publish to Telegram Channel
-        if: ${{ github.event_name != 'pull_request' && (inputs.publish_telegram != false) }}
+        if: ${{ github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.publish_telegram == true) }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

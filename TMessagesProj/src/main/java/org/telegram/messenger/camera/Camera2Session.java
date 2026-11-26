@@ -10,32 +10,23 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
-import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.Log;
-import android.util.Range;
 import android.util.Size;
-import android.util.SizeF;
 import android.view.Surface;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.SharedConfig;
-import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
 
 import java.io.File;
@@ -48,7 +39,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import uz.unnarsx.cherrygram.camera.VideoMessagesHelper;
+import uz.unnarsx.cherrygram.camera.roundvideo.VideoMessagesHelper;
 import uz.unnarsx.cherrygram.core.configs.CherrygramCameraConfig;
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -338,6 +329,35 @@ public class Camera2Session {
             diffOrientation += 360;
         }
         return diffOrientation;
+    }
+
+    /**
+     * Rotation the round video recorder applies to its GL quad on top of the SurfaceTexture
+     * transform, which only makes the frame upright for the device's natural orientation.
+     * Counter-clockwise degrees equal to the display rotation. {@link #getWorldAngle()} stays
+     * as the attach camera (CameraView) expects it.
+     */
+    public int getRoundVideoRotationAngle() {
+        try {
+            Context context = ApplicationLoader.applicationContext;
+            if (context == null) {
+                return 0;
+            }
+            int rotation = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+            switch (rotation) {
+                case Surface.ROTATION_90:
+                    return 90;
+                case Surface.ROTATION_180:
+                    return 180;
+                case Surface.ROTATION_270:
+                    return 270;
+                default:
+                    return 0;
+            }
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+        return 0;
     }
 
     public int getCurrentOrientation() {

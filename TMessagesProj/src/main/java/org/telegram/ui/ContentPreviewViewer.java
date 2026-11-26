@@ -81,6 +81,7 @@ import org.telegram.ui.ActionBar.ActionBarPopupWindow;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.SimpleTextView;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.ActionBar.ThemeBind;
 import org.telegram.ui.Cells.ContextLinkCell;
 import org.telegram.ui.Cells.StickerCell;
 import org.telegram.ui.Cells.StickerEmojiCell;
@@ -104,7 +105,7 @@ import org.telegram.ui.Components.StickersDialogs;
 import org.telegram.ui.Components.SuggestEmojiView;
 import org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory;
 import org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl;
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap;
+import org.telegram.utils.glass.source.GlassSourceBitmap;
 import org.telegram.ui.Components.blur3.utils.Blur3Utils;
 import org.telegram.ui.Components.chat.ViewPositionWatcher;
 import org.telegram.ui.Components.poll.RecentVotersCell;
@@ -343,7 +344,7 @@ public class ContentPreviewViewer {
 
     private int currentAccount;
 
-    private final BlurredBackgroundSourceBitmap scrimBlur3SourceBitmap = new BlurredBackgroundSourceBitmap();
+    private final GlassSourceBitmap scrimBlur3SourceBitmap = new GlassSourceBitmap();
     private final BlurredBackgroundDrawableViewFactory scrimBlur3Factory = new BlurredBackgroundDrawableViewFactory(scrimBlur3SourceBitmap);
 
     private ColorDrawable backgroundDrawable = new ColorDrawable(0x71000000);
@@ -437,13 +438,13 @@ public class ContentPreviewViewer {
             item.setText(LocaleController.formatPluralString("PollVotesCount", voters.voters));
             item.setRecentVoters(voters.recent_voters, false);
             item.setLayoutParams(LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
-            item.setBackground(Theme.createRadSelectorDrawable(getThemedColor(Theme.key_dialogButtonSelector), 12, 0));
+            ThemeBind.selectorBackground(item, Theme.createRadSelectorDrawable(getThemedColor(Theme.key_dialogButtonSelector), 12, 0), null, ThemeBind.of(Theme.key_dialogButtonSelector), resourcesProvider);
             item.setOnClickListener(v -> previewMenu.getSwipeBack().openForeground(foregroundIndex));
             previewMenu.addView(item);
 
             ActionBarPopupWindow.GapView gap = new ActionBarPopupWindow.GapView(previewMenu.getContext(), resourcesProvider);
             gap.setTag(R.id.fit_width_tag, 1);
-            gap.setColor(Theme.multAlpha(Theme.getColor(Theme.key_actionBarDefaultSubmenuItem, resourcesProvider), 0.06f));
+            ThemeBind.backgroundColor(gap, ThemeBind.multAlpha(Theme.key_actionBarDefaultSubmenuItem, 0.06f), resourcesProvider);
             gap.setLayoutParams(LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8));
             previewMenu.addView(gap);
         }
@@ -468,7 +469,7 @@ public class ContentPreviewViewer {
         if (!showFullVotersList && (addVote || addUnvote)) {
             ActionBarPopupWindow.GapView gap = new ActionBarPopupWindow.GapView(previewMenu.getContext(), resourcesProvider);
             gap.setTag(R.id.fit_width_tag, 1);
-            gap.setColor(Theme.multAlpha(Theme.getColor(Theme.key_actionBarDefaultSubmenuItem, resourcesProvider), 0.06f));
+            ThemeBind.backgroundColor(gap, ThemeBind.multAlpha(Theme.key_actionBarDefaultSubmenuItem, 0.06f), resourcesProvider);
             gap.setLayoutParams(LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8));
             previewMenu.addView(gap);
         }
@@ -597,7 +598,7 @@ public class ContentPreviewViewer {
 
                 FrameLayout backContainer = new FrameLayout(containerView.getContext());
                 LinearLayout linearLayout = new LinearLayout(containerView.getContext());
-                linearLayout.setBackgroundColor(getThemedColor(Theme.key_actionBarDefaultSubmenuBackground));
+                ThemeBind.backgroundColor(linearLayout, Theme.key_actionBarDefaultSubmenuBackground, ContentPreviewViewer.this.resourcesProvider);
                 linearLayout.setOrientation(LinearLayout.VERTICAL);
                 RecyclerListView listView = createMyStickerPacksListView();
                 listView.setOnItemClickListener((view, position) -> {
@@ -750,11 +751,6 @@ public class ContentPreviewViewer {
                         icons.add(R.drawable.msg_delete);
                         actions.add(5);
                     }
-                    if (currentStickerSet != null && !MessageObject.isAnimatedStickerDocument(currentDocument, true)) {
-                        items.add(LocaleController.getString(R.string.CG_SaveSticker));
-                        icons.add(R.drawable.msg_download);
-                        actions.add(1390);
-                    }
                 }
                 if (!MessageObject.isMaskDocument(currentDocument) && (inFavs || MediaDataController.getInstance(currentAccount).canAddStickerToFavorites() && MessageObject.isStickerHasSet(currentDocument))) {
                     items.add(inFavs ? LocaleController.getString(R.string.DeleteFromFavorites) : LocaleController.getString(R.string.AddToFavorites));
@@ -792,6 +788,7 @@ public class ContentPreviewViewer {
                         }
                     }
                 }
+                addCherrygramItems(items, icons, actions, currentStickerSet != null && !MessageObject.isAnimatedStickerDocument(currentDocument, true));
 
                 if (items.isEmpty()) {
                     return;
@@ -849,18 +846,8 @@ public class ContentPreviewViewer {
                             if (delegate != null && currentDocument != null) {
                                 delegate.deleteSticker(currentDocument);
                             }
-                        } else if (action == 1390) {
-                            if (currentDocument != null) {
-                                ChatsHelper.getInstance(currentAccount).saveStickerToGallery(parentActivity, currentDocument, (uri) -> {
-                                    if (parentActivity instanceof LaunchActivity activity && !activity.isFinishing() && !activity.isDestroyed()) {
-                                        if (activity.getActionBarLayout() != null && activity.getActionBarLayout().getLastFragment() != null) {
-                                            if (BulletinFactory.canShowBulletin(activity.getActionBarLayout().getLastFragment())) {
-                                                BulletinFactory.of(activity.getActionBarLayout().getLastFragment()).createDownloadBulletin(BulletinFactory.FileType.STICKER, resourcesProvider).show();
-                                            }
-                                        }
-                                    }
-                                });
-                            }
+                        } else {
+                            onCherrygramItemClick(action);
                         }
 
                         dismissPopupWindow();
@@ -869,13 +856,13 @@ public class ContentPreviewViewer {
 
                 addVoteOptions(previewMenu);
                 for (int i = 0; i < items.size(); i++) {
+                    addCherrygramGapIfNeeded(previewMenu, actions, i);
                     ActionBarMenuSubItem item = ActionBarMenuItem.addItem(previewMenu, icons.get(i), items.get(i), false, resourcesProvider);
                     item.setTag(i);
                     item.setOnClickListener(onItemClickListener);
                     if (actions.get(i) == 8) {
-                        int redColor = getThemedColor(Theme.key_text_RedBold);
-                        item.setColors(redColor, redColor);
-                        item.setSelectorColor(Theme.multAlpha(redColor, .1f));
+                        item.setColorKeys(Theme.key_text_RedBold, Theme.key_text_RedBold);
+                        item.setSelectorColorKey(Theme.key_text_RedBold, .1f);
                     }
                 }
                 popupWindow = new ActionBarPopupWindow(previewMenu, LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT) {
@@ -973,11 +960,7 @@ public class ContentPreviewViewer {
                     icons.add(inFavs ? R.drawable.msg_unfave : R.drawable.msg_fave);
                     actions.add(5);
                 }
-                if (currentDocument != null) {
-                    items.add(LocaleController.getString(R.string.CG_SaveSticker));
-                    icons.add(R.drawable.msg_download);
-                    actions.add(1390);
-                }
+                addCherrygramItems(items, icons, actions, false);
                 if (items.isEmpty()) {
                     return;
                 }
@@ -1007,26 +990,18 @@ public class ContentPreviewViewer {
                         delegate.removeFromRecent(currentDocument);
                     } else if (action == 5) {
                         MediaDataController.getInstance(currentAccount).addRecentSticker(MediaDataController.TYPE_FAVE, parentObject, currentDocument, (int) (System.currentTimeMillis() / 1000), inFavs);
-                    } else if (actions.get(which) == 1390) {
-                        ChatsHelper.getInstance(currentAccount).saveStickerToGallery(parentActivity, currentDocument, (uri) -> {
-                            if (parentActivity instanceof LaunchActivity activity) {
-                                if (activity.getActionBarLayout() != null && activity.getActionBarLayout().getLastFragment() != null) {
-                                    if (BulletinFactory.canShowBulletin(activity.getActionBarLayout().getLastFragment())) {
-                                        BulletinFactory.of(activity.getActionBarLayout().getLastFragment()).createDownloadBulletin(BulletinFactory.FileType.STICKER, resourcesProvider).show();
-                                    }
-                                }
-                            }
-                        });
+                    } else {
+                        onCherrygramItemClick(action);
                     }
                     dismissPopupWindow();
                 };
 
                 final boolean hasVoteOptions = addVoteOptions(previewMenu);
                 for (int i = 0; i < items.size(); i++) {
+                    addCherrygramGapIfNeeded(previewMenu, actions, i);
                     ActionBarMenuSubItem item = ActionBarMenuItem.addItem(!hasVoteOptions && i == 0, i == items.size() - 1, previewMenu, icons.get(i), items.get(i), false, resourcesProvider);
                     if (actions.get(i) == 4) {
-                        item.setIconColor(getThemedColor(Theme.key_text_RedRegular));
-                        item.setTextColor(getThemedColor(Theme.key_text_RedBold));
+                        item.setColorKeys(Theme.key_text_RedBold, Theme.key_text_RedRegular);
                     }
                     item.setTag(i);
                     item.setOnClickListener(onItemClickListener);
@@ -1099,7 +1074,7 @@ public class ContentPreviewViewer {
                 if (delegate.needSend(currentContentType) && !delegate.isInScheduleMode()) {
                     items.add(LocaleController.getString(R.string.EnablePhotoSpoiler));
                     icons.add(R.drawable.msg_spoiler);
-                    actions.add(1391);
+                    actions.add(OPTION_CG_GIF_SPOILER);
                 }
                 if (delegate.canSchedule()) {
                     items.add(LocaleController.getString(R.string.Schedule));
@@ -1161,7 +1136,7 @@ public class ContentPreviewViewer {
                         AlertsCreator.createScheduleDatePickerDialog(parentActivity, stickerPreviewViewerDelegate.getDialogId(), (notify, scheduleDate, scheduleRepeatPeriod) -> stickerPreviewViewerDelegate.sendGif(document != null ? document : result, parent, notify, scheduleDate, scheduleRepeatPeriod), resourcesProvider);
                     } else if (actions.get(which) == 11) {
                         delegate.addCaptionToGif(currentDocument != null ? currentDocument : inlineResult, parentObject, true, 0, 0);
-                    } else if (actions.get(which) == 1391) {
+                    } else if (actions.get(which) == OPTION_CG_GIF_SPOILER) {
                         CherrygramMessagesConfig.INSTANCE.setGifSpoilers(true);
                         delegate.sendGif(currentDocument != null ? currentDocument : inlineResult, parentObject, true, 0, 0);
                     }
@@ -1174,7 +1149,7 @@ public class ContentPreviewViewer {
                     item.setOnClickListener(onItemClickListener);
 
                     if (canDelete && i == items.size() - 1) {
-                        item.setColors(getThemedColor(Theme.key_text_RedBold), getThemedColor(Theme.key_text_RedRegular));
+                        item.setColorKeys(Theme.key_text_RedBold, Theme.key_text_RedRegular);
                     }
                 }
                 popupWindow = new ActionBarPopupWindow(previewMenu, LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT) {
@@ -2485,4 +2460,58 @@ public class ContentPreviewViewer {
             }
         }
     }
+
+    /** Cherrygram start */
+    private static final int OPTION_CG_SAVE_STICKER = 1390;
+    private static final int OPTION_CG_GIF_SPOILER = 1391;
+    private static final int OPTION_CG_COPY_ID = 1392;
+
+    private void addCherrygramItems(ArrayList<CharSequence> items, ArrayList<Integer> icons, ArrayList<Integer> actions, boolean canSave) {
+        if (currentDocument == null) {
+            return;
+        }
+        if (canSave) {
+            items.add(getString(R.string.CG_SaveSticker));
+            icons.add(R.drawable.msg_download);
+            actions.add(OPTION_CG_SAVE_STICKER);
+        }
+        if (currentDocument.id != 0) {
+            items.add(getString(R.string.Copy) + " ID");
+            icons.add(R.drawable.msg_copy);
+            actions.add(OPTION_CG_COPY_ID);
+        }
+    }
+
+    private void addCherrygramGapIfNeeded(ActionBarPopupWindow.ActionBarPopupWindowLayout previewMenu, ArrayList<Integer> actions, int index) {
+        if (index == 0 || actions.get(index) < OPTION_CG_SAVE_STICKER || actions.get(index - 1) >= OPTION_CG_SAVE_STICKER) {
+            return;
+        }
+        ActionBarPopupWindow.GapView gap = new ActionBarPopupWindow.GapView(previewMenu.getContext(), resourcesProvider);
+        gap.setTag(R.id.fit_width_tag, 1);
+        ThemeBind.backgroundColor(gap, ThemeBind.multAlpha(Theme.key_actionBarDefaultSubmenuItem, 0.06f), resourcesProvider);
+        gap.setLayoutParams(LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8));
+        previewMenu.addView(gap);
+    }
+
+    private void onCherrygramItemClick(int action) {
+        if (currentDocument == null) {
+            return;
+        }
+        if (action == OPTION_CG_SAVE_STICKER) {
+            final Theme.ResourcesProvider resourcesProvider = this.resourcesProvider;
+            ChatsHelper.getInstance(currentAccount).saveStickerToGallery(parentActivity, currentDocument, uri -> {
+                if (!(parentActivity instanceof LaunchActivity activity) || activity.isFinishing() || activity.isDestroyed() || activity.getActionBarLayout() == null) {
+                    return;
+                }
+                BaseFragment fragment = activity.getActionBarLayout().getLastFragment();
+                if (fragment != null && BulletinFactory.canShowBulletin(fragment)) {
+                    BulletinFactory.of(fragment).createDownloadBulletin(BulletinFactory.FileType.STICKER, resourcesProvider).show();
+                }
+            });
+        } else if (action == OPTION_CG_COPY_ID) {
+            AndroidUtilities.addToClipboard(String.valueOf(currentDocument.id));
+        }
+    }
+    /** Cherrygram finish */
+
 }

@@ -1,6 +1,7 @@
 package org.telegram.ui.Components;
 
 import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.LocaleController.getString;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -17,11 +18,13 @@ import android.graphics.Matrix;
 import android.graphics.Outline;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.os.Build;
 import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
 import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
@@ -51,14 +54,20 @@ import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable;
 import org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundColorProvider;
 import org.telegram.ui.Components.voip.CellFlickerDrawable;
 import org.telegram.ui.Stories.recorder.FlashViews;
-import org.telegram.utils.camera.roundvideo.RoundVideoSession;
+import org.telegram.ui.Stories.recorder.HintView2;
+
+import kotlin.random.Random;
+
+import org.telegram.utils.recorder.round.RoundVideoSession;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 
+import uz.unnarsx.cherrygram.camera.CameraXController;
+import uz.unnarsx.cherrygram.camera.CameraXUtils;
 import uz.unnarsx.cherrygram.camera.CherryZoomSliderView;
-import uz.unnarsx.cherrygram.camera.VideoMessagesHelper;
+import uz.unnarsx.cherrygram.camera.roundvideo.VideoMessagesHelper;
 import uz.unnarsx.cherrygram.core.configs.CherrygramCameraConfig;
 
 /** Telegram UI adapter for the standalone Camera2 round-video session. */
@@ -68,6 +77,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
     private static final float ZOOM_GESTURE_EFFORT = 1.5f;
     private static final int SWITCH_PREVIEW_BITMAP_SIZE = 180;
     private static final long UI_FRAME_FALLBACK_DELAY_NS = 70_000_000L;
+    private static final long CAMERA_FLIP_MINIMUM_DURATION_MS = 580L;
 
     private final InstantCameraView.Delegate delegate;
     private final Theme.ResourcesProvider resourcesProvider;
@@ -100,8 +110,12 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
     private TelegramRoundVideoUpload upload;
     private VideoEditedInfo videoEditedInfo;
     private SendOptions pendingSend;
+    private boolean finishRequested;
+    /** The host destroyed the view while a send was finishing; the session completes detached. */
+    private boolean sendDetached;
     private AnimatorSet visibilityAnimator;
     private ValueAnimator zoomResetAnimator;
+    private ValueAnimator cameraFlipAnimator;
     private RLottieDrawable switchCameraDrawable;
     private RLottieDrawable flashOnDrawable;
     private RLottieDrawable flashOffDrawable;
@@ -114,6 +128,12 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
     private boolean setVisibilityFromPause;
     private boolean drawInitialPlaceholder;
     private boolean switchPlaceholderVisible;
+    private boolean cameraFlipInProgress;
+    private boolean cameraFlipSessionReady;
+    private boolean cameraFlipFirstFrameReady;
+    private boolean cameraFlipAnimationCompleted;
+    private long cameraFlipStartedRealtimeMs;
+    private int cameraFlipGeneration;
     private Bitmap lastBitmap;
     private long lastVisibleDurationMs;
     private float panTranslationY;
@@ -122,6 +142,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
     private float zoomProgress;
     private int zoomPointerId1 = -1;
     private int zoomPointerId2 = -1;
+
     private boolean pinchZoomActive;
     private boolean heavyOperationsStopped;
     private float previousWindowBrightness = Float.NaN;
@@ -253,7 +274,16 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
         flashButton = new FlashViews.ImageViewInvertable(context);
         flashButton.setScaleType(ImageView.ScaleType.CENTER);
         buttonsLayout.addView(flashButton, LayoutHelper.createLinear(iconSize, iconSize, 0, 0, iconMargin, 0));
-        flashButton.setOnClickListener(view -> toggleFlash());
+        flashButton.setOnClickListener(view -> {
+            setFlashOn(!isFlashOn());
+            videoMessagesHelper.checkFlash(this);
+            maybeShowFlashHint();
+        });
+        flashButton.setOnLongClickListener(view -> useCameraX
+                && session != null
+                && stateInfo != null
+                && stateInfo.canControlCamera()
+                && videoMessagesHelper.createFlashConfigurator(this));
 
         buttonIconSize = dp(isNewDesign ? 24 : 28);
         switchCameraDrawable = new RLottieDrawable(
@@ -279,6 +309,12 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
         muteImageView.setImageResource(R.drawable.video_mute);
         muteImageView.setAlpha(0f);
         addView(muteImageView, LayoutHelper.createFrame(48, 48, Gravity.CENTER));
+
+        if (CameraXUtils.isCurrentCameraCameraX()) {
+            createZoomControl(context);
+            createExposureControl(context);
+            createFlashHint(context);
+        }
 
         textureView.setOnTouchListener(this::handleZoomTouch);
         super.setVisibility(INVISIBLE);
@@ -312,6 +348,8 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
         muteImageView.setScaleX(1f);
         muteImageView.setScaleY(1f);
         progressView.getPaint().setAlpha(0);
+        if (zoomControlView != null) zoomControlView.setAlpha(0f);
+        if (evControlView != null) evControlView.setAlpha(0f);
         try {
             Activity activity = (Activity) getContext();
             if (visibility == VISIBLE) {
@@ -327,12 +365,21 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
     @Override
     public void destroy(boolean async) {
         setRecordingUiFrameClockActive(false);
+        cancelCameraFlipAnimation();
         if (zoomResetAnimator != null) zoomResetAnimator.cancel();
-        if (session != null) {
+        if (zoomControlView != null) zoomControlView.unbindCamera();
+        hideExposureControlsImmediately();
+        if (session != null && isSendFinishing()) {
+            // The output is still being produced: the session keeps finishing on its own and
+            // the message is sent from onCompleted, so neither the session nor the upload goes.
+            sendDetached = true;
+            session.release();
+        } else if (session != null) {
             session.release();
             session = null;
         }
-        if (upload != null) {
+        videoMessagesHelper.cameraXController = null;
+        if (upload != null && !sendDetached) {
             upload.release(!sent);
             upload = null;
         }
@@ -345,12 +392,15 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
     public void togglePause() {
         if (session == null || stateInfo == null) return;
         if (stateInfo.getState() == RoundVideoSession.State.RECORDING) {
+            setFlashOn(false);
+            videoMessagesHelper.checkFlash(this);
             pauseForPreview();
         } else if (stateInfo.getState() == RoundVideoSession.State.PREVIEWING) {
+            // Refused at the duration limit: the host keeps showing the paused preview.
+            if (!session.resumeRecording()) return;
             videoEditedInfo = null;
             resumeNotificationPending = true;
             stopNotificationSent = false;
-            session.resumeRecording();
         }
     }
 
@@ -371,27 +421,49 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
         progressView.getPaint().setAlpha(255);
         sent = false;
         muted = false;
+        pendingSend = null;
+        finishRequested = false;
         startedNotificationSent = false;
         stopNotificationSent = false;
         lastVisibleDurationMs = 0L;
         progressView.setProgress(0f);
+        requestLayout();
         showInitialPlaceholder();
         upload = new TelegramRoundVideoUpload(currentAccount, secretChat);
-        activeOutputResolution = SharedSettings.roundVideoOutputResolution.get();
+        activeOutputResolution = useCameraX ? RoundVideoSession.OutputResolution.P480 : SharedSettings.roundVideoOutputResolution.get();
         session = new RoundVideoSession.Builder(getContext(), textureView)
                 .setOutputDirectory(new File(ApplicationLoader.getFilesDirFixed(), "cache"))
                 .setInitialFacing(fromPaused ? SharedSettings.roundVideoLastCamera.get() : initialFacing)
                 .setOutputResolution(activeOutputResolution)
                 .setVideoBitrate(SharedSettings.roundVideoVideoBitrate.get())
                 .setCameraResolution(SharedSettings.roundVideoCameraResolution.get())
-                .setFrameRate(SharedSettings.roundVideoFrameRate.get())
+                .setFrameRate(VideoMessagesHelper.isCamera60Fps() ? RoundVideoSession.FrameRate.FPS_60 : RoundVideoSession.FrameRate.FPS_30)
                 .setCompositionEnabled(SharedSettings.roundVideoComposition.get())
                 .setListener(sessionListener)
                 .setOutputListener(upload)
                 .setScreenFlashController(this::setScreenFlashEnabled)
+                .setUseCameraX(useCameraX)
                 .build();
+        videoMessagesHelper.cameraXController = session.getCameraXController();
+        CameraXController lensController = session.getCameraXController();
+        if (lensController != null) {
+            lensController.addLensSwitchListener(lensSwitchListener);
+        }
         MediaController.getInstance().requestRecordAudioFocus(true);
         session.start();
+        if (zoomControlView != null) {
+            zoomControlView.bindCamera(session.getCameraXZoomController());
+        }
+        if (evControlView != null) {
+            evControlView.setValue(0.5f);
+            evControlView.setTag(null);
+            evControlView.setVisibility(VISIBLE);
+            AndroidUtilities.cancelRunOnUIThread(evControlHideRunnable);
+            AndroidUtilities.runOnUIThread(evControlHideRunnable = () -> {
+                evControlHideRunnable = null;
+                videoMessagesHelper.showExposureControls(this, false);
+            }, 5000);
+        }
         startAnimation(true, fromPaused);
     }
 
@@ -435,6 +507,12 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
                 ObjectAnimator.ofFloat(muteImageView, View.ALPHA, muted && open ? 1f : 0f),
                 translationYAnimator
         );
+        if (zoomControlView != null) {
+            visibilityAnimator.play(ObjectAnimator.ofFloat(zoomControlView, View.ALPHA, open ? 1f : 0f));
+        }
+        if (evControlView != null && evControlView.getVisibility() == VISIBLE) {
+            visibilityAnimator.play(ObjectAnimator.ofFloat(evControlView, View.ALPHA, open ? 1f : 0f));
+        }
         visibilityAnimator.setDuration(180L);
         visibilityAnimator.setInterpolator(new DecelerateInterpolator());
         if (!open) {
@@ -457,11 +535,13 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
     @Override
     public RectF getCameraRect() {
         textureView.getLocationOnScreen(screenPosition);
+        float scaleX = progressView.getScaleX() * cameraContainer.getScaleX();
+        float scaleY = progressView.getScaleY() * cameraContainer.getScaleY();
         return new RectF(
                 screenPosition[0],
                 screenPosition[1],
-                screenPosition[0] + textureView.getWidth(),
-                screenPosition[1] + textureView.getHeight()
+                screenPosition[0] + textureView.getWidth() * scaleX,
+                screenPosition[1] + textureView.getHeight() * scaleY
         );
     }
 
@@ -496,7 +576,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
             pauseForPreview();
             return;
         }
-        if (state != 1 && state != 4) return;
+        if (state != 1 && state != 4 || pendingSend != null) return;
         long duration = getCurrentDurationMs();
         if (duration < MINIMUM_DURATION_MS) {
             NotificationCenter.getInstance(currentAccount).postNotificationName(
@@ -510,9 +590,9 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
         }
         if (stateInfo.getState() == RoundVideoSession.State.RECORDING) {
             postRecordStopped(5);
-        } else {
-            applyExternalTrim();
         }
+        // A resume in progress must not bring the host back into the recording state.
+        resumeNotificationPending = false;
         pendingSend = new SendOptions(
                 notify,
                 scheduleDate,
@@ -521,14 +601,38 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
                 effectId,
                 stars
         );
-        session.finish(!muted);
+        finishPendingSend();
+    }
+
+    private boolean isSendFinishing() {
+        return pendingSend != null
+                && finishRequested
+                && session != null
+                && session.getStateInfo().getState() == RoundVideoSession.State.FINISHING;
+    }
+
+    /** Finishes a requested send once the session can finish: PAUSING and RESUMING defer it. */
+    private void finishPendingSend() {
+        if (pendingSend == null || finishRequested || session == null || stateInfo == null) return;
+        RoundVideoSession.State state = stateInfo.getState();
+        if (state == RoundVideoSession.State.PREVIEWING) {
+            applyExternalTrim();
+        } else if (state != RoundVideoSession.State.RECORDING) {
+            return;
+        }
+        finishRequested = session.finish(!muted);
     }
 
     @Override
     public void cancel(boolean byGesture) {
-        if (session == null) return;
+        // A send that is already finishing is not cancelled by a late back press or gesture.
+        if (isSendFinishing()) return;
+        // Refused once the result was delivered: the recording is being sent.
+        if (session == null || !session.cancel()) return;
+        pendingSend = null;
         postRecordStopped(byGesture ? 0 : 6);
-        session.cancel();
+        setFlashOn(false);
+        videoMessagesHelper.checkFlash(this);
         if (upload != null) upload.release(true);
         upload = null;
         MediaController.getInstance().requestRecordAudioFocus(false);
@@ -601,15 +705,41 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
     }
 
     @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        setScreenFlashEnabled(false);
+    }
+
+    @Override
+    protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        if (visibility != VISIBLE) pauseForHiddenWindow();
+    }
+
+    /**
+     * The camera is evicted and the microphone silenced in the background, so an active recording
+     * is kept as a paused preview, and preview playback stops.
+     */
+    private void pauseForHiddenWindow() {
+        if (session == null || stateInfo == null) return;
+        if (stateInfo.getState() == RoundVideoSession.State.RECORDING) {
+            pauseForPreview();
+        } else if (stateInfo.isPreviewPlaying()) {
+            session.pausePreview();
+        }
+    }
+
+    @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int newSize = MeasureSpec.getSize(heightMeasureSpec) - getPaddingBottom()
                 > MeasureSpec.getSize(widthMeasureSpec) * 1.3f
                 ? AndroidUtilities.roundPlayingMessageSize
                 : AndroidUtilities.roundMessageSize;
-        if (textureViewSize != newSize) {
+        if (textureViewSize != newSize && !isCircleSizeFrozen()) {
             textureViewSize = newSize;
-            cameraContainer.getLayoutParams().width = newSize + dp(28);
-            cameraContainer.getLayoutParams().height = newSize + dp(28);
+            int baseSize = AndroidUtilities.roundPlayingMessageSize;
+            cameraContainer.getLayoutParams().width = baseSize + dp(28);
+            cameraContainer.getLayoutParams().height = baseSize + dp(28);
             ((LayoutParams) muteImageView.getLayoutParams()).topMargin = newSize / 2 - dp(24);
         }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -617,6 +747,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
         int height = MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY);
         flashViews.backgroundView.measure(width, height);
         flashViews.foregroundView.measure(width, height);
+        updateSizeTranslationY();
     }
 
     private boolean isRecordingState() {
@@ -661,6 +792,11 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
             if (previous == RoundVideoSession.State.RECORDING
                     && info.getState() != RoundVideoSession.State.RECORDING) {
                 saveLastCameraBitmap(true);
+                if (zoomControlView != null) {
+                    zoomControlView.collapse();
+                    zoomControlView.prepareForCameraChange();
+                }
+                hideExposureControlsImmediately();
             }
             lastVisibleDurationMs = Math.max(lastVisibleDurationMs, info.getRecordedDurationMs());
             if (info.getState() == RoundVideoSession.State.RECORDING) {
@@ -690,6 +826,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
             if (info.getState() == RoundVideoSession.State.COMPLETED
                     || info.getState() == RoundVideoSession.State.ERROR
                     || info.getState() == RoundVideoSession.State.RELEASED) {
+                cancelCameraFlipAnimation();
                 startHeavyOperations();
             }
             if (previous == RoundVideoSession.State.RECORDING
@@ -697,6 +834,12 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
                 postRecordStopped(2);
             }
             updateButtons();
+            if (pendingSend != null && !finishRequested) {
+                AndroidUtilities.runOnUIThread(InstantCameraView2.this::finishPendingSend);
+            }
+            if (info.isPreviewPlaying() && getWindowVisibility() != VISIBLE) {
+                AndroidUtilities.runOnUIThread(InstantCameraView2.this::pauseForHiddenWindow);
+            }
         }
 
         @Override
@@ -712,22 +855,24 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
 
         @Override
         public void onCameraSwitchStarted(@NonNull RoundVideoSession.CameraFacing facing) {
-            showCameraSwitchPlaceholder();
-            previewContainer.animate().cancel();
-            previewContainer.setCameraDistance(previewContainer.getMeasuredHeight() * 8f);
-            previewContainer.animate().rotationY(90f).setDuration(120L).start();
+            startCameraFlipAnimation(facing);
         }
 
         @Override
         public void onCameraSwitchCompleted(@NonNull RoundVideoSession.CameraFacing facing) {
-            previewContainer.animate().cancel();
-            previewContainer.setRotationY(-90f);
-            previewContainer.animate().rotationY(0f).setDuration(140L).start();
+            cameraFlipSessionReady = true;
+            FileLog.d("RoundVideo camera flip session ready: facing=" + facing
+                    + ", elapsedMs=" + getCameraFlipElapsedMs());
+            maybeFinishCameraFlip();
         }
 
         @Override
         public void onCameraSwitchFirstFrame() {
-            hideCameraSwitchPlaceholder();
+            cameraFlipFirstFrameReady = true;
+            FileLog.d("RoundVideo camera flip first frame: elapsedMs="
+                    + getCameraFlipElapsedMs());
+            hideCameraSwitchPlaceholder(true);
+            maybeFinishCameraFlip();
         }
 
         @Override
@@ -735,6 +880,9 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
             progressView.setProgress(durationMs / 60_000f);
             muted = false;
             muteImageView.setAlpha(0f);
+            // A send deferred while pausing finishes right away; the host already left the
+            // recording UI and must not switch to the preview.
+            if (pendingSend != null) return;
             File previewFile = session == null ? null : session.getPreviewFile();
             if (previewFile == null) return;
             videoEditedInfo = createVideoEditedInfo(previewFile, durationMs, null);
@@ -767,9 +915,30 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
             FileLog.e(error);
             if (upload != null) upload.release(true);
             upload = null;
-            NotificationCenter.getInstance(currentAccount).postNotificationName(
+            if (sendDetached) {
+                // The session releases itself on failure; nothing is left for the host.
+                sendDetached = false;
+                session = null;
+                return;
+            }
+            MediaController.getInstance().requestRecordAudioFocus(false);
+            if (startedNotificationSent) {
+                postRecordStopped(6);
+            } else {
+                NotificationCenter.getInstance(currentAccount).postNotificationName(
                     NotificationCenter.recordStartError,
                     recordingGuid
+                );
+            }
+            startAnimation(false, false);
+        }
+
+        @Override
+        public void onAmplitude(double amplitude) {
+            NotificationCenter.getInstance(currentAccount).postNotificationName(
+                    NotificationCenter.recordProgressChanged,
+                    recordingGuid,
+                    amplitude
             );
         }
     };
@@ -868,6 +1037,11 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
         if (upload != null) upload.release(false);
         upload = null;
         MediaController.getInstance().requestRecordAudioFocus(false);
+        if (sendDetached) {
+            // Released by the session itself right after this completion callback.
+            sendDetached = false;
+            session = null;
+        }
     }
 
     private VideoEditedInfo createVideoEditedInfo(
@@ -901,7 +1075,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
 
     private void switchCamera() {
         if (session == null || stateInfo == null || capabilities == null
-                || !stateInfo.canControlCamera()) {
+                || !stateInfo.canControlCamera() || cameraFlipInProgress) {
             return;
         }
         RoundVideoSession.CameraFacing facing =
@@ -947,7 +1121,9 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
     }
 
     private void updateButtons() {
-        boolean cameraControls = stateInfo != null && stateInfo.canControlCamera();
+        boolean cameraControls = stateInfo != null
+                && stateInfo.canControlCamera()
+                && !cameraFlipInProgress;
         switchCameraButton.setEnabled(cameraControls);
         flashButton.setEnabled(cameraControls
                 && capabilities != null
@@ -974,6 +1150,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
         if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
             if (zoomResetAnimator != null) zoomResetAnimator.cancel();
             pinchZoomActive = false;
+            touchHadPinch = false;
             zoomPointerId1 = event.getPointerId(0);
             zoomPointerId2 = -1;
             if (stateInfo.getState() == RoundVideoSession.State.PREVIEWING) {
@@ -986,8 +1163,17 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
                 && stateInfo.canControlCamera()) {
             zoomPointerId1 = event.getPointerId(0);
             zoomPointerId2 = event.getPointerId(1);
+            touchHadPinch = true;
             pinchStartDistance = pointerDistance(event, 0, 1);
             pinchZoomActive = pinchStartDistance > 0f;
+            if (isZoomSliderActive()) {
+                zoomWas = false;
+                return true;
+            }
+            if (useCameraX) {
+                pinchStartZoomProgress = zoomProgress;
+                return true;
+            }
             zoomProgress = 0f;
             return true;
         }
@@ -998,10 +1184,36 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
                 finishZoomGesture();
                 return true;
             }
+            if (isZoomSliderActive()) {
+                float distance = pointerDistance(event, index1, index2);
+                if (!zoomWas) {
+                    if (Math.abs(distance - pinchStartDistance) >= AndroidUtilities.getPixelsInCM(0.4f, false)) {
+                        pinchStartDistance = distance;
+                        zoomWas = true;
+                    }
+                } else if (pinchStartDistance > 0f) {
+                    float factor = 1f + (distance / pinchStartDistance - 1f) * SLIDER_PINCH_ZOOM_SENSITIVITY;
+                    pinchStartDistance = distance;
+                    zoomControlView.scaleZoom(factor);
+                }
+                return true;
+            }
             float scale = pointerDistance(event, index1, index2) / pinchStartDistance;
             float maximumZoomRatio = capabilities == null
                     ? 1f
                     : capabilities.getMaximumZoomRatio();
+            if (useCameraX) {
+                zoomProgress = maximumZoomRatio <= 1f
+                        ? 0f
+                        : clamp(
+                                pinchStartZoomProgress + (float) (Math.log(scale)
+                                        / (ZOOM_GESTURE_EFFORT * Math.log(maximumZoomRatio))),
+                                0f,
+                                1f
+                        );
+                session.setZoom(zoomProgress);
+                return true;
+            }
             float requestedZoomRatio = 1f
                     + Math.max(0f, scale - 1f) / ZOOM_GESTURE_EFFORT;
             zoomProgress = maximumZoomRatio <= 1f
@@ -1026,6 +1238,9 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
             finishZoomGesture();
             return true;
         }
+        if (event.getActionMasked() == MotionEvent.ACTION_UP && !touchHadPinch) {
+            onCameraTap(event.getX(), event.getY());
+        }
         return true;
     }
 
@@ -1041,6 +1256,10 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
         pinchZoomActive = false;
         zoomPointerId1 = -1;
         zoomPointerId2 = -1;
+        if (isZoomSliderActive()) {
+            zoomWas = false;
+            return;
+        }
         animateZoomReset();
     }
 
@@ -1058,11 +1277,21 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
 
     private void setScreenFlashEnabled(boolean enabled) {
         Activity activity = delegate.getParentActivity();
+        if (activity == null) activity = AndroidUtilities.findActivity(getContext());
         if (activity == null) return;
         WindowManager.LayoutParams attributes = activity.getWindow().getAttributes();
         if (enabled) {
             if (Float.isNaN(previousWindowBrightness)) {
                 previousWindowBrightness = attributes.screenBrightness;
+            }
+            if (useCameraX) {
+                attributes.screenBrightness = CherrygramCameraConfig.INSTANCE.getVideoMessagesFlashIntensity();
+                flashViews.setWarmth(CherrygramCameraConfig.INSTANCE.getVideoMessagesFlashWarmthIntensity());
+                flashViews.setForCameraX(true);
+                flashViews.setCircleCutout(getTextureView());
+                flashViews.flashIn(null, true);
+                activity.getWindow().setAttributes(attributes);
+                return;
             }
             attributes.screenBrightness = 1f;
             flashViews.flashIn(null);
@@ -1071,13 +1300,18 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
                 attributes.screenBrightness = previousWindowBrightness;
                 previousWindowBrightness = Float.NaN;
             }
+            if (useCameraX) {
+                flashViews.flashOut(null, true);
+                activity.getWindow().setAttributes(attributes);
+                return;
+            }
             flashViews.flashOut();
         }
         activity.getWindow().setAttributes(attributes);
     }
 
     private void updateTranslationY() {
-        cameraContainer.setTranslationY(animationTranslationY + panTranslationY);
+        cameraContainer.setTranslationY(animationTranslationY + panTranslationY + sizeTranslationY);
     }
 
     private void showInitialPlaceholder() {
@@ -1121,15 +1355,103 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
         textureOverlayView.setAlpha(1f);
     }
 
-    private void hideCameraSwitchPlaceholder() {
+    private void startCameraFlipAnimation(
+            @NonNull RoundVideoSession.CameraFacing facing
+    ) {
+        cameraFlipGeneration++;
+        if (cameraFlipAnimator != null) {
+            cameraFlipAnimator.removeAllListeners();
+            cameraFlipAnimator.cancel();
+            cameraFlipAnimator = null;
+        }
+        cameraFlipInProgress = true;
+        cameraFlipSessionReady = false;
+        cameraFlipFirstFrameReady = false;
+        cameraFlipAnimationCompleted = false;
+        cameraFlipStartedRealtimeMs = SystemClock.elapsedRealtime();
+        videoMessagesHelper.prepareCameraSwitch(InstantCameraView2.this);
+        showCameraSwitchPlaceholder();
+        previewContainer.animate().cancel();
+        previewContainer.setRotationY(0f);
+        previewContainer.setCameraDistance(previewContainer.getMeasuredHeight() * 8f);
+        int generation = cameraFlipGeneration;
+        cameraFlipAnimator = ValueAnimator.ofFloat(0f, 1f);
+        cameraFlipAnimator.setDuration(CAMERA_FLIP_MINIMUM_DURATION_MS);
+        cameraFlipAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+        cameraFlipAnimator.addUpdateListener(animation -> {
+            if (generation != cameraFlipGeneration) return;
+            float progress = (float) animation.getAnimatedValue();
+            float rotation = progress < 0.5f ? progress : progress - 1f;
+            previewContainer.setRotationY(rotation * 180f);
+        });
+        cameraFlipAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (generation != cameraFlipGeneration) return;
+                previewContainer.setRotationY(0f);
+                cameraFlipAnimationCompleted = true;
+                cameraFlipAnimator = null;
+                FileLog.d("RoundVideo camera flip visual animation completed: elapsedMs="
+                        + getCameraFlipElapsedMs());
+                maybeFinishCameraFlip();
+            }
+        });
+        cameraFlipAnimator.start();
+        FileLog.d("RoundVideo camera flip started: facing=" + facing
+                + ", minimumDurationMs=" + CAMERA_FLIP_MINIMUM_DURATION_MS);
+        updateButtons();
+    }
+
+    private void maybeFinishCameraFlip() {
+        if (!cameraFlipInProgress
+                || !cameraFlipAnimationCompleted
+                || !cameraFlipSessionReady
+                || !cameraFlipFirstFrameReady) {
+            return;
+        }
+        cameraFlipInProgress = false;
+        FileLog.d("RoundVideo camera flip completed: elapsedMs="
+                + getCameraFlipElapsedMs());
+        updateButtons();
+    }
+
+    private void cancelCameraFlipAnimation() {
+        if (!cameraFlipInProgress && cameraFlipAnimator == null) return;
+        cameraFlipGeneration++;
+        if (cameraFlipAnimator != null) {
+            cameraFlipAnimator.removeAllListeners();
+            cameraFlipAnimator.cancel();
+            cameraFlipAnimator = null;
+        }
+        previewContainer.animate().cancel();
+        previewContainer.animate().setListener(null);
+        previewContainer.setRotationY(0f);
+        cameraFlipInProgress = false;
+        cameraFlipSessionReady = false;
+        cameraFlipFirstFrameReady = false;
+        cameraFlipAnimationCompleted = false;
+        hideCameraSwitchPlaceholder(false);
+    }
+
+    private long getCameraFlipElapsedMs() {
+        return cameraFlipStartedRealtimeMs == 0L
+                ? 0L
+                : Math.max(0L, SystemClock.elapsedRealtime() - cameraFlipStartedRealtimeMs);
+    }
+
+    private void hideCameraSwitchPlaceholder(boolean animated) {
         if (!switchPlaceholderVisible) return;
         switchPlaceholderVisible = false;
         textureOverlayView.animate().cancel();
-        textureOverlayView.animate()
-                .alpha(0f)
-                .setDuration(100L)
-                .setInterpolator(new DecelerateInterpolator())
-                .start();
+        if (animated) {
+            textureOverlayView.animate()
+                    .alpha(0f)
+                    .setDuration(120L)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .start();
+        } else {
+            textureOverlayView.setAlpha(0f);
+        }
     }
 
     private void saveLastCameraBitmap(boolean persist) {
@@ -1254,9 +1576,11 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
                 invalidate();
             }
             canvas.save();
+            canvas.translate(progressView.getLeft(), progressView.getTop());
+            canvas.concat(progressView.getMatrix());
             canvas.translate(
-                    progressView.getLeft() + previewContainer.getLeft() + textureView.getLeft(),
-                    progressView.getTop() + previewContainer.getTop() + textureView.getTop()
+                    previewContainer.getLeft() + textureView.getLeft(),
+                    previewContainer.getTop() + textureView.getTop()
             );
             if (imageReceiver.getImageWidth() != textureView.getWidth()) {
                 float scale = textureView.getWidth() / imageReceiver.getImageWidth();
@@ -1297,20 +1621,240 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
     }
 
     /** Cherrygram start */
+    private float sizeTranslationY;
+
     private final RoundVideoSession.CameraFacing initialFacing =
             CherrygramCameraConfig.INSTANCE.getRearCam() ? RoundVideoSession.CameraFacing.BACK : RoundVideoSession.CameraFacing.FRONT;
 
-    public CherryZoomSliderView zoomControlView;
-    public SliderView evControlView;
-    public AnimatorSet evControlAnimation;
-    public Runnable evControlHideRunnable;
+    private boolean touchHadPinch;
+    private HintView2 flashHint;
 
     private final VideoMessagesHelper videoMessagesHelper = new VideoMessagesHelper();
     public float cameraZoom;
     private boolean zoomWas;
+    private final boolean useCameraX = CameraXUtils.isCurrentCameraCameraX();;
+    private float pinchStartZoomProgress;
+    private static final float SLIDER_PINCH_ZOOM_SENSITIVITY = 2.5f;
+
+    private final CameraXController.LensSwitchListener lensSwitchListener = new CameraXController.LensSwitchListener() {
+        @Override
+        public void onLensSwitchStarted(boolean ultraWide) {
+            showCameraSwitchPlaceholder();
+        }
+
+        @Override
+        public void onLensSettled() {
+            hideCameraSwitchPlaceholder(true);
+        }
+    };
+
+    private void createZoomControl(Context context) {
+        zoomControlView = new CherryZoomSliderView(context, resourcesProvider, false);
+
+        HintView2 zoomHint = new HintView2(context, HintView2.DIRECTION_BOTTOM);
+        zoomHint.setRounding(16);
+        zoomHint.setJoint(0.5f, 0);
+        zoomHint.setDuration(2500);
+        zoomHint.setMultilineText(true);
+        zoomHint.setCloseButton(false);
+        zoomHint.setPadding(0, 0, 0, dp(56 + 13 + 56));
+        addView(zoomHint, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+
+        addView(zoomControlView, LayoutHelper.createFrame(
+                LayoutHelper.MATCH_PARENT,
+                56,
+                Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM,
+                28, 0, 28, 56 + 8
+        ));
+        zoomControlView.hideImmediately();
+        zoomControlView.setOnPresetSelectedListener(zoom -> {
+            CherrygramCameraConfig.INSTANCE.checkVideoMessagesHint();
+            int count = CherrygramCameraConfig.INSTANCE.getZoomHintCount();
+            if (count <= 5 && Random.Default.nextBoolean()) {
+                boolean shouldShow = !isFrontCameraActive() /*&& CameraXUtils.isCurrentCameraCameraX()*/;
+
+                if (!shouldShow) return;
+
+                CharSequence text = getString(R.string.CP_Zoom_Hint);
+                zoomHint.setMaxWidthPx(HintView2.cutInFancyHalf(text, zoomHint.getTextPaint()));
+                zoomHint.setText(text);
+                if (!zoomHint.shown()) zoomHint.show();
+                CherrygramCameraConfig.INSTANCE.setZoomHintCount(count + 1);
+            }
+        });
+    }
+
+    private boolean isZoomSliderActive() {
+        return useCameraX && zoomControlView != null;
+    }
+
+    private void createFlashHint(Context context) {
+        flashHint = new HintView2(context, HintView2.DIRECTION_BOTTOM);
+        flashHint.setRounding(16);
+        flashHint.setJoint(0, 0);
+        flashHint.setDuration(2500);
+        flashHint.setMultilineText(true);
+        flashHint.setCloseButton(false);
+        flashHint.setPadding(0, 0, 0, dp(56 + 14));
+        addView(flashHint, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+    }
+
+    private boolean isFrontCameraActive() {
+        return capabilities != null && capabilities.getActiveFacing() == RoundVideoSession.CameraFacing.FRONT;
+    }
+
+    @Override
+    public boolean isRearFlashConfigurable() {
+        return useCameraX
+                && !isFrontCameraActive()
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM
+                && capabilities != null
+                && capabilities.getFlashType() == RoundVideoSession.FlashType.TORCH;
+    }
+
+    private void maybeShowFlashHint() {
+        if (!isRearFlashConfigurable()) return;
+        boolean flashing = stateInfo != null && stateInfo.isFlashEnabled();
+
+        CherrygramCameraConfig.INSTANCE.checkVideoMessagesHint();
+        int count = CherrygramCameraConfig.INSTANCE.getVideoMessagesHintCount();
+        if (flashing && count <= 5 && Random.Default.nextBoolean()) {
+            boolean shouldShow;
+
+            if (isFrontCameraActive()) {
+                shouldShow = true;
+            } else {
+                shouldShow = Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && CameraXUtils.isCurrentCameraCameraX();
+            }
+
+            if (!shouldShow) {
+                return;
+            }
+
+            int textRes = isFrontCameraActive() ? R.string.CP_Flash_Hint : R.string.CP_Flash_Hint_Rear;
+
+            CharSequence text = getString(textRes);
+            flashHint.setMaxWidthPx(HintView2.cutInFancyHalf(text, flashHint.getTextPaint()));
+            flashHint.setText(text);
+
+            flashHint.post(() -> {
+                int[] buttonLocation = new int[2];
+                int[] hintLocation = new int[2];
+
+                flashButton.getLocationOnScreen(buttonLocation);
+                flashHint.getLocationOnScreen(hintLocation);
+
+                float buttonCenterX = buttonLocation[0] + flashButton.getWidth() / 2f - hintLocation[0];
+
+                float normalizedX = buttonCenterX / flashHint.getWidth();
+
+                flashHint.setJoint(normalizedX, 0);
+            });
+
+            if (!flashHint.shown()) {
+                flashHint.show();
+            }
+
+            CherrygramCameraConfig.INSTANCE.setVideoMessagesHintCount(count + 1);
+        }
+    }
+
+    private void createExposureControl(Context context) {
+        int position = CherrygramCameraConfig.INSTANCE.getExposureSlider();
+        if (position == CherrygramCameraConfig.EXPOSURE_SLIDER_NONE) return;
+        evControlView = new SliderView(context, SliderView.TYPE_EXPOSURE_CG);
+        evControlView.setRotation(270f);
+        evControlView.setVisibility(GONE);
+        evControlView.setAlpha(0f);
+        evControlView.setValue(0.5f);
+        boolean exposureOnRight = position == CherrygramCameraConfig.EXPOSURE_SLIDER_RIGHT;
+        addView(evControlView, LayoutHelper.createFrame(
+                dp(30),
+                dp(100),
+                exposureOnRight ? Gravity.RIGHT | Gravity.CENTER_VERTICAL : Gravity.LEFT | Gravity.CENTER_VERTICAL,
+                exposureOnRight ? 0 : -25,
+                0,
+                exposureOnRight ? -25 : 0,
+                0
+        ));
+        evControlView.setOnValueChange(ev -> {
+            if (videoMessagesHelper.cameraXController != null && videoMessagesHelper.cameraXController.isExposureCompensationSupported()) {
+                videoMessagesHelper.cameraXController.setExposureCompensation(ev);
+            }
+            if (evControlView.getTag() != null) videoMessagesHelper.showExposureControls(this, true);
+        });
+    }
+
+    private void onCameraTap(float x, float y) {
+        if (!useCameraX || session == null || stateInfo == null || stateInfo.getState() != RoundVideoSession.State.RECORDING) {
+            return;
+        }
+        if (evControlView != null) {
+            evControlView.setVisibility(VISIBLE);
+            videoMessagesHelper.showExposureControls(this, true);
+        }
+        if (!CherrygramCameraConfig.INSTANCE.getContinuousAutofocus()) {
+            session.focusCameraX(x, y);
+        }
+    }
+
+    private void hideExposureControlsImmediately() {
+        if (evControlView == null) return;
+        AndroidUtilities.cancelRunOnUIThread(evControlHideRunnable);
+        evControlHideRunnable = null;
+        if (evControlAnimation != null) evControlAnimation.cancel();
+        evControlView.setTag(null);
+        evControlView.setAlpha(0f);
+        evControlView.setVisibility(INVISIBLE);
+    }
 
     public View getZoomControlView() {
         return zoomControlView;
+    }
+
+    @Override
+    public boolean isFrontFaceCamera() {
+        return isFrontCameraActive();
+    }
+
+    @Override
+    public boolean isFlashOn() {
+        return stateInfo != null && stateInfo.isFlashEnabled();
+    }
+
+    @Override
+    public void setFlashOn(boolean on) {
+        if (session != null && capabilities != null && isFlashOn() != on) session.setFlashEnabled(on);
+    }
+
+    @Override
+    public void applyFlashState() {
+        updateFlashIcon();
+    }
+
+    @Override
+    public FlashViews getFlashViews() {
+        return flashViews;
+    }
+
+    @Override
+    public View getFlashButton() {
+        return flashButton;
+    }
+
+    @Override
+    public ViewGroup getButtonsContainer() {
+        return buttonsLayout;
+    }
+
+    @Override
+    public Theme.ResourcesProvider getCameraResourcesProvider() {
+        return resourcesProvider;
+    }
+
+    @Override
+    public Activity getParentActivity() {
+        return delegate != null ? delegate.getParentActivity() : null;
     }
 
     public View getEvControlView() {
@@ -1323,6 +1867,65 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
     ) {
         if (zoomControlView != null) {
             zoomControlView.setLiquidGlassBackground(factory, colorProvider);
+        }
+    }
+
+    private boolean isCircleSizeFrozen() {
+        return pendingSend != null || sent || cameraContainer.messageTransition;
+    }
+
+    private void updateSizeTranslationY() {
+        if (isCircleSizeFrozen()) return;
+        int smallerSize = Math.min(AndroidUtilities.roundPlayingMessageSize, AndroidUtilities.roundMessageSize);
+        float baseOffset = textureViewSize == smallerSize ? -dp(10) : 0f;
+        float offset = baseOffset - (delegate != null && delegate.hasReplyMessage() ? dp(25) : CameraXUtils.isCurrentCameraCameraX() ? dp(5) : 0f);
+        if (textureViewSize <= 0) {
+            sizeTranslationY = offset;
+            updateTranslationY();
+            return;
+        }
+        int baseSize = AndroidUtilities.roundPlayingMessageSize;
+        float scale = textureViewSize / (float) baseSize;
+        float fitScale = 1f;
+
+        if (isZoomSliderActive() && getMeasuredHeight() > 0) {
+            LayoutParams sliderParams = (LayoutParams) zoomControlView.getLayoutParams();
+            float contentTop = getPaddingTop() + dp(VideoMessagesHelper.CIRCLE_MIN_TOP_MARGIN_DP);
+            float contentCenterY = (getPaddingTop() + getMeasuredHeight() - getPaddingBottom()) / 2f;
+            float sliderTop = getMeasuredHeight() - getPaddingBottom()
+                    - sliderParams.bottomMargin - sliderParams.height;
+            float limitBottom = sliderTop - dp(VideoMessagesHelper.ZOOM_SLIDER_MIN_GAP_DP);
+            float halfSize = (baseSize + dp(28)) * scale / 2f;
+            float centerY = contentCenterY + offset;
+            float overlap = centerY + halfSize - limitBottom;
+            if (overlap > 0f) {
+                float roomAbove = Math.max(0f, centerY - halfSize - contentTop);
+                if (overlap <= roomAbove) {
+                    offset -= overlap;
+                } else {
+                    float available = limitBottom - contentTop;
+                    fitScale = clamp(available / (halfSize * 2f), VideoMessagesHelper.CIRCLE_MIN_FIT_SCALE, 1f);
+                    offset = (contentTop + limitBottom) / 2f - contentCenterY;
+                }
+            }
+        }
+
+        progressView.setScaleX(scale * fitScale);
+        progressView.setScaleY(scale * fitScale);
+        sizeTranslationY = offset;
+        updateTranslationY();
+    }
+
+    public void updateReplyOffset() {
+        updateSizeTranslationY();
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+
+        if (flashViews != null && textureView != null) {
+            textureView.post(() -> flashViews.setCircleCutout(textureView));
         }
     }
     /** Cherrygram finish */

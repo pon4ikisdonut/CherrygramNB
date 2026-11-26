@@ -399,8 +399,9 @@ public class SimpleTextView extends View implements Drawable.Callback {
                         width -= drawablePadding;
                     }
                     if (rightDrawable2 != null && !rightDrawableOutside) {
-                        rightDrawableWidth += (int) (rightDrawable2.getIntrinsicWidth() * rightDrawableScale);
-                        width -= rightDrawableWidth;
+                        final int rightDrawable2Width = (int) (rightDrawable2.getIntrinsicWidth() * rightDrawableScale);
+                        rightDrawableWidth += rightDrawable2Width;
+                        width -= rightDrawable2Width;
                         width -= drawablePadding;
                     }
                 }
@@ -938,6 +939,9 @@ public class SimpleTextView extends View implements Drawable.Callback {
         if (scrollingOffset != 0) {
             if (leftDrawable != null && !leftDrawableOutside) {
                 int x = (int) -scrollingOffset + nextScrollX;
+                if ((gravity & Gravity.HORIZONTAL_GRAVITY_MASK) == Gravity.CENTER_HORIZONTAL) {
+                    x += offsetX;
+                }
                 int y;
                 if ((gravity & Gravity.VERTICAL_GRAVITY_MASK) == Gravity.CENTER_VERTICAL) {
                     y = (getMeasuredHeight() - leftDrawable.getIntrinsicHeight()) / 2 + leftDrawableTopPadding;

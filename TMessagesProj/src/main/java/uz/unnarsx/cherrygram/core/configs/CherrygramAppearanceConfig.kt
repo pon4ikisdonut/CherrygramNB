@@ -36,6 +36,8 @@ object CherrygramAppearanceConfig {
     /** Header finish */
 
     /** Appearance start */
+    var iconBasedSplash by sharedPreferences.boolean("AP_IconBasedSplash", false)
+
     const val ICON_REPLACE_NONE = 0
     const val ICON_REPLACE_SOLAR = 1
 
@@ -49,6 +51,11 @@ object CherrygramAppearanceConfig {
 
     var oneUI_SwitchStyle by sharedPreferences.boolean("AP_OneUI_SwitchStyle", true)
     var disableDividers by sharedPreferences.boolean("AP_DisableDividers", true)
+
+    const val GLARE_EFFECTS_DISABLE = 0
+    const val GLARE_EFFECTS_DEFAULT = 1
+    const val GLARE_EFFECTS_STROKE = 2
+    var glareEffectsType by sharedPreferences.int("AP_GlareEffect", GLARE_EFFECTS_DEFAULT)
     /** Appearance finish */
 
     /** Folders start */
@@ -76,6 +83,8 @@ object CherrygramAppearanceConfig {
     /** Main tabs finish */
 
     /** Messages and profiles start */
+    var msgForwardDate by sharedPreferences.boolean("CP_ForwardMsgDate", true)
+    var showPencilIcon by sharedPreferences.boolean("AP_PencilIcon", true)
     var showSeconds by sharedPreferences.boolean("CP_ShowSeconds", false)
     var disablePremiumStatuses by sharedPreferences.boolean("CP_DisablePremiumStatuses", SharedConfig.getDevicePerformanceClass() == SharedConfig.PERFORMANCE_CLASS_LOW)
     var replyBackground by sharedPreferences.boolean("CP_ReplyBackground", SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE)
@@ -93,6 +102,8 @@ object CherrygramAppearanceConfig {
     var profileBusinessPreview by sharedPreferences.boolean("CP_ProfileBusinessPreview", true)
     var profileBackgroundColor by sharedPreferences.boolean("CP_ProfileBackgroundColor", SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE)
     var profileBackgroundEmoji by sharedPreferences.boolean("CP_ProfileBackgroundEmoji", SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE)
+    var newProfileDesign by sharedPreferences.boolean("AP_NewProfileDesign", true)
+    var roundProfileActions by sharedPreferences.boolean("AP_RoundProfileActions", newProfileDesign)
     /** Messages and profiles finish */
 
     /** Drawer items start */

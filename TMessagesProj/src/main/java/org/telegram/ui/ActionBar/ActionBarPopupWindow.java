@@ -174,7 +174,7 @@ public class ActionBarPopupWindow extends PopupWindow {
             }
             if (backgroundDrawable != null) {
                 backgroundDrawable.getPadding(bgPaddings);
-                setBackgroundColor(getThemedColor(Theme.key_actionBarDefaultSubmenuBackground));
+                ThemeBind.backgroundColor(this, Theme.key_actionBarDefaultSubmenuBackground, resourcesProvider);
             }
             if (rounded_corners) {
                 roundedBackgroundPaint.setColor(getThemedColor(Theme.key_actionBarDefaultSubmenuBackground));
@@ -387,6 +387,8 @@ public class ActionBarPopupWindow extends PopupWindow {
             backgroundDrawable = drawable;
             if (backgroundDrawable != null) {
                 backgroundDrawable.getPadding(bgPaddings);
+            } else {
+                bgPaddings.setEmpty();
             }
             if (rounded_corners && drawable != null && drawable.getColorFilter() instanceof PorterDuffColorFilter f1) {
                 roundedBackgroundPaint.setColorFilter(f1);
@@ -598,7 +600,7 @@ public class ActionBarPopupWindow extends PopupWindow {
                     canvas.restoreToCount(saveCount);
                 }
             }
-            if (reactionsEnterProgress != 1f) {
+            if (reactionsEnterProgress != 1f && backgroundDrawable != null) {
                 canvas.saveLayerAlpha((float) AndroidUtilities.rectTmp2.left, (float) AndroidUtilities.rectTmp2.top, AndroidUtilities.rectTmp2.right, AndroidUtilities.rectTmp2.bottom, (int) (255 * reactionsEnterProgress), Canvas.ALL_SAVE_FLAG);
                 float scale = 0.5f + reactionsEnterProgress * 0.5f;
                 canvas.scale(scale, scale, AndroidUtilities.rectTmp2.right, AndroidUtilities.rectTmp2.top);
@@ -712,6 +714,21 @@ public class ActionBarPopupWindow extends PopupWindow {
 
         public LinearLayout getLinearLayout() {
             return linearLayout;
+        }
+
+        public void stretchContentWidth() {
+            if (swipeBackLayout != null) {
+                return;
+            }
+            View v = linearLayout;
+            while (v != null && v != this) {
+                ViewGroup.LayoutParams lp = v.getLayoutParams();
+                if (lp != null) {
+                    lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                }
+                v = v.getParent() instanceof View ? (View) v.getParent() : null;
+            }
+            requestLayout();
         }
         /** Cherrygram finish */
     }
@@ -1099,7 +1116,7 @@ public class ActionBarPopupWindow extends PopupWindow {
                 windowAnimatorSet.setDuration(dismissAnimationDuration);
             } else {
                 windowAnimatorSet.playTogether(
-                        ObjectAnimator.ofFloat(viewGroup, View.TRANSLATION_Y, dp((content != null && content.shownFromBottom) ? 5 : -5)),
+                        ObjectAnimator.ofFloat(viewGroup, View.TRANSLATION_Y, viewGroup.getTranslationY() + dp((content != null && content.shownFromBottom) ? 5 : -5)),
                         ObjectAnimator.ofFloat(viewGroup, View.ALPHA, 0.0f));
                 windowAnimatorSet.setDuration(dismissAnimationDuration);
             }
@@ -1161,6 +1178,13 @@ public class ActionBarPopupWindow extends PopupWindow {
             this(context, Theme.getColor(colorKey, resourcesProvider), Theme.getColor(Theme.key_windowBackgroundGrayShadow, resourcesProvider));
         }
 
+        /** Cherrygram start */
+        public GapView(Context context, int color) {
+            super(context != null ? context : ApplicationLoader.applicationContext);
+            setBackgroundColor(color);
+        }
+        /** Cherrygram finish */
+
         public void setColor(int color) {
             setBackgroundColor(color);
         }
@@ -1174,4 +1198,29 @@ public class ActionBarPopupWindow extends PopupWindow {
             }
         }
     }
+
+    /** Cherrygram start */
+    public static class SpaceGapView extends GapView {
+        public SpaceGapView(Context context, Theme.ResourcesProvider resourcesProvider) {
+            super(context, resourcesProvider);
+        }
+
+        @Override
+        public void draw(@NonNull Canvas canvas) {
+            if (!isOnGlass()) {
+                super.draw(canvas);
+            }
+        }
+
+        private boolean isOnGlass() {
+            for (android.view.ViewParent p = getParent(); p instanceof View; p = p.getParent()) {
+                if (p instanceof ActionBarPopupWindowLayout) {
+                    return ((ActionBarPopupWindowLayout) p).getBackgroundDrawable() == null;
+                }
+            }
+            return false;
+        }
+    }
+    /** Cherrygram finish */
+
 }

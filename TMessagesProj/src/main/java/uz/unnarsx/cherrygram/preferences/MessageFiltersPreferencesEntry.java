@@ -12,6 +12,8 @@ package uz.unnarsx.cherrygram.preferences;
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.LocaleController.getString;
 
+import static uz.unnarsx.cherrygram.preferences.helpers.SettingsHelper.applyNewSpan;
+
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -24,8 +26,8 @@ import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.R;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.ActionBar;
-import org.telegram.ui.ActionBar.ActionBarMenuItem;
 import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.ActionBar.SimpleActionBarDoneButton;
 import org.telegram.ui.Components.OutlineEditText;
 import org.telegram.ui.Components.UItem;
 import org.telegram.ui.Components.UniversalAdapter;
@@ -49,19 +51,32 @@ public class MessageFiltersPreferencesEntry extends BaseCGPreferencesEntry {
     private final int filterWordsRow = 2;
     private final int detectTranslitRow = 3;
     private final int exactWordMatchRow = 4;
-    private final int exclusionsRow = 5;
 
-    private final int filterFromBlockedRow = 6;
-    private final int detectEntitiesRow = 7;
+    private final int exclusionsSettingsRow = 5;
+    private final int exclusionsRow = 6;
+    private final int excludeUsersRow = 7;
+    private final int excludeBotsRow = 8;
+    private final int excludeGroupsRow = 9;
+    private final int excludeChannelsRow = 10;
 
-    private final int hideAllRow = 9;
-    private final int collapseAutomaticallyRow = 10;
-    private final int makeTransparentRow = 11;
+    private final int filterFromBlockedRow = 11;
+    private final int detectEntitiesRow = 12;
+
+    private final int fullyHideMessagesRow = 13;
+    private final int hideAllRow = 14;
+    private final int collapseAutomaticallyRow = 15;
+    private final int makeTransparentRow = 16;
 
     private OutlineEditText outlineEditText;
 
     private static final int done_button = 1;
-    private ActionBarMenuItem doneButton;
+    private SimpleActionBarDoneButton doneButton;
+
+    private boolean expandedExclusionsSettings = false;
+
+    private static final Set<String> EXCLUSIONS_SECTION_SLUGS = Set.of(
+            "exclusionsSettings", "exclusions", "excludeUsers", "excludeBots", "excludeGroups", "excludeChannels"
+    );
 
     @Override
     protected CharSequence getTitle() {
@@ -75,8 +90,13 @@ public class MessageFiltersPreferencesEntry extends BaseCGPreferencesEntry {
     }
 
     @Override
+    protected boolean useSimpleActionBar() {
+        return true;
+    }
+
+    @Override
     public View createView(Context context) {
-        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
+        simpleActionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
                 if (id == -1) {
@@ -86,9 +106,11 @@ public class MessageFiltersPreferencesEntry extends BaseCGPreferencesEntry {
                 }
             }
         });
-        doneButton = actionBar.createMenu().addItemWithWidth(done_button, R.drawable.ic_ab_done, dp(56), getString(R.string.Done));
+        doneButton = simpleActionBar.createDoneButton(done_button, getString(R.string.Done));
 
-        return super.createView(context);
+        final View view = super.createView(context);
+        checkDone(false); // the button starts active: hidden until the words are changed
+        return view;
     }
 
     @Override
@@ -141,11 +163,43 @@ public class MessageFiltersPreferencesEntry extends BaseCGPreferencesEntry {
                 .setEnabled(CherrygramMessagesConfig.INSTANCE.getEnableMsgFilters())
                 .slug("exactWordMatch")
         );
-        items.add(UItem.asButton(exclusionsRow, R.drawable._menu_stream_comments_off_24, getString(R.string.CP_Message_Filtering_Exclusions), String.valueOf(MessagesFilterHelper.INSTANCE.getExcludedChatsCount()))
-                .setEnabled(CherrygramMessagesConfig.INSTANCE.getEnableMsgFilters())
-                .slug("exclusions")
-        );
+
         items.add(UItem.asShadow(null));
+        items.add(
+                SettingsHelper.asExpandableSwitch(
+                        exclusionsSettingsRow,
+                        R.drawable.msg_photo_settings_solar,
+                        applyNewSpan(getString(R.string.CP_Message_Filtering_Exclusions)),
+                        " "
+                )
+                .setCollapsed(!expandedExclusionsSettings)
+                .hideCheckbox(true)
+                .slug("exclusionsSettings")
+        );
+        if (expandedExclusionsSettings) {
+            items.add(UItem.asShadow(null));
+            items.add(UItem.asButton(exclusionsRow, R.drawable._menu_stream_comments_off_24, getString(R.string.CP_Message_Filtering_Exclusions), String.valueOf(MessagesFilterHelper.INSTANCE.getExcludedChatsCount()))
+                    .setEnabled(CherrygramMessagesConfig.INSTANCE.getEnableMsgFilters())
+                    .slug("exclusions")
+            );
+            items.add(SettingsHelper.asSwitchCG(excludeUsersRow, getString(R.string.CP_Message_Filtering_Exclusions_Users))
+                    .setChecked(CherrygramMessagesConfig.INSTANCE.getExcludeUsers())
+                    .slug("excludeUsers")
+            );
+            items.add(SettingsHelper.asSwitchCG(excludeBotsRow, getString(R.string.CP_Message_Filtering_Exclusions_Bots))
+                    .setChecked(CherrygramMessagesConfig.INSTANCE.getExcludeBots())
+                    .slug("excludeBots")
+            );
+            items.add(SettingsHelper.asSwitchCG(excludeGroupsRow, getString(R.string.CP_Message_Filtering_Exclusions_Groups))
+                    .setChecked(CherrygramMessagesConfig.INSTANCE.getExcludeGroups())
+                    .slug("excludeGroups")
+            );
+            items.add(SettingsHelper.asSwitchCG(excludeChannelsRow, getString(R.string.CP_Message_Filtering_Exclusions_Channels))
+                    .setChecked(CherrygramMessagesConfig.INSTANCE.getExcludeChannels())
+                    .slug("excludeChannels")
+            );
+        }
+        items.add(UItem.asShadow(AndroidUtilities.replaceTags(getString(R.string.CP_Message_Filtering_Exclusions_Desc))));
 
         items.add(UItem.asHeader(getString(R.string.LocalMiscellaneousCache)));
         items.add(SettingsHelper.asSwitchCG(filterFromBlockedRow, getString(R.string.CP_Message_Filtering_FilterBlocked), getString(R.string.CP_Message_Filtering_FilterBlockedDesc))
@@ -205,6 +259,11 @@ public class MessageFiltersPreferencesEntry extends BaseCGPreferencesEntry {
         } else if (item.id == exactWordMatchRow) {
             CherrygramMessagesConfig.INSTANCE.setMsgFiltersMatchExactWord(!CherrygramMessagesConfig.INSTANCE.getMsgFiltersMatchExactWord());
             SettingsHelper.updateCheckState(view, CherrygramMessagesConfig.INSTANCE.getMsgFiltersMatchExactWord());
+        } else if (item.id == exclusionsSettingsRow) {
+            expandedExclusionsSettings = !expandedExclusionsSettings;
+            item.collapsed = !item.collapsed;
+
+            updateRows(true);
         } else if (item.id == exclusionsRow) {
             AndroidUtilities.runOnUIThread(() -> {
                 UsersSelectActivity activity = getUsersSelectActivity();
@@ -232,6 +291,18 @@ public class MessageFiltersPreferencesEntry extends BaseCGPreferencesEntry {
                 });
                 presentFragment(activity);
             }, 300);
+        } else if (item.id == excludeUsersRow) {
+            CherrygramMessagesConfig.INSTANCE.setExcludeUsers(!CherrygramMessagesConfig.INSTANCE.getExcludeUsers());
+            SettingsHelper.updateCheckState(view, CherrygramMessagesConfig.INSTANCE.getExcludeUsers());
+        } else if (item.id == excludeBotsRow) {
+            CherrygramMessagesConfig.INSTANCE.setExcludeBots(!CherrygramMessagesConfig.INSTANCE.getExcludeBots());
+            SettingsHelper.updateCheckState(view, CherrygramMessagesConfig.INSTANCE.getExcludeBots());
+        } else if (item.id == excludeGroupsRow) {
+            CherrygramMessagesConfig.INSTANCE.setExcludeGroups(!CherrygramMessagesConfig.INSTANCE.getExcludeGroups());
+            SettingsHelper.updateCheckState(view, CherrygramMessagesConfig.INSTANCE.getExcludeGroups());
+        } else if (item.id == excludeChannelsRow) {
+            CherrygramMessagesConfig.INSTANCE.setExcludeChannels(!CherrygramMessagesConfig.INSTANCE.getExcludeChannels());
+            SettingsHelper.updateCheckState(view, CherrygramMessagesConfig.INSTANCE.getExcludeChannels());
         } else if (item.id == filterFromBlockedRow) {
             CherrygramMessagesConfig.INSTANCE.setMsgFiltersHideFromBlocked(!CherrygramMessagesConfig.INSTANCE.getMsgFiltersHideFromBlocked());
             SettingsHelper.updateCheckState(view, CherrygramMessagesConfig.INSTANCE.getMsgFiltersHideFromBlocked());
@@ -250,6 +321,19 @@ public class MessageFiltersPreferencesEntry extends BaseCGPreferencesEntry {
         }
     }
 
+    @Override
+    public void scrollToRow(String slug, Runnable unknown) {
+        boolean needsExpand = false;
+        if (EXCLUSIONS_SECTION_SLUGS.contains(slug) && !expandedExclusionsSettings) {
+            expandedExclusionsSettings = true;
+            needsExpand = true;
+        }
+        if (needsExpand) {
+            updateRows(true);
+        }
+        super.scrollToRow(slug, unknown);
+    }
+
     private boolean hasChanges() {
         return (
                 !TextUtils.equals(CherrygramMessagesConfig.INSTANCE.getMsgFiltersElements(), outlineEditText.getEditText().getText().toString())
@@ -263,16 +347,7 @@ public class MessageFiltersPreferencesEntry extends BaseCGPreferencesEntry {
             doOnDone(this);
         }
 
-        boolean changed = hasChanges();
-
-        doneButton.setEnabled(changed);
-
-        doneButton.animate()
-                .alpha(changed ? 1.0f : 0.0f)
-                .scaleX(changed ? 1.0f : 0.0f)
-                .scaleY(changed ? 1.0f : 0.0f)
-                .setDuration(180)
-                .start();
+        doneButton.setActive(hasChanges(), true);
     }
 
     private void doOnDone(BaseFragment fragment) {

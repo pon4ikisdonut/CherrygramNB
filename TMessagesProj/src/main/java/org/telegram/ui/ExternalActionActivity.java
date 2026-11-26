@@ -446,7 +446,7 @@ public class ExternalActionActivity extends Activity implements INavigationLayou
     }
 
     public void needLayout() {
-        if (AndroidUtilities.isTablet()) {
+        if (AndroidUtilities.isTablet() && layersActionBarLayout != null) {
             RelativeLayout.LayoutParams relativeLayoutParams = (RelativeLayout.LayoutParams) layersActionBarLayout.getView().getLayoutParams();
             relativeLayoutParams.leftMargin = (AndroidUtilities.displaySize.x - relativeLayoutParams.width) / 2;
             int y = AndroidUtilities.statusBarHeight;
@@ -522,19 +522,19 @@ public class ExternalActionActivity extends Activity implements INavigationLayou
     protected void onResume() {
         super.onResume();
         actionBarLayout.onResume();
-        if (AndroidUtilities.isTablet()) {
+        if (AndroidUtilities.isTablet() && layersActionBarLayout != null) {
             layersActionBarLayout.onResume();
         }
         ApplicationLoader.externalInterfacePaused = false;
         onPasscodeResume();
         if (passcodeView.getVisibility() != View.VISIBLE) {
             actionBarLayout.onResume();
-            if (AndroidUtilities.isTablet()) {
+            if (AndroidUtilities.isTablet() && layersActionBarLayout != null) {
                 layersActionBarLayout.onResume();
             }
         } else {
             actionBarLayout.dismissDialogs();
-            if (AndroidUtilities.isTablet()) {
+            if (AndroidUtilities.isTablet() && layersActionBarLayout != null) {
                 layersActionBarLayout.dismissDialogs();
             }
             passcodeView.onResume();
@@ -607,7 +607,7 @@ public class ExternalActionActivity extends Activity implements INavigationLayou
         }
         if (PhotoViewer.getInstance().isVisible()) {
             PhotoViewer.getInstance().closePhoto(true, false);
-        } else if (AndroidUtilities.isTablet()) {
+        } else if (AndroidUtilities.isTablet() && layersActionBarLayout != null) {
             if (layersActionBarLayout.getView().getVisibility() == View.VISIBLE) {
                 layersActionBarLayout.onBackPressed();
             } else {
@@ -622,7 +622,7 @@ public class ExternalActionActivity extends Activity implements INavigationLayou
     public void onLowMemory() {
         super.onLowMemory();
         actionBarLayout.onLowMemory();
-        if (AndroidUtilities.isTablet()) {
+        if (AndroidUtilities.isTablet() && layersActionBarLayout != null) {
             layersActionBarLayout.onLowMemory();
         }
     }

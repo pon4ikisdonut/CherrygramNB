@@ -9,7 +9,6 @@
 
 package uz.unnarsx.cherrygram.preferences;
 
-import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.LocaleController.getString;
 
 import static uz.unnarsx.cherrygram.preferences.helpers.SettingsHelper.applyNewSpan;
@@ -21,13 +20,14 @@ import android.view.View;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
 import org.telegram.messenger.browser.Browser;
+import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.ActionBarMenu;
 import org.telegram.ui.ActionBar.ActionBarMenuItem;
+import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.Bulletin;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.IconBackgroundColors;
-import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.Components.UItem;
 import org.telegram.ui.Components.UniversalAdapter;
 import org.telegram.ui.SettingsActivity;
@@ -36,13 +36,12 @@ import java.util.ArrayList;
 
 import kotlin.Pair;
 import uz.unnarsx.cherrygram.chats.CGChatMenuInjector;
-import uz.unnarsx.cherrygram.core.configs.CherrygramExperimentalConfig;
 import uz.unnarsx.cherrygram.core.configs.CherrygramFirebaseConfig;
 import uz.unnarsx.cherrygram.core.firebase.crashlytics.Crashlytics;
 import uz.unnarsx.cherrygram.core.firebase.FirebaseAnalyticsHelper;
 import uz.unnarsx.cherrygram.core.helpers.AppRestartHelper;
 import uz.unnarsx.cherrygram.core.helpers.DeeplinkHelper;
-import uz.unnarsx.cherrygram.core.helpers.backup.BackupHelper;
+import uz.unnarsx.cherrygram.core.configs.backup.BackupHelper;
 import uz.unnarsx.cherrygram.preferences.helpers.TelegramSettingsHelper;
 
 public class CGPreferencesEntry extends BaseCGPreferencesEntry {
@@ -60,6 +59,12 @@ public class CGPreferencesEntry extends BaseCGPreferencesEntry {
     private final int donateKofiRow = 9;
     private final int proxyRow = 10;
 
+    private static final int MENU_EXPORT = 1;
+    private static final int MENU_IMPORT = 2;
+    private static final int MENU_RESET = 3;
+    private static final int MENU_COPY_REPORT = 4;
+    private static final int MENU_RESTART = 5;
+
     @Override
     protected CharSequence getTitle() {
         FirebaseAnalyticsHelper.INSTANCE.trackEventWithEmptyBundle("main_preferences_screen");
@@ -73,9 +78,43 @@ public class CGPreferencesEntry extends BaseCGPreferencesEntry {
 
     @Override
     public View createView(Context context) {
+        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
+            @Override
+            public void onItemClick(int id) {
+                if (id == -1) {
+                    finishFragment();
+                } else if (id == MENU_EXPORT) {
+                    BackupHelper.INSTANCE.backupSettings(CGPreferencesEntry.this);
+                } else if (id == MENU_IMPORT) {
+                    BackupHelper.INSTANCE.importSettings(CGPreferencesEntry.this);
+                } else if (id == MENU_RESET) {
+                    BackupHelper.INSTANCE.resetSettings(CGPreferencesEntry.this);
+                } else if (id == MENU_COPY_REPORT) {
+                    AndroidUtilities.addToClipboard(Crashlytics.getReportMessage() + "\n\n#bug");
+                    BulletinFactory.of(CGPreferencesEntry.this).createErrorBulletin(getString(R.string.CG_ReportDetailsCopied))
+                            .setDuration(Bulletin.DURATION_SHORT)
+                            .show();
+                } else if (id == MENU_RESTART) {
+                    AppRestartHelper.restartApp(getContext());
+                }
+            }
+        });
+
         final ActionBarMenu menu = actionBar.createMenu();
-        ActionBarMenuItem otherItem = menu.addItem(1, R.drawable.ic_ab_other);
-        otherItem.setOnClickListener(view -> showItemOptions(otherItem));
+        final ActionBarMenuItem otherItem = menu.addItem(0, R.drawable.ic_ab_other);
+        otherItem.setContentDescription(getString(R.string.AccDescrMoreOptions));
+        otherItem.setSubMenuOverlayProvider(this::getSimpleMenuOverlay);
+        otherItem.addSubItem(MENU_EXPORT, R.drawable.msg_shareout_solar, getString(R.string.CG_ExportSettings));
+        otherItem.addSubItem(MENU_IMPORT, R.drawable.msg_photo_settings_solar, getString(R.string.CG_ImportSettings));
+        otherItem.addColoredGap();
+        final ActionBarMenuSubItem resetItem = otherItem.addSubItem(MENU_RESET, R.drawable.msg_reset_solar, getString(R.string.CG_ResetSettings));
+        final int red = getThemedColor(Theme.key_text_RedRegular);
+        resetItem.setColors(red, red);
+        resetItem.setSelectorColor(Theme.multAlpha(red, .12f));
+        otherItem.addSpaceGap();
+        otherItem.addSubItem(MENU_COPY_REPORT, R.drawable.bug_solar, getString(R.string.CG_CopyReportDetails));
+        otherItem.addColoredGap();
+        otherItem.addSubItem(MENU_RESTART, R.drawable.msg_retry_solar, getString(R.string.CG_Restart));
 
         return super.createView(context);
     }
@@ -138,19 +177,17 @@ public class CGPreferencesEntry extends BaseCGPreferencesEntry {
                 )
                 .slug(DeeplinkHelper.DeepLinksRepo.CG_Camera)
         );
-        if (CherrygramExperimentalConfig.INSTANCE.getUse_CG_OOMHandler()) {
-            items.add(
-                    SettingsActivity.SettingCell.Factory.of(
-                            experimentalRow,
-                            IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom,
-                            R.drawable.settings_tube_filled_solar,
-                            getString(R.string.EP_Category_Experimental),
-                            getString(R.string.CGP_Experimental_Desc),
-                            true
-                    )
-                    .slug(DeeplinkHelper.DeepLinksRepo.CG_Experimental)
-            );
-        }
+        items.add(
+                SettingsActivity.SettingCell.Factory.of(
+                        experimentalRow,
+                        IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom,
+                        R.drawable.settings_tube_filled_solar,
+                        getString(R.string.EP_Category_Experimental) + " // W.I.P",
+                        getString(R.string.CGP_Experimental_Desc),
+                        true
+                )
+                .slug(DeeplinkHelper.DeepLinksRepo.CG_Experimental)
+        );
         items.add(
                 SettingsActivity.SettingCell.Factory.of(
                         privacyRow,
@@ -235,29 +272,6 @@ public class CGPreferencesEntry extends BaseCGPreferencesEntry {
         } else if (item.id == proxyRow) {
             Browser.openUrl(getContext(), CherrygramFirebaseConfig.INSTANCE.getProxyURL());
         }
-    }
-
-    private void showItemOptions(View button) {
-        ItemOptions o = ItemOptions.makeOptions(this, button);
-
-        o.add(R.drawable.msg_instant_link_solar, getString(R.string.CG_ExportSettings), () -> BackupHelper.INSTANCE.backupSettings(this));
-        o.add(R.drawable.msg_photo_settings_solar, getString(R.string.CG_ImportSettings), () -> BackupHelper.INSTANCE.importSettings(this));
-        o.addGap();
-        o.add(R.drawable.bug_solar, getString(R.string.CG_CopyReportDetails), () -> {
-            AndroidUtilities.addToClipboard(Crashlytics.getReportMessage() + "\n\n#bug");
-            BulletinFactory.of(this).createErrorBulletin(getString(R.string.CG_ReportDetailsCopied))
-                    .setDuration(Bulletin.DURATION_SHORT)
-                    .show();
-        });
-
-        o.addSpaceGap();
-
-        o.add(R.drawable.msg_retry_solar, getString(R.string.CG_Restart), () -> AppRestartHelper.restartApp(getContext()));
-
-        o.setBlur(false);
-        o.setDrawScrim(false);
-        o.translate(0F, -dp(48F));
-        o.show();
     }
 
 }

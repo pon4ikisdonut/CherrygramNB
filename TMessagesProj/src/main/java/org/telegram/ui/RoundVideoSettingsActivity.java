@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,13 +18,15 @@ import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.ActionBar.ThemeBind;
 import org.telegram.ui.Cells.HeaderCell;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
+import org.telegram.ui.Components.InstantCameraViewBase;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
-import org.telegram.utils.camera.roundvideo.RoundVideoSession;
+import org.telegram.utils.recorder.round.RoundVideoSession;
 
 import uz.unnarsx.cherrygram.core.configs.CherrygramCoreConfig;
 
@@ -57,11 +60,16 @@ public class RoundVideoSettingsActivity extends BaseFragment {
     private ListAdapter adapter;
 
     @Override
+    protected boolean useSimpleActionBar() {
+        return true;
+    }
+
+    @Override
     public View createView(Context context) {
-        actionBar.setBackButtonImage(R.drawable.ic_ab_back);
-        actionBar.setAllowOverlayTitle(true);
-        actionBar.setTitle(LocaleController.getString(R.string.RoundVideoSettings));
-        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
+        setHasOwnBackground(true);
+        simpleActionBar.setBackButtonImage(R.drawable.ic_ab_back);
+        simpleActionBar.setTitle(LocaleController.getString(R.string.RoundVideoSettings));
+        simpleActionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
                 if (id == -1) {
@@ -71,12 +79,11 @@ public class RoundVideoSettingsActivity extends BaseFragment {
         });
 
         FrameLayout frameLayout = new FrameLayout(context);
-        frameLayout.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
         fragmentView = frameLayout;
 
         listView = new RecyclerListView(context);
         listView.setSections();
-        actionBar.setAdaptiveBackground(listView);
+        listView.setSectionsDrawBackground(true);
         listView.setLayoutManager(new LinearLayoutManager(context));
         listView.setVerticalScrollBarEnabled(false);
         listView.setAdapter(adapter = new ListAdapter(context));
@@ -88,15 +95,26 @@ public class RoundVideoSettingsActivity extends BaseFragment {
         return fragmentView;
     }
 
+    @Override
+    public boolean isSupportEdgeToEdge() {
+        return true;
+    }
+
+    @Nullable
+    @Override
+    protected RecyclerListView getListViewForSimpleGlass() {
+        return listView;
+    }
+
     private void onRowClicked(int position) {
         if (position == ROW_ENABLED) {
-            SharedSettings.roundVideoCamera2Enabled.set(!SharedSettings.roundVideoCamera2Enabled.get());
+            SharedSettings.roundVideoCamera2Enabled.set(!InstantCameraViewBase.isCamera2Enabled(currentAccount));
             adapter.notifyDataSetChanged();
             return;
         }
-        if (!SharedSettings.roundVideoCamera2Enabled.get()) {
+        /*if (!InstantCameraViewBase.isCamera2Enabled(currentAccount)) {
             return;
-        }
+        }*/
         if (position == ROW_OUTPUT_RESOLUTION) {
             showChoice(
                     R.string.RoundVideoOutputResolution,
@@ -192,9 +210,9 @@ public class RoundVideoSettingsActivity extends BaseFragment {
             if (position == ROW_ENABLED) {
                 return true;
             }
-            if (!SharedSettings.roundVideoCamera2Enabled.get()) {
+            /*if (!InstantCameraViewBase.isCamera2Enabled(currentAccount)) {
                 return false;
-            }
+            }*/
             return position == ROW_OUTPUT_RESOLUTION
                     || position == ROW_CAMERA_RESOLUTION
                     || position == ROW_FRAME_RATE
@@ -226,7 +244,7 @@ public class RoundVideoSettingsActivity extends BaseFragment {
 
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-            boolean enabled = SharedSettings.roundVideoCamera2Enabled.get();
+            boolean enabled = InstantCameraViewBase.isCamera2Enabled(currentAccount);
             if (holder.getItemViewType() == TYPE_HEADER) {
                 HeaderCell cell = (HeaderCell) holder.itemView;
                 cell.setText(position == ROW_GENERAL_HEADER

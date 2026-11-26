@@ -131,9 +131,36 @@ public class PopupSwipeBackLayout extends FrameLayout {
         onSwipeBackProgressListeners.add(onSwipeBackProgressListener);
     }
 
+    /**
+     * On glass (a menu bubble) the pages have no background: the main page fades out and the nested one fades
+     * in instead of covering it with the menu's color.
+     */
+    private boolean foregroundOnGlass;
+
+    public void setForegroundOnGlass(boolean onGlass) {
+        if (foregroundOnGlass != onGlass) {
+            foregroundOnGlass = onGlass;
+            invalidate();
+        }
+    }
+
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
         int i = indexOfChild(child);
+        if (foregroundOnGlass) {
+            // the main page is gone by the middle of the slide, so the two never read over each other
+            final float alpha = i == 0 ? 1f - Math.min(1f, transitionProgress * 2f) : Math.max(0f, transitionProgress * 2f - 1f);
+            if (alpha <= 0) {
+                return false;
+            }
+            if (alpha >= 1) {
+                return super.drawChild(canvas, child, drawingTime);
+            }
+            final int s = canvas.saveLayerAlpha(child.getX(), child.getY(), child.getX() + child.getWidth(), child.getY() + child.getHeight(), (int) (0xFF * alpha));
+            final boolean b = super.drawChild(canvas, child, drawingTime);
+            canvas.restoreToCount(s);
+            return b;
+        }
         int s = canvas.save();
         if (!MessageMenuHelper.getInstance(UserConfig.selectedAccount).allowNewMessageMenu() && i != 0) {
             if (foregroundColor == 0) {
@@ -259,7 +286,11 @@ public class PopupSwipeBackLayout extends FrameLayout {
         View bv = getChildAt(0);
         View fv = getChildAt(currentForegroundIndex);
 
-        boolean b = (transitionProgress > 0.5f ? fv : bv).dispatchTouchEvent(ev);
+        View target = transitionProgress > 0.5f ? fv : bv;
+        final float offsetX = -target.getLeft();
+        ev.offsetLocation(offsetX, 0);
+        boolean b = target.dispatchTouchEvent(ev);
+        ev.offsetLocation(-offsetX, 0);
         if (!b && act == MotionEvent.ACTION_DOWN) {
             return true;
         }

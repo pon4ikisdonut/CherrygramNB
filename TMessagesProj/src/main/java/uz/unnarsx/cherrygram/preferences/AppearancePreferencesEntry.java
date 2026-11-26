@@ -11,26 +11,37 @@ package uz.unnarsx.cherrygram.preferences;
 
 import static org.telegram.messenger.LocaleController.getString;
 
+import static uz.unnarsx.cherrygram.preferences.helpers.SettingsHelper.applyNewSpan;
+
+import android.os.Build;
 import android.view.View;
+import android.widget.ImageView;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Cells.TextCell;
 import org.telegram.ui.Components.IconBackgroundColors;
 import org.telegram.ui.Components.UItem;
 import org.telegram.ui.Components.UniversalAdapter;
 import org.telegram.ui.LaunchActivity;
+import org.telegram.ui.LauncherIconController;
 import org.telegram.ui.SettingsActivity;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import kotlin.Pair;
 import uz.unnarsx.cherrygram.core.configs.CherrygramAppearanceConfig;
+import uz.unnarsx.cherrygram.core.configs.CherrygramChatsConfig;
 import uz.unnarsx.cherrygram.core.firebase.FirebaseAnalyticsHelper;
 import uz.unnarsx.cherrygram.core.helpers.DeeplinkHelper;
 import uz.unnarsx.cherrygram.helpers.ui.PopupHelper;
+import uz.unnarsx.cherrygram.preferences.cells.ChatHeaderPreviewView;
+import uz.unnarsx.cherrygram.preferences.cells.ChatInputPreviewView;
+import uz.unnarsx.cherrygram.preferences.cells.LauncherIconDrawable;
 import uz.unnarsx.cherrygram.preferences.helpers.SettingsHelper;
 import uz.unnarsx.cherrygram.preferences.helpers.TelegramSettingsHelper;
 
@@ -43,10 +54,20 @@ public class AppearancePreferencesEntry extends BaseCGPreferencesEntry {
     private final int iconPackRow = 4;
     private final int oneUISwitchesRow = 5;
     private final int disableDividersRow = 6;
+    private final int iconBasedSplashRow = 7;
 
-    private final int foldersRow = 7;
-    private final int bottomTabsRow = 8;
-    private final int messagesAndProfilesRow = 9;
+    private final int foldersRow = 8;
+    private final int bottomTabsRow = 9;
+    private final int messagesAndProfilesRow = 10;
+
+    private final int glareEffectsSectionRow = 11;
+    private final int glareEffectsStyleRow = 12;
+    private final int appIconRow = 13;
+    private boolean expandedGlareEffectsSectionRow = false;
+
+    private static final Set<String> GLARE_EFFECTS_SECTION_SLUG = Set.of(
+            "glareEffectsType"
+    );
 
     @Override
     protected CharSequence getTitle() {
@@ -77,7 +98,9 @@ public class AppearancePreferencesEntry extends BaseCGPreferencesEntry {
         items.add(UItem.asShadow(null));
 
         items.add(UItem.asHeader(getString(R.string.AP_Header_Appearance)));
-        items.add(UItem.asButton(iconPackRow, getString(R.string.AP_IconReplacements), getIconPackValueText()));
+        items.add(UItem.asButton(iconPackRow, getString(R.string.AP_IconReplacements), getIconPackValueText())
+                .slug("iconPack")
+        );
         items.add(SettingsHelper.asSwitchCG(oneUISwitchesRow, getString(R.string.AP_OneUI_Switch_Style))
                 .setChecked(CherrygramAppearanceConfig.INSTANCE.getOneUI_SwitchStyle())
                 .slug("oneUI_Switches")
@@ -87,6 +110,62 @@ public class AppearancePreferencesEntry extends BaseCGPreferencesEntry {
                 .slug("dividers")
         );
         items.add(UItem.asShadow(null));
+
+        LauncherIconDrawable appIconDrawable = new LauncherIconDrawable(getContext(), LauncherIconController.getCurrentIcon(), AndroidUtilities.dp(30));
+        items.add(UItem.asButton(appIconRow, applyNewSpan(getString(R.string.AppIcon)))
+                .onBind(view -> {
+                    ImageView valueImageView = ((TextCell) view).getValueImageView();
+                    valueImageView.setImageDrawable(appIconDrawable);
+                    valueImageView.setVisibility(View.VISIBLE);
+                })
+                .slug(DeeplinkHelper.DeepLinksRepo.CG_App_Icon)
+        );
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            items.add(
+                    SettingsHelper.asSwitchCG(
+                            iconBasedSplashRow,
+                            applyNewSpan(getString(R.string.AP_IconBasedSplash)),
+                            getString(R.string.AP_IconBasedSplash_Desc)
+                    )
+                    .setChecked(CherrygramAppearanceConfig.INSTANCE.getIconBasedSplash())
+                    .slug("iconBasedSplash")
+            );
+        }
+        items.add(UItem.asShadow(null));
+
+        items.add(
+                SettingsHelper.asExpandableSwitch(
+                        glareEffectsSectionRow,
+                        R.drawable.msg_photo_settings_solar,
+                        applyNewSpan(getString(R.string.CP_StrokeOnViews)),
+                        " "
+                )
+                .setCollapsed(!expandedGlareEffectsSectionRow)
+                .setClickCallback(v -> {
+                    expandedGlareEffectsSectionRow = !expandedGlareEffectsSectionRow;
+                    updateRows(true);
+                })
+                .hideCheckbox(true)
+                .slug("glareEffects")
+        );
+        if (expandedGlareEffectsSectionRow) {
+            items.add(UItem.asButton(glareEffectsStyleRow, getString(R.string.AP_StrokeOnViews_Type), getGlareEffectsValueText())
+                    .slug("glareEffectsType")
+            );
+            items.add(UItem.asShadow(null));
+
+            ChatHeaderPreviewView headerPreviewView = new ChatHeaderPreviewView(getContext(), this, getResourceProvider());
+            headerPreviewView.setTitleCentered(CherrygramChatsConfig.INSTANCE.getCenterChatTitle());
+            headerPreviewView.updateIOSUnreadBadge();
+            items.add(SettingsHelper.asCustomWithBackground(headerPreviewView, 62));
+            items.add(UItem.asShadow(null));
+
+            ChatInputPreviewView inputPreviewView = new ChatInputPreviewView(getContext(), this, getResourceProvider());
+            items.add(SettingsHelper.asCustomWithBackground(inputPreviewView, 62));
+            items.add(UItem.asShadow(null));
+        } else {
+            items.add(UItem.asShadow(null));
+        }
 
         items.add(UItem.asHeader(getString(R.string.LocalMiscellaneousCache)));
         items.add(
@@ -129,11 +208,35 @@ public class AppearancePreferencesEntry extends BaseCGPreferencesEntry {
 
     @Override
     protected void onClick(UItem item, View view, int position, float x, float y) {
-        if (item.id == centerTitleRow) {
+        if (item.id == glareEffectsSectionRow) {
+            expandedGlareEffectsSectionRow = !expandedGlareEffectsSectionRow;
+            item.collapsed = !item.collapsed;
+
+            updateRows(true);
+        } else if (item.id == glareEffectsStyleRow) {
+            ArrayList<String> configStringKeys = new ArrayList<>();
+            ArrayList<Integer> configValues = new ArrayList<>();
+
+            configStringKeys.add(getString(R.string.Disable));
+            configValues.add(CherrygramAppearanceConfig.GLARE_EFFECTS_DISABLE);
+
+            configStringKeys.add(getString(R.string.Default));
+            configValues.add(CherrygramAppearanceConfig.GLARE_EFFECTS_DEFAULT);
+
+            configStringKeys.add(getString(R.string.AP_StrokeOnViews_Stroke));
+            configValues.add(CherrygramAppearanceConfig.GLARE_EFFECTS_STROKE);
+
+            PopupHelper.show(configStringKeys, getString(R.string.CP_StrokeOnViews), configValues.indexOf(CherrygramAppearanceConfig.INSTANCE.getGlareEffectsType()), getContext(), i -> {
+                CherrygramAppearanceConfig.INSTANCE.setGlareEffectsType(configValues.get(i));
+                SettingsHelper.updateButtonValue(view, getGlareEffectsValueText());
+
+                updateRows(true);
+            });
+        } else if (item.id == centerTitleRow) {
             CherrygramAppearanceConfig.INSTANCE.setCenterTitle(!CherrygramAppearanceConfig.INSTANCE.getCenterTitle());
             SettingsHelper.updateCheckState(view, CherrygramAppearanceConfig.INSTANCE.getCenterTitle());
 
-            getParentLayout().rebuildAllFragmentViews(true, true);
+            getParentLayout().rebuildAllFragmentViews(false, false);
         } else  if (item.id == hideSearchBar) {
             CherrygramAppearanceConfig.INSTANCE.setHideSearchFiled(!CherrygramAppearanceConfig.INSTANCE.getHideSearchFiled());
             SettingsHelper.updateCheckState(view, CherrygramAppearanceConfig.INSTANCE.getHideSearchFiled());
@@ -144,6 +247,11 @@ public class AppearancePreferencesEntry extends BaseCGPreferencesEntry {
             SettingsHelper.updateCheckState(view, CherrygramAppearanceConfig.INSTANCE.getDrawSnowInActionBar());
 
             showRestartBulletin();
+        } else if (item.id == iconBasedSplashRow) {
+            CherrygramAppearanceConfig.INSTANCE.setIconBasedSplash(!CherrygramAppearanceConfig.INSTANCE.getIconBasedSplash());
+            SettingsHelper.updateCheckState(view, CherrygramAppearanceConfig.INSTANCE.getIconBasedSplash());
+
+            LauncherIconController.applySplashTheme(getParentActivity(), LauncherIconController.getCurrentIcon());
         } else if (item.id == iconPackRow) {
             ArrayList<String> configStringKeys = new ArrayList<>();
             ArrayList<Integer> configValues = new ArrayList<>();
@@ -176,6 +284,8 @@ public class AppearancePreferencesEntry extends BaseCGPreferencesEntry {
 
             Theme.applyCommonTheme();
             updateRows(true);
+        } else if (item.id == appIconRow) {
+            CherrygramPreferencesNavigator.INSTANCE.createAppIcons(this);
         } else if (item.id == foldersRow) {
             CherrygramPreferencesNavigator.INSTANCE.createFoldersPrefs(this);
         } else if (item.id == bottomTabsRow) {
@@ -185,9 +295,36 @@ public class AppearancePreferencesEntry extends BaseCGPreferencesEntry {
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateRows(false);
+    }
+
+    @Override
+    public void scrollToRow(String slug, Runnable unknown) {
+        boolean needsExpand = false;
+        if (GLARE_EFFECTS_SECTION_SLUG.contains(slug) && !expandedGlareEffectsSectionRow) {
+            expandedGlareEffectsSectionRow = true;
+            needsExpand = true;
+        }
+        if (needsExpand) {
+            updateRows(true);
+        }
+        super.scrollToRow(slug, unknown);
+    }
+
     private String getIconPackValueText()  {
         return switch (CherrygramAppearanceConfig.INSTANCE.getIconReplacement()) {
             case CherrygramAppearanceConfig.ICON_REPLACE_SOLAR -> getString(R.string.AP_IconReplacement_Solar);
+            default -> getString(R.string.Default);
+        };
+    }
+
+    private String getGlareEffectsValueText()  {
+        return switch (CherrygramAppearanceConfig.INSTANCE.getGlareEffectsType()) {
+            case CherrygramAppearanceConfig.GLARE_EFFECTS_DISABLE -> getString(R.string.Disable);
+            case CherrygramAppearanceConfig.GLARE_EFFECTS_STROKE -> getString(R.string.AP_StrokeOnViews_Stroke);
             default -> getString(R.string.Default);
         };
     }

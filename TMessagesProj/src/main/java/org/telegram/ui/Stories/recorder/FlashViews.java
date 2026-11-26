@@ -17,13 +17,16 @@ import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.RadialGradient;
+import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.Shader;
 import android.hardware.Camera;
 import android.os.Build;
+import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -42,7 +45,6 @@ import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.Components.CubicBezierInterpolator;
-import org.telegram.ui.Components.InstantCameraView;
 import org.telegram.ui.LaunchActivity;
 
 import java.util.ArrayList;
@@ -298,16 +300,6 @@ public class FlashViews {
 
             canvas.restore();
         } else {
-            canvas.save();
-
-            if (circlePath != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    canvas.clipOutPath(circlePath);
-                } else {
-                    canvas.clipPath(circlePath, Region.Op.DIFFERENCE);
-                }
-            }
-
             if (gradient != null) {
                 invalidateGradient();
                 gradient.setLocalMatrix(gradientMatrix);
@@ -318,8 +310,6 @@ public class FlashViews {
                     canvas.drawRoundRect(AndroidUtilities.rectTmp, dp(12) - 2, dp(12) - 2, paint);
                 }
             }
-
-            canvas.restore();
         }
     }
 
@@ -350,25 +340,94 @@ public class FlashViews {
         foregroundView.invalidate();
     }
 
-    public void setCircleCutout(InstantCameraView instantCameraView) {
-        if (instantCameraView == null || instantCameraView.getCameraContainer() == null) return;
+    private View cutoutTarget;
+    private boolean cutoutListenerAdded;
+    private boolean cutoutAttachListenerAdded;
+    private final RectF cutoutRect = new RectF();
+    private final RectF foregroundRect = new RectF();
+    private final RectF lastCutoutRect = new RectF();
 
-        InstantCameraView.InstantViewCameraContainer container = instantCameraView.getCameraContainer();
+    private final ViewTreeObserver.OnPreDrawListener cutoutPreDrawListener = () -> {
+        updateCircleCutout();
+        return true;
+    };
 
-        int left = container.getLeft();
-        int top = container.getTop();
-        int width = container.getWidth();
-        int height = container.getHeight();
+    private final View.OnAttachStateChangeListener cutoutAttachListener = new View.OnAttachStateChangeListener() {
+        @Override
+        public void onViewAttachedToWindow(View v) {
+            ensureCutoutListener();
+        }
 
-        float circleCx = left + width / 2f;
-        float circleCy = top + height / 2f;
-        float circleRadius = Math.min(width, height) / 2f;
+        @Override
+        public void onViewDetachedFromWindow(View v) {
+            if (cutoutListenerAdded) {
+                v.getViewTreeObserver().removeOnPreDrawListener(cutoutPreDrawListener);
+                cutoutListenerAdded = false;
+            }
+        }
+    };
 
-        circlePath = new Path();
-        circlePath.addCircle(circleCx, circleCy, circleRadius, Path.Direction.CW);
+    public void setCircleCutout(View targetView) {
+        if (targetView == null || foregroundView == null) return;
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            foregroundView.post(() -> setCircleCutout(targetView));
+            return;
+        }
+        cutoutTarget = targetView;
+        if (!cutoutAttachListenerAdded) {
+            cutoutAttachListenerAdded = true;
+            foregroundView.addOnAttachStateChangeListener(cutoutAttachListener);
+        }
+        ensureCutoutListener();
+        updateCircleCutout();
+    }
 
+    private void ensureCutoutListener() {
+        if (cutoutListenerAdded || cutoutTarget == null || !foregroundView.isAttachedToWindow()) return;
+        foregroundView.getViewTreeObserver().addOnPreDrawListener(cutoutPreDrawListener);
+        cutoutListenerAdded = true;
+    }
+
+    private void updateCircleCutout() {
+        View target = cutoutTarget;
+        if (!forCameraX || target == null || target.getWidth() <= 0 || target.getHeight() <= 0) return;
+        if (!target.isAttachedToWindow() || !foregroundView.isAttachedToWindow()) return;
+
+        cutoutRect.set(0, 0, target.getWidth(), target.getHeight());
+        View targetRoot = mapToRoot(target, cutoutRect);
+        foregroundRect.set(0, 0, foregroundView.getWidth(), foregroundView.getHeight());
+        View foregroundRoot = mapToRoot(foregroundView, foregroundRect);
+        if (targetRoot == null || targetRoot != foregroundRoot) return;
+        cutoutRect.offset(-foregroundRect.left, -foregroundRect.top);
+
+        if (circlePath != null && cutoutRect.equals(lastCutoutRect)) return;
+        lastCutoutRect.set(cutoutRect);
+
+        if (circlePath == null) {
+            circlePath = new Path();
+        } else {
+            circlePath.reset();
+        }
+        circlePath.addCircle(
+                cutoutRect.centerX(),
+                cutoutRect.centerY(),
+                Math.min(cutoutRect.width(), cutoutRect.height()) / 2f,
+                Path.Direction.CW
+        );
         backgroundView.invalidate();
         foregroundView.invalidate();
+    }
+
+    private static View mapToRoot(View view, RectF rect) {
+        View v = view;
+        while (true) {
+            v.getMatrix().mapRect(rect);
+            rect.offset(v.getLeft(), v.getTop());
+            if (!(v.getParent() instanceof View)) return v;
+            View parent = (View) v.getParent();
+            rect.offset(-parent.getScrollX(), -parent.getScrollY());
+            v = parent;
+        }
     }
 
     public void flashIn(Runnable done, boolean cg) {

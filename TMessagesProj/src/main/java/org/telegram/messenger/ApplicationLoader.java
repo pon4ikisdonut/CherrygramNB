@@ -50,7 +50,9 @@ import org.telegram.ui.LauncherIconController;
 import java.io.File;
 import java.util.Locale;
 
+import uz.unnarsx.cherrygram.chats.AudioEnhance;
 import uz.unnarsx.cherrygram.core.CherrygramLogger;
+import uz.unnarsx.cherrygram.core.configs.CherrygramChatsConfig;
 import uz.unnarsx.cherrygram.core.configs.CherrygramExperimentalConfig;
 import uz.unnarsx.cherrygram.core.memory.MemoryMonitor;
 import uz.unnarsx.cherrygram.core.configs.CherrygramCoreConfig;
@@ -244,6 +246,8 @@ public class ApplicationLoader extends Application {
             e.printStackTrace();
         }
 
+        LiteMode.registerBatteryReceiver();
+
         try {
             PowerManager pm = (PowerManager) ApplicationLoader.applicationContext.getSystemService(Context.POWER_SERVICE);
             isScreenOn = pm.isScreenOn();
@@ -299,6 +303,10 @@ public class ApplicationLoader extends Application {
             DownloadController.getInstance(a);
         }
         BillingController.getInstance().startConnection();
+        // HTML widgets: the isolated engine's process up front, after the app's own start, so that a widget's first
+        // frame does not wait for it.
+        AndroidUtilities.runOnUIThread(() -> Utilities.globalQueue.postRunnable(
+                () -> org.telegram.utils.twidget.WidgetSandboxSession.prewarmEngine(applicationContext)), 3000);
     }
 
     public ApplicationLoader() {
@@ -315,6 +323,11 @@ public class ApplicationLoader extends Application {
         }
 
         super.onCreate();
+
+        // The widget engine's isolated process has no files, network or accounts: none of the client starts there.
+        if (org.telegram.utils.twidget.WidgetEngineService.isEngineProcess()) {
+            return;
+        }
 
         // AndroidUtilities must be initialized before FileLog
         final String helloWorld = AndroidUtilities.getHelloWorld();
@@ -775,6 +788,10 @@ public class ApplicationLoader extends Application {
         return false;
     }
 
+    public void playUpdaterFilterUpdate(TLRPC.TL_help_appUpdate update, Utilities.Callback<TLRPC.TL_help_appUpdate> callback) {
+        callback.run(update);
+    }
+
     public boolean playUpdaterCheckPendingDownload() {
         return false;
     }
@@ -782,6 +799,9 @@ public class ApplicationLoader extends Application {
     private void initCG() {
         KaboomWidget.forceUpdateKaboomWidgets(applicationContext);
         FirebaseAnalyticsHelper.INSTANCE.init(applicationContext);
+        if (CherrygramChatsConfig.INSTANCE.getMuteSystemSounds()) {
+            AudioEnhance.recoverSystemSounds(applicationContext);
+        }
 
         if (CherrygramExperimentalConfig.INSTANCE.getUse_CG_OOMHandler()) {
             MemoryMonitor memoryMonitor = new MemoryMonitor(

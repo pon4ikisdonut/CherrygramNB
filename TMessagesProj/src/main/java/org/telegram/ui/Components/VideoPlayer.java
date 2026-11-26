@@ -109,6 +109,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import uz.unnarsx.cherrygram.profile.CGProfileMusicBeat;
+
 @SuppressLint("NewApi")
 @OptIn(markerClass = UnstableApi.class)
 public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsListener, NotificationCenter.NotificationCenterDelegate {
@@ -263,6 +265,10 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
                 builder.setLooper(looper);
             }
             player = builder.build();
+            player.setAudioAttributes(new AudioAttributes.Builder()
+                .setUsage(C.USAGE_MEDIA)
+                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                .build(), false);
 
             player.addAnalyticsListener(this);
             player.addListener(this);
@@ -282,6 +288,10 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
                 audioPlayer = new ExoPlayer.Builder(ApplicationLoader.applicationContext)
                         .setTrackSelector(trackSelector)
                         .setLoadControl(loadControl).build();
+                audioPlayer.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                    .build(), false);
                 audioPlayer.addListener(new Player.Listener() {
 
                     @Override
@@ -1624,11 +1634,13 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
         if (player != null) {
             player.setAudioAttributes(new AudioAttributes.Builder()
                 .setUsage(type == AudioManager.STREAM_VOICE_CALL ? C.USAGE_VOICE_COMMUNICATION : C.USAGE_MEDIA)
+                .setContentType(type == AudioManager.STREAM_VOICE_CALL ? C.AUDIO_CONTENT_TYPE_SPEECH : C.AUDIO_CONTENT_TYPE_MOVIE)
                 .build(), handleAudioFocus);
         }
         if (audioPlayer != null) {
             audioPlayer.setAudioAttributes(new AudioAttributes.Builder()
                 .setUsage(type == AudioManager.STREAM_VOICE_CALL ? C.USAGE_VOICE_COMMUNICATION : C.USAGE_MEDIA)
+                .setContentType(type == AudioManager.STREAM_VOICE_CALL ? C.AUDIO_CONTENT_TYPE_SPEECH : C.AUDIO_CONTENT_TYPE_MUSIC)
                 .build(), true);
         }
     }
@@ -1812,6 +1824,7 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
 
     private class VisualizerBufferSink implements TeeAudioProcessor.AudioBufferSink {
 
+        private final CGProfileMusicBeat cgMusicBeat = new CGProfileMusicBeat();
         private final int BUFFER_SIZE = 1024;
         private final int MAX_BUFFER_SIZE = BUFFER_SIZE * 8;
         FourierTransform.FFT fft = new FourierTransform.FFT(BUFFER_SIZE, 48000);
@@ -1826,7 +1839,7 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
 
         @Override
         public void flush(int sampleRateHz, int channelCount, int encoding) {
-
+            cgMusicBeat.configure(sampleRateHz, channelCount, encoding);
         }
 
 
@@ -1843,6 +1856,15 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
                     audioVisualizerDelegate.onVisualizerUpdate(false, true, null);
                 }, 80);
                 return;
+            }
+
+            if (CGProfileMusicBeat.hasListeners()) {
+                final float beat = cgMusicBeat.consume(buffer);
+                if (beat >= 0f) {
+                    AndroidUtilities.runOnUIThread(() -> {
+                        if (mixedPlayWhenReady) CGProfileMusicBeat.dispatch(beat);
+                    }, CGProfileMusicBeat.DISPATCH_DELAY_MS);
+                }
             }
 
             if (!audioVisualizerDelegate.needUpdate()) {

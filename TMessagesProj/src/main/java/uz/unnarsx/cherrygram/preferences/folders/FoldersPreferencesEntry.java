@@ -11,7 +11,6 @@ package uz.unnarsx.cherrygram.preferences.folders;
 
 import static org.telegram.messenger.LocaleController.getString;
 
-import static uz.unnarsx.cherrygram.preferences.helpers.SettingsHelper.applyNewSpan;
 import static uz.unnarsx.cherrygram.preferences.helpers.SettingsHelper.applyProSpan;
 
 import android.view.View;
@@ -83,12 +82,14 @@ public class FoldersPreferencesEntry extends BaseCGPreferencesEntry {
                 .slug("hideCounterInTabs")
         );
         if (!CherrygramAppearanceConfig.INSTANCE.getTabsNoUnread()) {
-            items.add(SettingsHelper.asSwitchCG(includeMutedChatsInCounter, applyNewSpan(getString(R.string.CP_IncludeMutedIn_FolderCounters)))
+            items.add(SettingsHelper.asSwitchCG(includeMutedChatsInCounter, getString(R.string.CP_IncludeMutedIn_FolderCounters))
                     .setChecked(CherrygramAppearanceConfig.INSTANCE.getTabsIncludeMutedInCounter())
                     .slug("includeMutedInCounters")
             );
         }
-        items.add(UItem.asButton(tabIconTypeRow, getString(R.string.AP_Tab_Style), getTabModeValue()));
+        items.add(UItem.asButton(tabIconTypeRow, getString(R.string.AP_Tab_Style), getTabModeValue())
+                .slug("tabStyle")
+        );
         items.add(SettingsHelper.asSwitchCG(addStrokeRow, getString(R.string.AP_Tab_Style_Stroke))
                 .setChecked(CherrygramAppearanceConfig.INSTANCE.getTabStyleStroke())
                 .slug("stroke")
