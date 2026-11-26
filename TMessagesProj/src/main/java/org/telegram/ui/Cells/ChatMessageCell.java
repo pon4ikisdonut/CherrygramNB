@@ -19281,7 +19281,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                             forwardAvatar.setChat(currentForwardChannel);
                         }
                     } else if (currentForwardUser != null) {
-                        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.isUserSpoilerHidden(currentForwardUser.id) || (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.getHideBlockedUsersSpoilers() && MessagesController.getInstance(currentAccount).blockePeers.indexOfKey(currentForwardUser.id) >= 0)) {
+                        if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.isUserSpoilerHidden(currentForwardUser.id) || (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getHideBlockedUsersSpoilers() && MessagesController.getInstance(currentAccount).blockePeers.indexOfKey(currentForwardUser.id) >= 0)) {
                             currentForwardNameString = LocaleController.getString("CG_HiddenUser", R.string.CG_HiddenUser);
                             includeAvatar = false;
                         } else {
@@ -19703,7 +19703,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                                 forwardAvatar.setChat(currentForwardChannel);
                             }
                         } else if (currentForwardUser != null) {
-                            if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.isUserSpoilerHidden(currentForwardUser.id) || (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.getHideBlockedUsersSpoilers() && MessagesController.getInstance(currentAccount).blockePeers.indexOfKey(currentForwardUser.id) >= 0)) {
+                            if (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.isUserSpoilerHidden(currentForwardUser.id) || (uz.unnarsx.cherrygram.core.configs.CherrygramNBConfig.INSTANCE.getHideBlockedUsersSpoilers() && MessagesController.getInstance(currentAccount).blockePeers.indexOfKey(currentForwardUser.id) >= 0)) {
                                 currentForwardNameString = LocaleController.getString("CG_HiddenUser", R.string.CG_HiddenUser);
                                 includeAvatar = false;
                             } else {
